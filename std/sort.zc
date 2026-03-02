@@ -1,13 +1,8 @@
 import "std/core.zc"
 
-// Generic sorting utilities for Zen C
-
 struct Sort {}
 
 import "std/core.zc"
-
-// Generic macro-based polymorphic sorting engine for Zen C.
-// Zen C compiler expands these macros into concrete type functions instantly preserving zero-overhead natively.
 
 raw {
     #define ZC_IMPL_SORT(T) \

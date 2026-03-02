@@ -71,12 +71,9 @@ impl Url {
              final_host = String::new(host_str.c_str());
         }
         
-        // Free split parts
-        for (let i: usize = 0; i < parts.len; i = i + 1) {
-            let part = parts.get_ref(i);
-            part.destroy();
-        }
-        parts.free();
+        // Free split parts is not needed if parts auto-drops and correctly frees its elements...
+        // Actually, Vec doesn't drop its elements in Zen C right now because no traits bounds on Drop...
+        // Let's look closer.
         host_str.free();
         
         let path = String::new("/");

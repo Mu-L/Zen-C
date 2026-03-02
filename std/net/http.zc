@@ -27,10 +27,7 @@ fn _parse_headers(lines: Vec<String>, start_idx: usize) -> Vec<Header> {
             let val_t = val.trim();
             headers.push(Header { key: key_t, value: val_t });
         }
-        for (let j: usize = 0; j < parts.len; j = j + 1) {
-            let p_str = parts.get_ref(j);
-            p_str.destroy();
-        }
+        // strings in `parts` will auto-drop since their `Vec`s will auto-drop.
     }
     return headers;
 }
@@ -176,15 +173,9 @@ impl Server {
                              
                              client.write((u8*)response_str.c_str(), response_str.length());
                          }
-                         for (let j: usize = 0; j < fl_parts.len; j = j + 1) {
-                             let p_str = fl_parts.get_ref(j);
-                             p_str.destroy();
-                         }
+                         // fl_parts auto-drops its strings.
                      }
-                     for (let j: usize = 0; j < lines.len; j = j + 1) {
-                         let l_str = lines.get_ref(j);
-                         l_str.destroy();
-                     }
+                     // lines auto-drops its strings.
                 }
             }
             client.close();

@@ -1,5 +1,3 @@
-// Zen C Standard Math Library
-// Provides an idiomatic, object-oriented wrapper over the C <math.h> library.
 
 import "std/core.zc"
 import "math.h" as c_math;

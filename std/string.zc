@@ -404,7 +404,7 @@ impl String {
             v.push(0);
             let ch_s = String::new(v.data);
             result.append(&ch_s);
-            v.free();
+            ch_s.destroy();
             i = i + 1;
         }
         return result;
