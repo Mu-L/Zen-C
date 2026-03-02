@@ -160,10 +160,11 @@ static char *normalize_raw_content(const char *content)
     {
         if (*s == '\r')
         {
-            // Skip \r, we only want \n
             if (*(s + 1) == '\n')
             {
-                s++;
+                // \r\n -> \n: skip \r, write \n, advance past both
+                *d++ = '\n';
+                s += 2;
                 continue;
             }
             // Bare \r -> \n
