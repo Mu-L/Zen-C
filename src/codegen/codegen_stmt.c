@@ -630,7 +630,7 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
             }
             else if (strcmp(rt, "void") != 0)
             {
-                fprintf(out, "    return (void*)(long)res;\n");
+                fprintf(out, "    return (void*)(uintptr_t)res;\n");
             }
             else
             {
@@ -1837,7 +1837,7 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
             {
                 if (needs_long_cast)
                 {
-                    fprintf(out, "(%s)(long)_r; })", ret_type);
+                    fprintf(out, "(%s)(uintptr_t)_r; })", ret_type);
                 }
                 else
                 {

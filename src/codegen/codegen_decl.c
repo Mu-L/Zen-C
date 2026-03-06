@@ -1313,7 +1313,7 @@ void print_type_defs(ParserContext *ctx, FILE *out, ASTNode *nodes)
                          "va_start(args, count); for(int i=0; i<count; i++) { v.data[v.len++] = "
                          "va_arg(args, void*); } va_end(args); return v; }\n");
         }
-        fprintf(out, "#define Vec_push(v, i) _z_vec_push(&(v), (void*)(long)(i))\n");
+        fprintf(out, "#define Vec_push(v, i) _z_vec_push(&(v), (void*)(uintptr_t)(i))\n");
         fprintf(out, "static inline long _z_check_bounds(long index, long limit) { if(index < 0 || "
                      "index >= limit) { fprintf(stderr, \"Index out of bounds: %%ld (limit "
                      "%%ld)\\n\", index, limit); exit(1); } return index; }\n");

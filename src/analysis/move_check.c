@@ -203,6 +203,10 @@ static void tc_error_with_hints(TypeChecker *tc, Token t, const char *msg, const
 {
     if (tc)
     {
+        if (tc->move_checks_only)
+        {
+            return;
+        }
         zerror_with_hints(t, msg, hints);
         tc->error_count++;
     }

@@ -1,4 +1,3 @@
-
 async fn fetch_string() -> string {
     return "Hello, world!";
 }

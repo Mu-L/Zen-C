@@ -1,4 +1,4 @@
-// EXPECT: FAIL
+// Move errors are only reported with --typecheck
 
 struct Mover {
     val: int

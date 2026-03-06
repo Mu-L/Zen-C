@@ -1,5 +1,3 @@
-// EXPECT: FAIL
-
 struct Mover {
   val: int
 }
