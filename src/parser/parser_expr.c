@@ -374,14 +374,14 @@ Precedence get_token_precedence(Token t)
         return PREC_OR;
     }
 
-    if (t.type == TOK_OR)
-    {
-        return PREC_OR;
-    }
-
     if (t.type == TOK_AND)
     {
         return PREC_AND;
+    }
+
+    if (t.type == TOK_OR)
+    {
+        return PREC_OR;
     }
 
     if (t.type == TOK_QQ_EQ)
@@ -5317,9 +5317,10 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
         goto after_unary;
     }
 
-    if (t.type == TOK_OP && (is_token(t, "-") || is_token(t, "!") || is_token(t, "*") ||
-                             is_token(t, "&") || is_token(t, "~") || is_token(t, "&&") ||
-                             is_token(t, "++") || is_token(t, "--") || is_token(t, "**")))
+    if ((t.type == TOK_OP && (is_token(t, "-") || is_token(t, "!") || is_token(t, "*") ||
+                              is_token(t, "&") || is_token(t, "~") || is_token(t, "&&") ||
+                              is_token(t, "++") || is_token(t, "--") || is_token(t, "**"))) ||
+        t.type == TOK_NOT)
     {
         lexer_next(l); // consume op
 
@@ -5360,7 +5361,7 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
         {
             method = "neg";
         }
-        if (is_token(t, "!"))
+        if (is_token(t, "!") || t.type == TOK_NOT)
         {
             method = "not";
         }
@@ -5436,7 +5437,14 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
         // Standard Unary Node (for primitives or if no overload found)
         lhs = ast_create(NODE_EXPR_UNARY);
         lhs->token = t;
-        lhs->unary.op = token_strdup(t);
+        if (t.type == TOK_NOT)
+        {
+            lhs->unary.op = xstrdup("!");
+        }
+        else
+        {
+            lhs->unary.op = token_strdup(t);
+        }
         lhs->unary.operand = operand;
 
         if (operand->type_info)

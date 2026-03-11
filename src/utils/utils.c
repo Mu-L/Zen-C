@@ -328,9 +328,38 @@ void scan_build_directives(ParserContext *ctx, const char *src)
                 {
                     directive_val++;
                 }
-                char flags[2048];
-                snprintf(flags, sizeof(flags), "-I%s", directive_val);
-                append_flag(g_cflags, sizeof(g_cflags), flags);
+
+                char *dp = directive_val;
+                while (*dp)
+                {
+                    while (*dp && isspace((unsigned char)*dp))
+                    {
+                        dp++;
+                    }
+                    if (!*dp)
+                    {
+                        break;
+                    }
+
+                    char path[1024];
+                    char *d = path;
+                    while (*dp && !isspace((unsigned char)*dp))
+                    {
+                        if (d - path < 1023)
+                        {
+                            *d++ = *dp++;
+                        }
+                        else
+                        {
+                            dp++;
+                        }
+                    }
+                    *d = '\0';
+
+                    char flags[1050];
+                    snprintf(flags, sizeof(flags), "-I%s", path);
+                    append_flag(g_cflags, sizeof(g_cflags), flags);
+                }
             }
             else if (strncmp(directive, "lib:", 4) == 0)
             {
@@ -339,9 +368,38 @@ void scan_build_directives(ParserContext *ctx, const char *src)
                 {
                     directive_val++;
                 }
-                char flags[2048];
-                snprintf(flags, sizeof(flags), "-L%s", directive_val);
-                append_flag(g_link_flags, sizeof(g_link_flags), flags);
+
+                char *dp = directive_val;
+                while (*dp)
+                {
+                    while (*dp && isspace((unsigned char)*dp))
+                    {
+                        dp++;
+                    }
+                    if (!*dp)
+                    {
+                        break;
+                    }
+
+                    char path[1024];
+                    char *d = path;
+                    while (*dp && !isspace((unsigned char)*dp))
+                    {
+                        if (d - path < 1023)
+                        {
+                            *d++ = *dp++;
+                        }
+                        else
+                        {
+                            dp++;
+                        }
+                    }
+                    *d = '\0';
+
+                    char flags[1050];
+                    snprintf(flags, sizeof(flags), "-L%s", path);
+                    append_flag(g_link_flags, sizeof(g_link_flags), flags);
+                }
             }
             else if (strncmp(directive, "framework:", 10) == 0)
             {
@@ -351,29 +409,29 @@ void scan_build_directives(ParserContext *ctx, const char *src)
                     directive_val++;
                 }
 
-                char *p = directive_val;
-                while (*p)
+                char *dp = directive_val;
+                while (*dp)
                 {
-                    while (*p && isspace((unsigned char)*p))
+                    while (*dp && isspace((unsigned char)*dp))
                     {
-                        p++;
+                        dp++;
                     }
-                    if (!*p)
+                    if (!*dp)
                     {
                         break;
                     }
 
                     char name[256];
                     char *d = name;
-                    while (*p && !isspace((unsigned char)*p))
+                    while (*dp && !isspace((unsigned char)*dp))
                     {
                         if (d - name < 255)
                         {
-                            *d++ = *p++;
+                            *d++ = *dp++;
                         }
                         else
                         {
-                            p++;
+                            dp++;
                         }
                     }
                     *d = '\0';
@@ -390,19 +448,48 @@ void scan_build_directives(ParserContext *ctx, const char *src)
                 {
                     directive_val++;
                 }
-                char flags[2048];
-                snprintf(flags, sizeof(flags), "-D%s", directive_val);
-                append_flag(g_cflags, sizeof(g_cflags), flags);
 
-                if (g_config.cfg_define_count < 64)
+                char *dp = directive_val;
+                while (*dp)
                 {
-                    char *name = xstrdup(directive_val);
-                    char *eq = strchr(name, '=');
-                    if (eq)
+                    while (*dp && isspace((unsigned char)*dp))
                     {
-                        *eq = '\0';
+                        dp++;
                     }
-                    g_config.cfg_defines[g_config.cfg_define_count++] = name;
+                    if (!*dp)
+                    {
+                        break;
+                    }
+
+                    char def_val[1024];
+                    char *d = def_val;
+                    while (*dp && !isspace((unsigned char)*dp))
+                    {
+                        if (d - def_val < 1023)
+                        {
+                            *d++ = *dp++;
+                        }
+                        else
+                        {
+                            dp++;
+                        }
+                    }
+                    *d = '\0';
+
+                    char flags[1050];
+                    snprintf(flags, sizeof(flags), "-D%s", def_val);
+                    append_flag(g_cflags, sizeof(g_cflags), flags);
+
+                    if (g_config.cfg_define_count < 64)
+                    {
+                        char *name = xstrdup(def_val);
+                        char *eq = strchr(name, '=');
+                        if (eq)
+                        {
+                            *eq = '\0';
+                        }
+                        g_config.cfg_defines[g_config.cfg_define_count++] = name;
+                    }
                 }
             }
             else if (0 == strncmp(directive, "shell:", 6))
