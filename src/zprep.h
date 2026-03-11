@@ -95,6 +95,7 @@ typedef struct
     int len;           ///< Length of the token text.
     int line;          ///< Line number (1-based).
     int col;           ///< Column number (1-based).
+    const char *file;  ///< Name of file with source code.
 } Token;
 
 /**
@@ -203,20 +204,22 @@ typedef struct
 
     // Modes.
     int mode_run;        ///< 1 if 'run' command (compile & execute).
+    int mode_debug;      ///< 1 if `debug` command (emits source mappings and implies mode_run).
     int mode_check;      ///< 1 if 'check' command (syntax/type check only).
+    int mode_transpile;  ///< 1 if 'transpile' command (to C).
     int emit_c;          ///< 1 if --emit-c (keep generated C file).
     int verbose;         ///< 1 if --verbose.
     int quiet;           ///< 1 if --quiet.
     int zen_mode;        ///< 1 if --zen (enable zen facts/easter eggs).
     int repl_mode;       ///< 1 if --repl (internal flag for REPL usage).
     int is_freestanding; ///< 1 if --freestanding (no stdlib).
-    int mode_transpile;  ///< 1 if 'transpile' command (to C).
     int use_cpp;         ///< 1 if --cpp (emit C++ compatible code).
     int use_cuda;        ///< 1 if --cuda (emit CUDA-compatible code).
     int use_objc;        ///< 1 if --objc (emit Objective-C compatible code).
     int mode_lsp;        ///< 1 if 'lsp' command (Language Server Protocol).
     int json_output;     ///< 1 if --json (emit structured JSON diagnostics).
-    int use_typecheck;   ///< 1 if --typecheck (enable manual semantic analysis).
+    int use_typecheck;   ///< 1 if --check (enable manual semantic analysis).
+    int warn_as_errors;  ///< 1 if --warn-errors or -Werror (treat Zen C warnings as errors).
 
     int keep_comments; ///< 1 if --keep-comments (preserve comments in output).
 
