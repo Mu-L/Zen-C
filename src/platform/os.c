@@ -142,6 +142,15 @@ void z_get_executable_path(char *buffer, size_t size)
 #else
     // Fallback
 #endif
+
+    // Strip the executable filename to get the directory
+    char *last_slash = strrchr(buffer, '/');
+    char *last_bslash = strrchr(buffer, '\\');
+    char *last_sep = last_slash > last_bslash ? last_slash : last_bslash;
+    if (last_sep)
+    {
+        *last_sep = '\0';
+    }
 }
 
 int z_isatty(int fd)
