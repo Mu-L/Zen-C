@@ -591,6 +591,43 @@ static void find_var_refs(ASTNode *node, char ***refs, int *ref_count)
             find_var_refs(c->match_case.body, refs, ref_count);
         }
         break;
+    case NODE_RAW_STMT:
+        for (int i = 0; i < node->raw_stmt.used_symbol_count; i++)
+        {
+            *refs = xrealloc(*refs, sizeof(char *) * (*ref_count + 1));
+            (*refs)[*ref_count] = xstrdup(node->raw_stmt.used_symbols[i]);
+            (*ref_count)++;
+        }
+        break;
+    case NODE_EXPR_CAST:
+        find_var_refs(node->cast.expr, refs, ref_count);
+        break;
+    case NODE_EXPR_STRUCT_INIT:
+        for (ASTNode *f = node->struct_init.fields; f; f = f->next)
+        {
+            find_var_refs(f, refs, ref_count);
+        }
+        break;
+    case NODE_EXPR_ARRAY_LITERAL:
+        for (ASTNode *e = node->array_literal.elements; e; e = e->next)
+        {
+            find_var_refs(e, refs, ref_count);
+        }
+        break;
+    case NODE_TERNARY:
+        find_var_refs(node->ternary.cond, refs, ref_count);
+        find_var_refs(node->ternary.true_expr, refs, ref_count);
+        find_var_refs(node->ternary.false_expr, refs, ref_count);
+        break;
+    case NODE_ASSERT:
+        find_var_refs(node->assert_stmt.condition, refs, ref_count);
+        break;
+    case NODE_DEFER:
+        find_var_refs(node->defer_stmt.stmt, refs, ref_count);
+        break;
+    case NODE_TRY:
+        find_var_refs(node->try_stmt.expr, refs, ref_count);
+        break;
     default:
         break;
     }
@@ -980,7 +1017,7 @@ ASTNode *parse_lambda(ParserContext *ctx, Lexer *l)
     return lambda;
 }
 
-static char *escape_c_string(const char *input)
+char *escape_c_string(const char *input)
 {
     char *out = xmalloc(strlen(input) * 2 + 1);
     char *p = out;

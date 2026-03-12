@@ -1,0 +1,24 @@
+fn execute(f: fn()) {
+    f();
+}
+
+test "closure capture in println" {
+    let count = 42;
+    let name = "Zen";
+    
+    // Test reference capture
+    execute(fn[&]() {
+        count++;
+        println "Count is {count}, Name is {name}";
+        assert count == 43;
+    });
+    
+    assert count == 43;
+    
+    // Test value capture
+    let x = 10;
+    execute(fn[=]() {
+        println "Value of x is {x}";
+        assert x == 10;
+    });
+}

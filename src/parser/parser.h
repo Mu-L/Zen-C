@@ -981,6 +981,11 @@ char *process_printf_sugar(ParserContext *ctx, const char *content, int newline,
                            char ***used_syms, int *count, int check_symbols);
 
 /**
+ * @brief Escapes a C string.
+ */
+char *escape_c_string(const char *input);
+
+/**
  * @brief Parses an assert statement.
  */
 ASTNode *parse_assert(ParserContext *ctx, Lexer *l);

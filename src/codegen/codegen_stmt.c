@@ -2043,13 +2043,72 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
         break;
     }
     case NODE_RAW_STMT:
-        fprintf(out, "    %s\n", node->raw_stmt.content);
+    {
+        if (g_current_lambda)
+        {
+            Lexer l;
+            lexer_init(&l, node->raw_stmt.content);
+            Token t;
+            int last_pos = 0;
+            while ((t = lexer_next(&l)).type != TOK_EOF)
+            {
+                int current_tok_start = (int)(t.start - node->raw_stmt.content);
+                for (int i = last_pos; i < current_tok_start; i++)
+                {
+                    fputc(node->raw_stmt.content[i], out);
+                }
+
+                if (t.type == TOK_IDENT)
+                {
+                    char *name = token_strdup(t);
+                    int captured = -1;
+                    if (g_current_lambda->lambda.captured_vars)
+                    {
+                        for (int i = 0; i < g_current_lambda->lambda.num_captures; i++)
+                        {
+                            if (strcmp(name, g_current_lambda->lambda.captured_vars[i]) == 0)
+                            {
+                                captured = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (captured != -1)
+                    {
+                        if (g_current_lambda->lambda.capture_modes &&
+                            g_current_lambda->lambda.capture_modes[captured] == 1)
+                        {
+                            fprintf(out, "(*ctx->%s)", name);
+                        }
+                        else
+                        {
+                            fprintf(out, "ctx->%s", name);
+                        }
+                    }
+                    else
+                    {
+                        fprintf(out, "%.*s", t.len, t.start);
+                    }
+                    free(name);
+                }
+                else
+                {
+                    fprintf(out, "%.*s", t.len, t.start);
+                }
+                last_pos = current_tok_start + t.len;
+            }
+            fprintf(out, "%s\n", node->raw_stmt.content + last_pos);
+        }
+        else
+        {
+            fprintf(out, "    %s\n", node->raw_stmt.content);
+        }
         break;
+    }
     default:
         codegen_expression(ctx, node, out);
         fprintf(out, ";\n");
-        // Suppress closure context free for Thread::spawn calls —
-        // the thread trampoline takes ownership of the closure context.
         if (node->type == NODE_EXPR_CALL && node->call.callee && pending_closure_free_count > 0)
         {
             int is_thread_spawn = 0;
