@@ -568,6 +568,14 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
             name1 = prefixed_name;
         }
 
+        // Resolve opaque alias (e.g. StringView -> Slice_char)
+        const char *alias_resolved = find_type_alias(ctx, name1);
+        if (alias_resolved)
+        {
+            free(name1);
+            name1 = xstrdup(alias_resolved);
+        }
+
         ctx->current_impl_struct = name1; // For patch_self_args inside parse_function
 
         if (gen_param)

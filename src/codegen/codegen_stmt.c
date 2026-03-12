@@ -888,16 +888,74 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
         }
         break;
     case NODE_IMPL:
-        g_current_impl_type = node->impl.struct_name;
+    {
+        char *sname = node->impl.struct_name;
+        const char *resolved = find_type_alias(ctx, sname);
+
+        // If this is an opaque alias, rename method func.name prefixes before codegen
+        if (resolved)
+        {
+            int slen = strlen(sname);
+            ASTNode *m = node->impl.methods;
+            while (m)
+            {
+                if (m->type == NODE_FUNCTION && m->func.name &&
+                    strncmp(m->func.name, sname, slen) == 0 && m->func.name[slen] == '_' &&
+                    m->func.name[slen + 1] == '_')
+                {
+                    const char *method_part = m->func.name + slen;
+                    char *new_name = xmalloc(strlen(resolved) + strlen(method_part) + 1);
+                    sprintf(new_name, "%s%s", resolved, method_part);
+                    free(m->func.name);
+                    m->func.name = new_name;
+                }
+                m = m->next;
+            }
+            g_current_impl_type = (char *)resolved;
+        }
+        else
+        {
+            g_current_impl_type = sname;
+        }
+
         codegen_walker(ctx, node->impl.methods, out);
         g_current_impl_type = NULL;
         break;
+    }
     case NODE_IMPL_TRAIT:
-        g_current_impl_type = node->impl_trait.target_type;
-        codegen_walker(ctx, node->impl_trait.methods, out);
+    {
+        char *sname = node->impl_trait.target_type;
+        const char *resolved = find_type_alias(ctx, sname);
 
+        if (resolved)
+        {
+            int slen = strlen(sname);
+            ASTNode *m = node->impl_trait.methods;
+            while (m)
+            {
+                if (m->type == NODE_FUNCTION && m->func.name &&
+                    strncmp(m->func.name, sname, slen) == 0 && m->func.name[slen] == '_' &&
+                    m->func.name[slen + 1] == '_')
+                {
+                    const char *method_part = m->func.name + slen;
+                    char *new_name = xmalloc(strlen(resolved) + strlen(method_part) + 1);
+                    sprintf(new_name, "%s%s", resolved, method_part);
+                    free(m->func.name);
+                    m->func.name = new_name;
+                }
+                m = m->next;
+            }
+            g_current_impl_type = (char *)resolved;
+        }
+        else
+        {
+            g_current_impl_type = sname;
+        }
+
+        codegen_walker(ctx, node->impl_trait.methods, out);
         g_current_impl_type = NULL;
         break;
+    }
     case NODE_DESTRUCT_VAR:
     {
         int id = tmp_counter++;

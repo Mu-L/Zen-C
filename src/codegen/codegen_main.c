@@ -746,8 +746,17 @@ void codegen_node(ParserContext *ctx, ASTNode *node, FILE *out)
                     continue;
                 }
 
+                // Resolve opaque alias
+                const char *resolved = find_type_alias(ctx, sname);
+
                 char *mangled = replace_string_type(sname);
                 ASTNode *def = find_struct_def_codegen(ctx, mangled);
+                if (!def && resolved)
+                {
+                    free(mangled);
+                    mangled = replace_string_type(resolved);
+                    def = find_struct_def_codegen(ctx, mangled);
+                }
                 int skip = 0;
                 if (def)
                 {

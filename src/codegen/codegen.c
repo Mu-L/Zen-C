@@ -768,6 +768,25 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
 
                     if (!find_func(ctx, mixin_func_name))
                     {
+                        // Reverse alias lookup: if base is a resolved alias (e.g. Slice_char),
+                        // try finding the method under the alias name (e.g. StringView__println)
+                        TypeAlias *ta = ctx->type_aliases;
+                        while (ta)
+                        {
+                            if (strcmp(ta->original_type, call_base) == 0)
+                            {
+                                char alias_func_name[512];
+                                snprintf(alias_func_name, sizeof(alias_func_name), "%s__%s",
+                                         ta->alias, method);
+                                if (find_func(ctx, alias_func_name))
+                                {
+                                    // Found method under alias name — use the resolved name
+                                    // since that's what the function definition will be emitted as
+                                    break;
+                                }
+                            }
+                            ta = ta->next;
+                        }
                         StructRef *ref = ctx->parsed_impls_list;
                         while (ref)
                         {

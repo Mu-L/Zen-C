@@ -1026,8 +1026,18 @@ void emit_protos(ParserContext *ctx, ASTNode *node, FILE *out)
                 continue;
             }
 
+            // Resolve opaque alias (e.g. StringView -> Slice_char)
+            const char *resolved = find_type_alias(g_parser_ctx, sname);
+            const char *effective_name = resolved ? resolved : sname;
+
             char *mangled = replace_string_type(sname);
             ASTNode *def = find_struct_def_codegen(g_parser_ctx, mangled);
+            if (!def && resolved)
+            {
+                free(mangled);
+                mangled = replace_string_type(resolved);
+                def = find_struct_def_codegen(g_parser_ctx, mangled);
+            }
             int skip = 0;
             if (def)
             {
@@ -1081,17 +1091,22 @@ void emit_protos(ParserContext *ctx, ASTNode *node, FILE *out)
                     fprintf(out, "#if %s\n", m->cfg_condition);
                 }
                 char *fname = m->func.name;
-                char *proto = xmalloc(strlen(fname) + strlen(sname) + 2);
+
+                // Build proto: if fname starts with sname__, replace with effective_name__
+                char *proto = NULL;
                 int slen = strlen(sname);
                 if (strncmp(fname, sname, slen) == 0 && fname[slen] == '_' &&
                     fname[slen + 1] == '_')
                 {
-                    size_t alloc_len = strlen(fname) + strlen(sname) + 2;
-                    snprintf(proto, alloc_len, "%s", fname);
+                    // Replace alias prefix with resolved name
+                    const char *method_part = fname + slen; // "__method"
+                    proto = xmalloc(strlen(effective_name) + strlen(method_part) + 1);
+                    sprintf(proto, "%s%s", effective_name, method_part);
                 }
                 else
                 {
-                    sprintf(proto, "%s__%s", sname, fname);
+                    proto = xmalloc(strlen(effective_name) + strlen(fname) + 3);
+                    sprintf(proto, "%s__%s", effective_name, fname);
                 }
 
                 if (m->func.is_async)
