@@ -408,7 +408,8 @@ fn add(a: int, b: int) -> int {
 add(a: 10, b: 20);
 ```
 
-> **Note**: Named arguments must strictly follow the defined parameter order. `add(b: 20, a: 10)` is invalid.
+> [!NOTE]
+> Named arguments must strictly follow the defined parameter order. `add(b: 20, a: 10)` is invalid.
 
 #### Const Arguments
 Function arguments can be marked as `const` to enforce read-only semantics. This is a type qualifier, not a manifest constant.
@@ -1163,7 +1164,8 @@ let re = regex! { ^[a-z]+$ };
 #### Generic C Macros
 Pass preprocessor macros through to C.
 
-> **Tip**: For simple constants, use `def` instead. Use `#define` when you need C-preprocessor macros or conditional compilation flags.
+> [!TIP]
+> For simple constants, use `def` instead. Use `#define` when you need C-preprocessor macros or conditional compilation flags.
 
 ```zc
 #define MAX_BUFFER 1024

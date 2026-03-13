@@ -410,7 +410,8 @@ fn somma(a: int, b: int) -> int {
 somma(a: 10, b: 20);
 ```
 
-> **Nota**: Gli argomenti nominati devono seguire rigorosamente l'ordine predefinito dei parametri. `somma(b: 20, a: 10)` è errato.
+> [!NOTE]
+> Gli argomenti nominati devono seguire rigorosamente l'ordine predefinito dei parametri. `somma(b: 20, a: 10)` è errato.
 
 #### Argomenti Costanti
 Gli argomenti di una funzione possono essere marcati come `const` (lett. _costanti_) per reinforzare semantiche di sola lettura. Questo è un qualificatore del tipo, non una costante esplicita.
@@ -943,7 +944,8 @@ impl Drop for Risorsa {
 }
 ```
 
-> [!NOTE] Se una variabile viene spostata, `drop` NON verrà chiamato sulla variabile originale. Aderisce alle [Semantiche delle Risorse](#semantiche-delle-risorse)
+> [!NOTE]
+> Se una variabile viene spostata, `drop` NON verrà chiamato sulla variabile originale. Aderisce alle [Semantiche delle Risorse](#semantiche-delle-risorse)
 
 **Copy** (lett. _copia_)
 
@@ -1289,7 +1291,8 @@ fn aggiungi_cinque(x: int) -> int {
 | **Clobber** | `: clobber("rax")` | `"rax"` |
 | **Memory** | `: clobber("memoria")` | `"memoria"` |
 
-> [!NOTE] Quando si usa la sintassi Intel (via `-masm=intel`), dovrai assicurarti che la tua build sia configurata correttamente (per esempio, `//> cflags: -masm=intel`). TCC non supporta la sintassi assembly Intel.
+> [!NOTE]
+> Quando si usa la sintassi Intel (via `-masm=intel`), dovrai assicurarti che la tua build sia configurata correttamente (per esempio, `//> cflags: -masm=intel`). TCC non supporta la sintassi assembly Intel.
 
 
 ### 15. Direttive della Build
@@ -1551,7 +1554,8 @@ zc run app.zc --cc zig
 > [!WARNING]
 > **AVVISO DI COMPILAZIONE:** Sebbene **Zig CC** funzioni ottimamente come backend per i tuoi programmi Zen C, compilare il *compilatore Zen C stesso* con esso potrebbe verificare ma produrre un binario instabile che fallisce i test. Consigliamo di compilare il compilatore con **GCC** o **Clang** e usare Zig solo come backend per il tuo codice operativo.
 
-> [!TIP]### Buildare con Zig
+> [!TIP]
+> ### Buildare con Zig
 
 Il comando `zig cc` di Zig fornisce un rimpiazzamento drop-in per GCC/Clang con eccellente supporto per la cross-compilation. Per usare Zig:
 

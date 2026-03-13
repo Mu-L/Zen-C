@@ -409,7 +409,8 @@ fn suma(a: int, b: int) -> int {
 suma(a: 10, b: 20);
 ```
 
-> **Nota**: Los argumentos con nombre deben seguir estrictamente el orden de los parámetros definidos. `suma(b: 20, a: 10)` es inválido.
+> [!NOTE]
+> Los argumentos con nombre deben seguir estrictamente el orden de los parámetros definidos. `suma(b: 20, a: 10)` es inválido.
 
 #### Argumentos Const
 Los argumentos de las funciones pueden marcarse como `const` para imponer una semántica de solo lectura. Este es un calificador de tipo, no una constante manifiesta.
@@ -949,7 +950,8 @@ impl Drop for Recurso {
 }
 ```
 
-> [!NOTE] Si una variable es movida, no se llama a `drop` en la variable original. Se adhiere a la [Semántica de Recursos](#semántica-de-recursos-movimiento-por-defecto).
+> [!NOTE]
+> Si una variable es movida, no se llama a `drop` en la variable original. Se adhiere a la [Semántica de Recursos](#semántica-de-recursos-movimiento-por-defecto).
 
 **Copy**
 

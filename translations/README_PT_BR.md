@@ -958,7 +958,8 @@ impl Drop for Resource {
 
 Trait marcador para optar pelo comportamento `Copy` (duplicação implícita) em vez de semântica Move. Usado via `@derive(Copy)`.
 
-> [!CAUTION] Tipos que implementam `Copy` não devem definir um destrutor (`Drop`).
+> [!CAUTION]
+> Tipos que implementam `Copy` não devem definir um destrutor (`Drop`).
 
 ```zc
 @derive(Copy)
