@@ -1,6 +1,0 @@
-fn main() {
-    let word = "little";
-    
-    // The variable 'word' is interpolated directly into the string
-    println "Mary had a {word} lamb";
-}
