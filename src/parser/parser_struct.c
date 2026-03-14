@@ -227,6 +227,7 @@ ASTNode *parse_trait(ParserContext *ctx, Lexer *l)
         {
             lexer_next(l);
             ASTNode *m = ast_create(NODE_FUNCTION);
+            m->token = ft;
             m->func.param_names = param_names;
             m->func.name = mname;
             m->func.args = args;
@@ -700,6 +701,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
             free(full_struct_name);
             // Register Template
             ASTNode *n = ast_create(NODE_IMPL);
+            n->token = t1;
             n->impl.struct_name = name1;
             n->impl.methods = h;
             register_impl_template(ctx, name1, gen_param, n);

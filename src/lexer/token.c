@@ -226,7 +226,7 @@ Token lexer_next(Lexer *l)
         }
         if (len == 3 && strncmp(s, "not", 3) == 0)
         {
-            return (Token){TOK_NOT, s, 3, start_line, start_col};
+            return (Token){TOK_NOT, s, 3, start_line, start_col, g_current_filename};
         }
         if (len == 6 && strncmp(s, "opaque", 6) == 0)
         {

@@ -1644,7 +1644,6 @@ void emit_source_mapping(ASTNode *node, FILE *out)
     if (!node->token.start || !node->token.file)
     {
         zwarn_at(node->token, "Encountered source mapping issue for node type %i, please report this issue.", node->type);
-        fprintf(out, "\n/* Encountered source mapping issue for node type %i */\n", node->type);
         return;
     }
 
