@@ -273,16 +273,13 @@ impl Vec<T> {
     // Structural equality check.
     // Returns true if both vectors have the same length and identical elements.
     fn eq(self, other: Vec<T>*) -> bool {
-        let result = true;
-        if self.len != (*other).len { result = false; }
-        else {
-            let i: usize = 0;
-            while i < self.len {
-                if memcmp(&self.data[i], &(*other).data[i], sizeof(T)) != 0 { result = false; break; }
-                i = i + 1;
-            }
+        if self.len != (*other).len { return false; }
+        let i: usize = 0;
+        while i < self.len {
+            if memcmp(&self.data[i], &(*other).data[i], sizeof(T)) != 0 { return false; }
+            i = i + 1;
         }
-        return result;
+        return true;
     }
 
     // Prevent Drop from freeing memory (simulates move)
@@ -307,8 +304,7 @@ impl Vec<T> {
     }
     // Operator overload for `!=` (Inequality)
     fn neq(self, other: Vec<T>*) -> bool {
-        let result = !self.eq(other);
-        return result;
+        return !self.eq(other);
     }
 
     // Operator overload for `<<` (Push item into vector)
@@ -373,9 +369,8 @@ impl Vec<T> {
         return Vec<T> {
             data: new_data,
             len: self.len,
-            cap: self.len // Set capacity to exact length
+            cap: self.len
         };
-        // No local Vec variable means no Drop is called here.
     }
 }
 

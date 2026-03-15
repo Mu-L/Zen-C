@@ -354,7 +354,7 @@ static void check_expr_binary(TypeChecker *tc, ASTNode *node)
             ZenSymbol *lhs_sym = tc_lookup(tc, node->binary.left->var_ref.name);
             if (lhs_sym)
             {
-                mark_symbol_valid(tc->pctx, lhs_sym, node);
+                mark_symbol_valid(tc->pctx, lhs_sym, node->binary.left);
             }
         }
 
@@ -915,6 +915,11 @@ static void check_var_decl(TypeChecker *tc, ASTNode *node)
     }
 
     tc_add_symbol(tc, node->var_decl.name, t, node->token);
+    ZenSymbol *new_sym = tc_lookup(tc, node->var_decl.name);
+    if (new_sym)
+    {
+        mark_symbol_valid(tc->pctx, new_sym, node);
+    }
 }
 
 static int block_always_returns(ASTNode *block);

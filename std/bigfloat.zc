@@ -56,7 +56,7 @@ impl BigFloat {
             o.align_scale(s.scale);
         }
 
-        s.magnitude.add_in_place(o.magnitude);
+        s.magnitude.add_in_place(&o.magnitude);
         let res = BigFloat::from_bigint(s.magnitude.clone(), s.scale);
         
         return res;

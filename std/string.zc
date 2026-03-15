@@ -161,7 +161,7 @@ impl String {
 
     fn add(self, other: String*) -> String {
         let new_s = String::from(self.c_str());
-        new_s.append(other);
+        (&new_s).append(other);
         
         let d = new_s.vec.data;
         let l = new_s.vec.len;

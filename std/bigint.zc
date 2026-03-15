@@ -38,7 +38,7 @@ impl BigInt {
         }
     }
     
-    fn add_in_place(self, other: BigInt) {
+    fn add_in_place(self, other: BigInt*) {
         let carry: u8 = 0;
         let i: usize = 0;
         let max_len = self.digits.len;
@@ -67,9 +67,9 @@ impl BigInt {
         }
     }
     
-    fn add(self, other: BigInt) -> Self {
+    fn add(self, other: BigInt*) -> Self {
         let res = self.clone();
-        res.add_in_place(other);
+        (&res).add_in_place(other);
         return res;
     }
     

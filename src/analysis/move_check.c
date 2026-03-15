@@ -403,12 +403,19 @@ void mark_symbol_valid(ParserContext *ctx, ZenSymbol *sym, ASTNode *context_node
         sym->is_moved = 0;
     }
 
-    if (ctx && ctx->move_state && context_node)
+    if (ctx && ctx->move_state)
     {
         char *path = get_node_path(context_node);
+        if (!path && sym)
+        {
+            path = xstrdup(sym->name);
+        }
+
         if (path)
         {
-            mark_valid_in_state(ctx->move_state, path, context_node->token);
+            mark_valid_in_state(ctx->move_state, path,
+                                context_node ? context_node->token
+                                             : (sym ? sym->decl_token : (Token){0}));
             free(path);
         }
     }
