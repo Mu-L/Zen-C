@@ -30,6 +30,7 @@
     <b><a href="#обзор">Обзор</a></b> •
     <b><a href="#сообщество">Сообщество</a></b> •
     <b><a href="#быстрый-старт">Быстрый старт</a></b> •
+    <b><a href="#экосистема">Экосистема</a></b> •
     <b><a href="#справочник">Справочник</a></b> •
     <b><a href="#стандартная-библиотека">Стандартная библиотека</a></b> •
     <b><a href="#инструменты">Инструменты</a></b>
@@ -48,6 +49,19 @@
 
 - Discord: [Присоединиться](https://discord.com/invite/q6wEsCmkJP)
 - RFC: [Предложить функции](https://github.com/zenc-lang/rfcs)
+
+## Экосистема
+
+Проект Zen C состоит из нескольких репозиториев. Ниже приведены основные из них:
+
+| Репозиторий | Описание | Статус |
+| :--- | :--- | :--- |
+| **[zenc](https://github.com/zenc-lang/zenc)** | Ядро компилятора Zen C (`zc`), CLI и стандартная библиотека. | Активная разработка |
+| **[docs](https://github.com/zenc-lang/docs)** | Официальная техническая документация и спецификация языка. | Активен |
+| **[rfcs](https://github.com/zenc-lang/rfcs)** | Репозиторий запросов на комментарии (RFC). Формируйте будущее языка. | Активен |
+| **[vscode-zenc](https://github.com/zenc-lang/vscode-zenc)** | Официальное расширение VS Code (подсветка синтаксиса, сниппеты). | Alpha |
+| **[www](https://github.com/zenc-lang/www)** | Исходный код `zenc-lang.org`. | Активен |
+| **[awesome-zenc](https://github.com/zenc-lang/awesome-zenc)** | Курируемый список отличных примеров Zen C. | Растет |
 
 ## Галерея
 
@@ -70,8 +84,10 @@
       <ul>
         <li><a href="#обзор">Обзор</a></li>
         <li><a href="#сообщество">Сообщество</a></li>
+        <li><a href="#экосистема">Экосистема</a></li>
         <li><a href="https://github.com/zenc-lang/rfcs">RFC</a></li>
         <li><a href="#быстрый-старт">Быстрый старт</a></li>
+        <li><a href="https://github.com/zenc-lang/docs">Документация</a></li>
         <li><a href="#стандартная-библиотека">Стандартная библиотека</a></li>
         <li><a href="#инструменты">Инструменты</a>
           <ul>
@@ -115,7 +131,6 @@
 ```bash
 git clone https://github.com/zenc-lang/zenc.git
 cd Zen-C
-git submodule update --init --recursive
 make clean # удалить старые файлы сборки
 make
 sudo make install
@@ -1752,6 +1767,8 @@ fn main() {
   <p>
     <a href="https://discord.com/invite/q6wEsCmkJP">Discord</a> •
     <a href="https://github.com/zenc-lang/zenc">GitHub</a> •
+    <a href="https://github.com/zenc-lang/docs">Документация</a> •
+    <a href="https://github.com/zenc-lang/awesome-zenc">Примеры</a> •
     <a href="https://github.com/zenc-lang/rfcs">RFC</a> •
     <a href="CONTRIBUTING_RU.md">Внести вклад</a>
   </p>

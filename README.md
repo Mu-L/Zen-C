@@ -30,6 +30,7 @@
     <b><a href="#overview">Overview</a></b> •
     <b><a href="#community">Community</a></b> •
     <b><a href="#quick-start">Quick Start</a></b> •
+    <b><a href="#ecosystem">Ecosystem</a></b> •
     <b><a href="#language-reference">Language Reference</a></b> •
     <b><a href="#standard-library">Standard Library</a></b> •
     <b><a href="#tooling">Toolchain</a></b>
@@ -48,6 +49,19 @@ Join the discussion, share demos, ask questions, or report bugs in the official 
 
 - Discord: [Join here](https://discord.com/invite/q6wEsCmkJP)
 - RFCs: [Propose features](https://github.com/zenc-lang/rfcs)
+
+## Ecosystem
+
+The Zen C project consists of several repositories. Below you can find the primary ones:
+
+| Repository | Description | Status |
+| :--- | :--- | :--- |
+| **[zenc](https://github.com/zenc-lang/zenc)** | The core Zen C compiler (`zc`), CLI, and Standard Library. | Active Development |
+| **[docs](https://github.com/zenc-lang/docs)** | The official documentation and language specification. | Active |
+| **[rfcs](https://github.com/zenc-lang/rfcs)** | The Request for Comments (RFC) repository. Shape the future of the language. | Active |
+| **[vscode-zenc](https://github.com/zenc-lang/vscode-zenc)** | Official VS Code extension (Syntax Highlighting, Snippets). | Alpha |
+| **[www](https://github.com/zenc-lang/www)** | Source code for `zenc-lang.org`. | Active |
+| **[awesome-zenc](https://github.com/zenc-lang/awesome-zenc)** | A curated list of awesome Zen C examples | Growing |
 
 ## Showcase
 
@@ -73,6 +87,8 @@ Check out these projects built with Zen C:
         <li><a href="#community">Community</a></li>
         <li><a href="https://github.com/zenc-lang/rfcs">RFCs</a></li>
         <li><a href="#quick-start">Quick Start</a></li>
+        <li><a href="#ecosystem">Ecosystem</a></li>
+        <li><a href="https://github.com/zenc-lang/docs">Documentation</a></li>
         <li><a href="#standard-library">Standard Library</a></li>
         <li><a href="#tooling">Tooling</a>
           <ul>
@@ -118,7 +134,6 @@ Check out these projects built with Zen C:
 ```bash
 git clone https://github.com/zenc-lang/zenc.git
 cd Zen-C
-git submodule update --init --recursive
 make clean # remove old build files
 make
 sudo make install
@@ -1818,6 +1833,8 @@ This project uses third-party libraries. Full license texts can be found in the 
   <p>
     <a href="https://discord.com/invite/q6wEsCmkJP">Discord</a> •
     <a href="https://github.com/zenc-lang/zenc">GitHub</a> •
+    <a href="https://github.com/zenc-lang/docs">Documentation</a> •
+    <a href="https://github.com/zenc-lang/awesome-zenc">Examples</a> •
     <a href="https://github.com/zenc-lang/rfcs">RFCs</a> •
     <a href="CONTRIBUTING.md">Contribute</a>
   </p>

@@ -1,6 +1,0 @@
-[submodule "docs"]
-	path = docs
-	url = https://github.com/zenc-lang/docs.git
-[submodule "examples"]
-	path = examples
-	url = https://github.com/zenc-lang/awesome-zenc.git

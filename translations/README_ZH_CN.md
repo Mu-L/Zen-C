@@ -30,6 +30,7 @@
     <b><a href="#概述">概述</a></b> •
     <b><a href="#社区">社区</a></b> •
     <b><a href="#快速入门">快速入门</a></b> •
+    <b><a href="#生态系统">生态系统</a></b> •
     <b><a href="#语言参考">语言参考</a></b> •
     <b><a href="#标准库">标准库</a></b> •
     <b><a href="#工具链">工具链</a></b>
@@ -48,6 +49,19 @@
 
 - Discord: [点击加入](https://discord.com/invite/q6wEsCmkJP)
 - RFC: [功能提案](https://github.com/zenc-lang/rfcs)
+
+## 生态系统
+
+Zen C 项目包含多个仓库。下面是主要的仓库列表：
+
+| 仓库 | 描述 | 状态 |
+| :--- | :--- | :--- |
+| **[zenc](https://github.com/zenc-lang/zenc)** | Zen C 核心编译器 (`zc`)、CLI 和标准库。 | 活跃开发 |
+| **[docs](https://github.com/zenc-lang/docs)** | 官方技术文档与语言规范。 | 活跃 |
+| **[rfcs](https://github.com/zenc-lang/rfcs)** | 征求意见稿 (RFC) 仓库。塑造语言的未来。 | 活跃 |
+| **[vscode-zenc](https://github.com/zenc-lang/vscode-zenc)** | 官方 VS Code 扩展（语法高亮、代码片段）。 | Alpha |
+| **[www](https://github.com/zenc-lang/www)** | `zenc-lang.org` 的源代码。 | 活跃 |
+| **[awesome-zenc](https://github.com/zenc-lang/awesome-zenc)** | 精选的 Zen C 示例列表。 | 不断增加 |
 
 ## 展示
 
@@ -71,8 +85,10 @@
       <ul>
         <li><a href="#概述">概述</a></li>
         <li><a href="#社区">社区</a></li>
+        <li><a href="#生态系统">生态系统</a></li>
         <li><a href="https://github.com/zenc-lang/rfcs">RFC</a></li>
         <li><a href="#快速入门">快速入门</a></li>
+        <li><a href="https://github.com/zenc-lang/docs">文档</a></li>
         <li><a href="#标准库">标准库</a></li>
         <li><a href="#工具链">工具链</a>
           <ul>
@@ -118,7 +134,6 @@
 ```bash
 git clone https://github.com/zenc-lang/zenc.git
 cd Zen-C
-git submodule update --init --recursive
 make clean # 移除旧的构建文件
 make
 sudo make install
@@ -1776,6 +1791,8 @@ fn main() {
   <p>
     <a href="https://discord.com/invite/q6wEsCmkJP">Discord</a> •
     <a href="https://github.com/zenc-lang/zenc">GitHub</a> •
+    <a href="https://github.com/zenc-lang/docs">文档</a> •
+    <a href="https://github.com/zenc-lang/awesome-zenc">示例</a> •
     <a href="https://github.com/zenc-lang/rfcs">RFC</a> •
     <a href="CONTRIBUTING_ZH_CN.md">贡献</a>
   </p>

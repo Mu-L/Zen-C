@@ -30,6 +30,7 @@
     <b><a href="#visão-geral">Visão Geral</a></b> •
     <b><a href="#comunidade">Comunidade</a></b> •
     <b><a href="#início-rápido">Início Rápido</a></b> •
+    <b><a href="#ecossistema">Ecossistema</a></b> •
     <b><a href="#referência-da-linguagem">Referência da Linguagem</a></b> •
     <b><a href="#biblioteca-padrão">Biblioteca Padrão</a></b> •
     <b><a href="#ferramentas">Ferramentas</a></b>
@@ -48,6 +49,19 @@ Participe das discussões, compartilhe demos, pergunte, ou reporte bugs no servi
 
 - Discord: [Clique aqui](https://discord.com/invite/q6wEsCmkJP)
 - RFCs: [Propor funcionalidades](https://github.com/zenc-lang/rfcs)
+
+## Ecossistema
+
+O projeto Zen C consiste em vários repositórios. Abaixo você pode encontrar os principais:
+
+| Repositório | Descrição | Estado |
+| :--- | :--- | :--- |
+| **[zenc](https://github.com/zenc-lang/zenc)** | O compilador core de Zen C (`zc`), CLI e a Biblioteca Padrão. | Desenvolvimento Ativo |
+| **[docs](https://github.com/zenc-lang/docs)** | A documentação técnica oficial e a especificação da linguagem. | Ativo |
+| **[rfcs](https://github.com/zenc-lang/rfcs)** | O repositório de Pedido de Comentários (RFC). Molde o futuro da linguagem. | Ativo |
+| **[vscode-zenc](https://github.com/zenc-lang/vscode-zenc)** | Extensão oficial do VS Code (Destaque de sintaxe, Snippets). | Alpha |
+| **[www](https://github.com/zenc-lang/www)** | Código fonte de `zenc-lang.org`. | Ativo |
+| **[awesome-zenc](https://github.com/zenc-lang/awesome-zenc)** | Uma lista curada de exemplos fantásticos de Zen C. | Em crescimento |
 
 ## Vitrine
 
@@ -71,8 +85,10 @@ Confira estes projetos construídos com Zen C:
       <ul>
         <li><a href="#visão-geral">Visão Geral</a></li>
         <li><a href="#comunidade">Comunidade</a></li>
+        <li><a href="#ecossistema">Ecossistema</a></li>
         <li><a href="https://github.com/zenc-lang/rfcs">RFCs</a></li>
         <li><a href="#início-rápido">Início Rápido</a></li>
+        <li><a href="https://github.com/zenc-lang/docs">Documentação</a></li>
         <li><a href="#biblioteca-padrão">Biblioteca Padrão</a></li>
         <li><a href="#ferramentas">Ferramentas</a>
           <ul>
@@ -118,7 +134,6 @@ Confira estes projetos construídos com Zen C:
 ```bash
 git clone https://github.com/zenc-lang/zenc.git
 cd Zen-C
-git submodule update --init --recursive
 make clean # remove arquivos de build antigos
 make
 sudo make install
@@ -1762,6 +1777,8 @@ Este projeto usa bibliotecas de terceiros. Textos completos de licença podem se
   <p>
     <a href="https://discord.com/invite/q6wEsCmkJP">Discord</a> •
     <a href="https://github.com/zenc-lang/zenc">GitHub</a> •
+    <a href="https://github.com/zenc-lang/docs">Documentação</a> •
+    <a href="https://github.com/zenc-lang/awesome-zenc">Exemplos</a> •
     <a href="https://github.com/zenc-lang/rfcs">RFCs</a> •
     <a href="CONTRIBUTING_PT_BR.md">Contribuir</a>
   </p>
