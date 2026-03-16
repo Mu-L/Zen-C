@@ -64,7 +64,13 @@ static void codegen_literal_expr(ASTNode *node, FILE *out)
     }
     else if (node->literal.type_kind == LITERAL_FLOAT)
     {
-        fprintf(out, "%f", node->literal.float_val);
+        char buf[64];
+        snprintf(buf, sizeof(buf), "%.17g", node->literal.float_val);
+        if (!strchr(buf, '.') && !strchr(buf, 'e') && !strchr(buf, 'E'))
+        {
+            strcat(buf, ".0");
+        }
+        fprintf(out, "%s", buf);
     }
     else // LITERAL_INT
     {
