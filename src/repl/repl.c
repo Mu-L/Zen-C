@@ -1433,11 +1433,10 @@ void run_repl(const char *self_path)
 
                                 char cmdbuf[4096];
 #if ZC_OS_WINDOWS
-                                snprintf(cmdbuf, sizeof(cmdbuf), "\"\"%s\" \"%s\"\"", editor,
+                                snprintf(cmdbuf, sizeof(cmdbuf), "\"%s \"%s\"\"", editor,
                                          edit_path);
 #else
-                                snprintf(cmdbuf, sizeof(cmdbuf), "\"%s\" \"%s\"", editor,
-                                         edit_path);
+                                snprintf(cmdbuf, sizeof(cmdbuf), "%s \"%s\"", editor, edit_path);
 #endif
                                 int status = system(cmdbuf);
 
@@ -1509,9 +1508,9 @@ void run_repl(const char *self_path)
 
                         char cmdbuf[4096];
 #if ZC_OS_WINDOWS
-                        snprintf(cmdbuf, sizeof(cmdbuf), "\"\"%s\" \"%s\"\"", editor, edit_path);
+                        snprintf(cmdbuf, sizeof(cmdbuf), "\"%s \"%s\"\"", editor, edit_path);
 #else
-                        snprintf(cmdbuf, sizeof(cmdbuf), "\"%s\" \"%s\"", editor, edit_path);
+                        snprintf(cmdbuf, sizeof(cmdbuf), "%s \"%s\"", editor, edit_path);
 #endif
                         int status = system(cmdbuf);
 

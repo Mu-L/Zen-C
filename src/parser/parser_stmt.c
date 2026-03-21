@@ -4391,12 +4391,11 @@ char *run_comptime_block(ParserContext *ctx, Lexer *l)
     // quotes, cmd.exe strips the first and last quote. Wrapping the whole thing in another pair of
     // quotes fixes this.
     snprintf(cmdbuf, sizeof(cmdbuf),
-             "\"\"%s\" \"%s\" -o \"%s\" -Istd -Istd/third-party/tre/include %s\"", g_config.cc,
+             "\"%s \"%s\" -o \"%s\" -Istd -Istd/third-party/tre/include %s\"", g_config.cc,
              filename, bin, z_get_comptime_link_flags());
 #else
-    snprintf(cmdbuf, sizeof(cmdbuf),
-             "\"%s\" \"%s\" -o \"%s\" -Istd -Istd/third-party/tre/include %s", g_config.cc,
-             filename, bin, z_get_comptime_link_flags());
+    snprintf(cmdbuf, sizeof(cmdbuf), "%s \"%s\" -o \"%s\" -Istd -Istd/third-party/tre/include %s",
+             g_config.cc, filename, bin, z_get_comptime_link_flags());
 #endif
 
     if (!g_config.verbose)
