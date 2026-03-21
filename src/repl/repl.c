@@ -1432,8 +1432,13 @@ void run_repl(const char *self_path)
                                 fclose(f);
 
                                 char cmdbuf[4096];
+#if ZC_OS_WINDOWS
+                                snprintf(cmdbuf, sizeof(cmdbuf), "\"\"%s\" \"%s\"\"", editor,
+                                         edit_path);
+#else
                                 snprintf(cmdbuf, sizeof(cmdbuf), "\"%s\" \"%s\"", editor,
                                          edit_path);
+#endif
                                 int status = system(cmdbuf);
 
                                 if (0 == status)
@@ -1503,7 +1508,11 @@ void run_repl(const char *self_path)
                         }
 
                         char cmdbuf[4096];
+#if ZC_OS_WINDOWS
+                        snprintf(cmdbuf, sizeof(cmdbuf), "\"\"%s\" \"%s\"\"", editor, edit_path);
+#else
                         snprintf(cmdbuf, sizeof(cmdbuf), "\"%s\" \"%s\"", editor, edit_path);
+#endif
                         int status = system(cmdbuf);
 
                         if (0 == status)
@@ -1881,8 +1890,13 @@ void run_repl(const char *self_path)
                             fprintf(f, "%s", probe_code);
                             fclose(f);
                             char cmdbuf[4096];
+#if ZC_OS_WINDOWS
+                            snprintf(cmdbuf, sizeof(cmdbuf), "\"\"%s\" run -q \"%s\"\"", self_path,
+                                     tmp_path);
+#else
                             snprintf(cmdbuf, sizeof(cmdbuf), "\"%s\" run -q \"%s\"", self_path,
                                      tmp_path);
+#endif
                             system(cmdbuf);
                             remove(tmp_path);
                         }
@@ -1958,11 +1972,16 @@ void run_repl(const char *self_path)
                         fprintf(f, "%s", probe_code);
                         fclose(f);
 
-                        char cmd[2048];
-                        snprintf(cmd, sizeof(cmd), "\"%s\" run -q \"%s\" 2>&1", self_path,
+                        char cmdbuf[2048];
+#if ZC_OS_WINDOWS
+                        snprintf(cmdbuf, sizeof(cmdbuf), "\"\"%s\" run -q \"%s\" 2>&1\"", self_path,
                                  tmp_path);
+#else
+                        snprintf(cmdbuf, sizeof(cmdbuf), "\"%s\" run -q \"%s\" 2>&1", self_path,
+                                 tmp_path);
+#endif
 
-                        FILE *p = popen(cmd, "r");
+                        FILE *p = popen(cmdbuf, "r");
                         if (p)
                         {
                             char buf[1024];
@@ -2072,8 +2091,13 @@ void run_repl(const char *self_path)
                         fprintf(f, "%s", code);
                         fclose(f);
                         char cmdbuf[2048];
+#if ZC_OS_WINDOWS
+                        snprintf(cmdbuf, sizeof(cmdbuf), "\"\"%s\" run -q \"%s\"\"", self_path,
+                                 tmp_path);
+#else
                         snprintf(cmdbuf, sizeof(cmdbuf), "\"%s\" run -q \"%s\"", self_path,
                                  tmp_path);
+#endif
                         system(cmdbuf);
                     }
                     free(code);
@@ -2180,7 +2204,12 @@ void run_repl(const char *self_path)
                         fprintf(f, "%s", code);
                         fclose(f);
                         char cmdbuf[2048];
+#if ZC_OS_WINDOWS
+                        snprintf(cmdbuf, sizeof(cmdbuf), "\"\"%s\" run \"%s\"\"", self_path,
+                                 tmp_path);
+#else
                         snprintf(cmdbuf, sizeof(cmdbuf), "\"%s\" run \"%s\"", self_path, tmp_path);
+#endif
                         system(cmdbuf);
                     }
                     free(code);

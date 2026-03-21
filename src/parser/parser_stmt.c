@@ -4386,9 +4386,18 @@ char *run_comptime_block(ParserContext *ctx, Lexer *l)
     sprintf(bin, "%s%s", filename, z_get_exe_ext());
 
     // Use quotes for paths to prevent injection/errors with spaces
+#if ZC_OS_WINDOWS
+    // On Windows, system() uses cmd.exe /c. If the command starts with a quote and has multiple
+    // quotes, cmd.exe strips the first and last quote. Wrapping the whole thing in another pair of
+    // quotes fixes this.
+    snprintf(cmdbuf, sizeof(cmdbuf),
+             "\"\"%s\" \"%s\" -o \"%s\" -Istd -Istd/third-party/tre/include %s\"", g_config.cc,
+             filename, bin, z_get_comptime_link_flags());
+#else
     snprintf(cmdbuf, sizeof(cmdbuf),
              "\"%s\" \"%s\" -o \"%s\" -Istd -Istd/third-party/tre/include %s", g_config.cc,
              filename, bin, z_get_comptime_link_flags());
+#endif
 
     if (!g_config.verbose)
     {
@@ -4405,7 +4414,11 @@ char *run_comptime_block(ParserContext *ctx, Lexer *l)
     sprintf(out_file, "%s.out", filename);
 
     // Execution command
+#if ZC_OS_WINDOWS
+    snprintf(cmdbuf, sizeof(cmdbuf), "\"%s\"%s\" > \"%s\"\"", z_get_run_prefix(), bin, out_file);
+#else
     snprintf(cmdbuf, sizeof(cmdbuf), "%s\"%s\" > \"%s\"", z_get_run_prefix(), bin, out_file);
+#endif
 
     if (system(cmdbuf) != 0)
     {
