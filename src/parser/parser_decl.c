@@ -774,21 +774,9 @@ ASTNode *parse_var_decl(ParserContext *ctx, Lexer *l)
     n->type_info = type_obj;
 
     // Auto-construct Trait Object
-    if (type && is_trait(type) && init && init->type == NODE_EXPR_UNARY &&
-        strcmp(init->unary.op, "&") == 0 && init->unary.operand->type == NODE_EXPR_VAR)
+    if (type && is_trait(type))
     {
-        char *var_ref_name = init->unary.operand->var_ref.name;
-        char *struct_type = find_symbol_type(ctx, var_ref_name);
-        if (struct_type)
-        {
-            char *code = xmalloc(512);
-            sprintf(code, "(%s){.self=&%s, .vtable=&%s_%s_VTable}", type, var_ref_name, struct_type,
-                    type);
-            ASTNode *wrapper = ast_create(NODE_RAW_STMT);
-            wrapper->token = name_tok;
-            wrapper->raw_stmt.content = code;
-            init = wrapper;
-        }
+        init = transform_to_trait_object(ctx, type, init);
     }
 
     n->var_decl.init_expr = init;

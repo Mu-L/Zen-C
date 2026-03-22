@@ -63,6 +63,131 @@ static ASTNode *find_function_definition(ParserContext *ctx, const char *name)
     return NULL;
 }
 
+static void get_struct_name(ParserContext *ctx, ASTNode *node, char **out_struct_name,
+                            char **out_var_ref_name)
+{
+    if (node->type == NODE_EXPR_UNARY && strcmp(node->unary.op, "&") == 0 &&
+        node->unary.operand->type == NODE_EXPR_VAR)
+    {
+        *out_var_ref_name = node->unary.operand->var_ref.name;
+        *out_struct_name = find_symbol_type(ctx, *out_var_ref_name);
+    }
+    else if (node->type == NODE_EXPR_VAR)
+    {
+        Type *rhs_t = find_symbol_type_info(ctx, node->var_ref.name);
+        if (rhs_t && rhs_t->kind == TYPE_POINTER && rhs_t->inner &&
+            rhs_t->inner->kind == TYPE_STRUCT)
+        {
+            *out_struct_name = rhs_t->inner->name;
+            *out_var_ref_name = node->var_ref.name;
+        }
+        else
+        {
+            char *rhs_type_str = find_symbol_type(ctx, node->var_ref.name);
+            if (rhs_type_str)
+            {
+                char *clean_rhs = rhs_type_str;
+                if (strncmp(clean_rhs, "const ", 6) == 0)
+                {
+                    clean_rhs += 6;
+                }
+                size_t len = strlen(clean_rhs);
+                if (len > 0 && clean_rhs[len - 1] == '*')
+                {
+                    size_t struct_type_len = len - 1;
+                    char *st = xmalloc(struct_type_len + 1);
+                    strncpy(st, clean_rhs, struct_type_len);
+                    st[struct_type_len] = '\0';
+                    *out_struct_name = st;
+                    *out_var_ref_name = node->var_ref.name;
+                    // Note: 'st' might leak if not handled, but we follow the existing pattern
+                }
+            }
+        }
+    }
+}
+
+ASTNode *transform_to_trait_object(ParserContext *ctx, const char *target_trait,
+                                   ASTNode *source_expr)
+{
+    if (!target_trait || !source_expr)
+    {
+        return source_expr;
+    }
+
+    char *clean_trait = xstrdup(target_trait);
+    char *p = strchr(clean_trait, '*');
+    if (p)
+    {
+        *p = '\0';
+    }
+
+    if (!is_trait(clean_trait))
+    {
+        free(clean_trait);
+        return source_expr;
+    }
+
+    char *struct_type = NULL;
+    char *var_ref_name = NULL;
+
+    get_struct_name(ctx, source_expr, &struct_type, &var_ref_name);
+
+    if (struct_type && var_ref_name)
+    {
+        char *clean_struct_type = struct_type;
+        if (strncmp(clean_struct_type, "const ", 6) == 0)
+        {
+            clean_struct_type += 6;
+        }
+
+        // Check if the struct actually implements the trait
+        if (check_impl(ctx, clean_trait, clean_struct_type))
+        {
+            char *code = xmalloc(512);
+            if (source_expr->type == NODE_EXPR_UNARY && strcmp(source_expr->unary.op, "&") == 0)
+            {
+                sprintf(code, "(%s){.self=&%s, .vtable=&%s_%s_VTable}", clean_trait, var_ref_name,
+                        clean_struct_type, clean_trait);
+            }
+            else
+            {
+                sprintf(code, "(%s){.self=%s, .vtable=&%s_%s_VTable}", clean_trait, var_ref_name,
+                        clean_struct_type, clean_trait);
+            }
+
+            ASTNode *wrapper = ast_create(NODE_RAW_STMT);
+            wrapper->token = source_expr->token;
+            wrapper->raw_stmt.content = code;
+
+            // Set Type Info so subsequent method calls work
+            Type *trait_type = type_new(TYPE_STRUCT);
+            trait_type->name = xstrdup(clean_trait);
+            wrapper->type_info = trait_type;
+
+            free(clean_trait);
+            // If target_trait had a *, we might need to wrap in &addr?
+            if (strchr(target_trait, '*'))
+            {
+                ASTNode *addr = ast_create(NODE_EXPR_UNARY);
+                addr->unary.op = xstrdup("&");
+                addr->unary.operand = wrapper;
+                addr->token = source_expr->token;
+
+                Type *ptr_type = type_new(TYPE_POINTER);
+                ptr_type->inner = trait_type;
+                addr->type_info = ptr_type;
+                return addr;
+            }
+
+            return wrapper;
+        }
+    }
+
+    free(clean_trait);
+    return source_expr;
+}
+
 static void validate_named_arguments(Token call_token, const char *func_name, char **arg_names,
                                      int args_count, ASTNode *func_def)
 {
@@ -3027,6 +3152,11 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                         }
                         lexer_next(l); // Eat }
 
+                        if (is_trait(acc))
+                        {
+                            return transform_to_trait_object(ctx, acc, node);
+                        }
+
                         ASTNode *cast = ast_create(NODE_EXPR_CAST);
                         cast->cast.target_type = xstrdup(acc);
                         cast->cast.expr = node;
@@ -3469,109 +3599,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
 
                         if (expected && expected->name && is_trait(expected->name))
                         {
-                            // Check if we are passing a struct pointer
-                            Type *arg_type =
-                                arg->type_info
-                                    ? arg->type_info
-                                    : ((arg->type == NODE_EXPR_VAR)
-                                           ? find_symbol_type_info(ctx, arg->var_ref.name)
-                                           : NULL);
-
-                            if (!arg_type && arg->type == NODE_EXPR_UNARY &&
-                                strcmp(arg->unary.op, "&") == 0)
-                            {
-                                // Handle &struct
-                                if (arg->unary.operand->type == NODE_EXPR_VAR)
-                                {
-                                    Type *inner = find_symbol_type_info(
-                                        ctx, arg->unary.operand->var_ref.name);
-                                    if (inner && inner->kind == TYPE_STRUCT)
-                                    {
-                                        if (check_impl(ctx, expected->name, inner->name))
-                                        {
-                                            // FOUND MATCH: &Struct -> Trait
-                                            // Construct Trait Object: (Trait){.self = arg, .vtable
-                                            // = &_Struct_Trait_VTable}
-
-                                            ASTNode *init = ast_create(NODE_EXPR_STRUCT_INIT);
-                                            init->struct_init.struct_name = xstrdup(expected->name);
-
-                                            Type *trait_type = type_new(TYPE_STRUCT);
-                                            trait_type->name = xstrdup(expected->name);
-                                            init->type_info = trait_type;
-
-                                            // Field: self
-                                            ASTNode *f_self = ast_create(NODE_VAR_DECL);
-                                            f_self->var_decl.name = xstrdup("self");
-                                            f_self->var_decl.init_expr = arg;
-
-                                            // Field: vtable
-                                            char vtable_name[256];
-                                            sprintf(vtable_name, "%s_%s_VTable", inner->name,
-                                                    expected->name);
-
-                                            ASTNode *vtable_var = ast_create(NODE_EXPR_VAR);
-                                            vtable_var->var_ref.name = xstrdup(vtable_name);
-
-                                            ASTNode *vtable_ref = ast_create(NODE_EXPR_UNARY);
-                                            vtable_ref->unary.op = xstrdup("&");
-                                            vtable_ref->unary.operand = vtable_var;
-
-                                            ASTNode *f_vtable = ast_create(NODE_VAR_DECL);
-                                            f_vtable->var_decl.name = xstrdup("vtable");
-                                            f_vtable->var_decl.init_expr = vtable_ref;
-
-                                            f_self->next = f_vtable;
-                                            init->struct_init.fields = f_self;
-
-                                            arg = init;
-                                        }
-                                    }
-                                }
-                            }
-                            else if (arg_type && arg_type->kind == TYPE_POINTER &&
-                                     arg_type->inner && arg_type->inner->kind == TYPE_STRUCT)
-                            {
-                                // Pointer variable or expression
-                                if (check_impl(ctx, expected->name, arg_type->inner->name))
-                                {
-                                    // Construct Trait Object: (Trait){.self = arg, .vtable =
-                                    // &_Struct_Trait_VTable}
-
-                                    ASTNode *init = ast_create(NODE_EXPR_STRUCT_INIT);
-                                    init->struct_init.struct_name = xstrdup(expected->name);
-
-                                    Type *trait_type = type_new(TYPE_STRUCT);
-                                    trait_type->name = xstrdup(expected->name);
-                                    init->type_info = trait_type;
-
-                                    // Field: self
-                                    ASTNode *f_self = ast_create(NODE_VAR_DECL);
-                                    f_self->var_decl.name = xstrdup("self");
-                                    f_self->var_decl.init_expr = arg;
-
-                                    // Field: vtable
-                                    char vtable_name[256];
-                                    sprintf(vtable_name, "%s_%s_VTable", arg_type->inner->name,
-                                            expected->name);
-
-                                    ASTNode *vtable_var = ast_create(NODE_EXPR_VAR);
-                                    vtable_var->var_ref.name = xstrdup(vtable_name);
-
-                                    ASTNode *vtable_ref = ast_create(NODE_EXPR_UNARY);
-                                    vtable_ref->unary.op = xstrdup("&");
-                                    vtable_ref->unary.operand = vtable_var;
-
-                                    ASTNode *f_vtable = ast_create(NODE_VAR_DECL);
-                                    f_vtable->var_decl.name = xstrdup("vtable");
-                                    f_vtable->var_decl.init_expr = vtable_ref;
-
-                                    f_self->next = f_vtable;
-                                    init->struct_init.fields = f_self;
-
-                                    arg = init;
-                                }
-                            }
+                            arg = transform_to_trait_object(ctx, expected->name, arg);
                         }
                     }
 
@@ -4198,6 +4226,13 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                         }
                     }
                     ASTNode *target = parse_expr_prec(ctx, l, PREC_UNARY);
+
+                    if (is_trait(cast_type))
+                    {
+                        free(cast_type);
+                        return transform_to_trait_object(ctx, type_to_string(cast_type_obj),
+                                                         target);
+                    }
 
                     node = ast_create(NODE_EXPR_CAST);
                     node->token = next;
@@ -7059,79 +7094,8 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 
                 if (is_trait(clean_lhs_type) && rhs)
                 {
-                    char *struct_type = NULL;
-                    char *var_ref_name = NULL;
-                    int allocated_struct = 0;
-
-                    if (rhs->type == NODE_EXPR_UNARY && strcmp(rhs->unary.op, "&") == 0 &&
-                        rhs->unary.operand->type == NODE_EXPR_VAR)
-                    {
-                        var_ref_name = rhs->unary.operand->var_ref.name;
-                        struct_type = find_symbol_type(ctx, var_ref_name);
-                    }
-                    else if (rhs->type == NODE_EXPR_VAR)
-                    {
-                        Type *rhs_t = find_symbol_type_info(ctx, rhs->var_ref.name);
-                        if (rhs_t && rhs_t->kind == TYPE_POINTER && rhs_t->inner &&
-                            rhs_t->inner->kind == TYPE_STRUCT)
-                        {
-                            struct_type = rhs_t->inner->name;
-                            var_ref_name = rhs->var_ref.name;
-                        }
-                        else
-                        {
-                            char *rhs_type_str = find_symbol_type(ctx, rhs->var_ref.name);
-                            if (rhs_type_str)
-                            {
-                                char *clean_rhs = rhs_type_str;
-                                if (strncmp(clean_rhs, "const ", 6) == 0)
-                                {
-                                    clean_rhs += 6;
-                                }
-                                size_t len = strlen(clean_rhs);
-                                if (len > 0 && clean_rhs[len - 1] == '*')
-                                {
-                                    size_t struct_type_len = len - 1;
-                                    struct_type = xmalloc(struct_type_len + 1);
-                                    strncpy(struct_type, clean_rhs, struct_type_len);
-                                    struct_type[struct_type_len] = '\0';
-                                    allocated_struct = 1;
-                                    var_ref_name = rhs->var_ref.name;
-                                }
-                            }
-                        }
-                    }
-
-                    if (struct_type && var_ref_name)
-                    {
-                        char *clean_struct_type = struct_type;
-                        if (strncmp(clean_struct_type, "const ", 6) == 0)
-                        {
-                            clean_struct_type += 6;
-                        }
-
-                        char *code = xmalloc(512);
-                        if (rhs->type == NODE_EXPR_UNARY && strcmp(rhs->unary.op, "&") == 0)
-                        {
-                            sprintf(code, "(%s){.self=&%s, .vtable=&%s_%s_VTable}", clean_lhs_type,
-                                    var_ref_name, clean_struct_type, clean_lhs_type);
-                        }
-                        else
-                        {
-                            sprintf(code, "(%s){.self=%s, .vtable=&%s_%s_VTable}", clean_lhs_type,
-                                    var_ref_name, clean_struct_type, clean_lhs_type);
-                        }
-                        ASTNode *wrapper = ast_create(NODE_RAW_STMT);
-                        wrapper->token = rhs->token;
-                        wrapper->raw_stmt.content = code;
-                        bin->binary.right = wrapper;
-                        rhs = wrapper;
-                    }
-
-                    if (allocated_struct)
-                    {
-                        free((void *)struct_type);
-                    }
+                    rhs = transform_to_trait_object(ctx, clean_lhs_type, rhs);
+                    bin->binary.right = rhs;
                 }
                 if (allocated_lhs)
                 {

@@ -23,16 +23,60 @@ void register_trait(const char *name)
 
 int is_trait(const char *name)
 {
+    if (!name)
+    {
+        return 0;
+    }
+
+    // Strip trailing stars for pointer types (e.g., IAnimal*)
+    char *base = xstrdup(name);
+
+    // Strip "struct " or "union " if present
+    if (strncmp(base, "struct ", 7) == 0)
+    {
+        char *nb = xstrdup(base + 7);
+        free(base);
+        base = nb;
+    }
+    else if (strncmp(base, "union ", 6) == 0)
+    {
+        char *nb = xstrdup(base + 6);
+        free(base);
+        base = nb;
+    }
+
+    char *p = strchr(base, '*');
+    if (p)
+    {
+        *p = '\0';
+    }
+
     TraitReg *r = registered_traits;
     while (r)
     {
-        if (0 == strcmp(r->name, name))
+        if (0 == strcmp(r->name, base))
         {
+            free(base);
             return 1;
         }
         r = r->next;
     }
+    free(base);
     return 0;
+}
+
+int is_trait_ptr(const char *name)
+{
+    if (!name)
+    {
+        return 0;
+    }
+    const char *p = strchr(name, '*');
+    if (!p)
+    {
+        return 0;
+    }
+    return is_trait(name);
 }
 
 ASTNode *ast_create(NodeType type)

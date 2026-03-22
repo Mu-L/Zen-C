@@ -140,6 +140,7 @@ void register_trait(const char *name);
  * @brief Check if a name is a trait.
  */
 int is_trait(const char *name);
+int is_trait_ptr(const char *name);
 
 /**
  * @brief Allocate memory.

@@ -1050,6 +1050,12 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l);
 ASTNode *parse_impl_trait(ParserContext *ctx, Lexer *l);
 
 /**
+ * @brief Transforms an expression into a trait object (fat pointer).
+ */
+ASTNode *transform_to_trait_object(ParserContext *ctx, const char *target_trait,
+                                   ASTNode *source_expr);
+
+/**
  * @brief Parses a test definition.
  */
 ASTNode *parse_test(ParserContext *ctx, Lexer *l);

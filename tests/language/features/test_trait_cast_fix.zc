@@ -1,0 +1,45 @@
+trait Greeter {
+    fn greet(self);
+}
+
+struct Human {
+    name: string;
+}
+
+impl Greeter for Human {
+    fn greet(self) {
+        println "Hello, my name is {self.name}";
+    }
+}
+
+fn test_implicit_conversion() {
+    let h = Human{name: "Alice"};
+    let g: Greeter = &h;
+    g.greet();
+}
+
+fn test_explicit_cast() {
+    let h = Human{name: "Bob"};
+    let ptr: Human* = &h;
+    let g = (Greeter)ptr;
+    g.greet();
+}
+
+fn test_pointer_to_trait_cast() {
+    let h = Human{name: "Charlie"};
+    let ptr: Human* = &h;
+    // This constructs a temporary fat pointer and returns its address
+    // It's valid within this scope
+    let g_ptr = (Greeter*)ptr;
+    if (g_ptr != NULL) {
+        g_ptr.greet();
+    }
+}
+
+fn main() {
+    println "Running trait cast tests...";
+    test_implicit_conversion();
+    test_explicit_cast();
+    test_pointer_to_trait_cast();
+    println "All trait cast tests passed!";
+}
