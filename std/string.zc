@@ -42,7 +42,7 @@ impl StringCharsIter {
     }
 
     fn iterator(self) -> StringCharsIter {
-        return *self;
+        return self;
     }
 }
 

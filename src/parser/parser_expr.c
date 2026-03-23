@@ -2324,7 +2324,15 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
 
                 Token pt = lexer_next(l);
                 char *s = token_strdup(pt);
-                if (pt.type == TOK_COMMA)
+
+                if (pt.type == TOK_DCOLON)
+                {
+                    // For patterns like MyOption::Some, we want to join them as MyOption__Some
+                    // to match the mangled variant name.
+                    // Remove trailing underscore if any (simplified joining logic)
+                    strncat(pat_buf, "__", sizeof(pat_buf) - strlen(pat_buf) - 1);
+                }
+                else if (pt.type == TOK_COMMA)
                 {
                     strncat(pat_buf, "|", sizeof(pat_buf) - strlen(pat_buf) - 1);
                 }
@@ -2593,7 +2601,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                         }
                         if (is_variant)
                         {
-                            sprintf(tmp, "%s_%s_%.*s", si->source_module, si->symbol, suffix.len,
+                            sprintf(tmp, "%s_%s__%.*s", si->source_module, si->symbol, suffix.len,
                                     suffix.start);
                         }
                         else
@@ -2686,7 +2694,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                             }
                             if (is_variant)
                             {
-                                sprintf(tmp, "%s_%.*s", acc, suffix.len, suffix.start);
+                                sprintf(tmp, "%s__%.*s", acc, suffix.len, suffix.start);
                             }
                             else
                             {
@@ -2727,7 +2735,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                         int resolved = 0;
                                         if (is_variant)
                                         {
-                                            sprintf(tmp, "%s_%.*s", acc, suffix.len, suffix.start);
+                                            sprintf(tmp, "%s__%.*s", acc, suffix.len, suffix.start);
                                             resolved = 1;
                                         }
                                         else
@@ -2832,7 +2840,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                             }
                                             if (is_variant)
                                             {
-                                                sprintf(tmp, "%s_%.*s", acc, suffix.len,
+                                                sprintf(tmp, "%s__%.*s", acc, suffix.len,
                                                         suffix.start);
                                             }
                                             else
@@ -7687,12 +7695,8 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
                     }
                 }
 
-                int lhs_is_num =
-                    is_integer_type(lhs->type_info) || lhs->type_info->kind == TYPE_F32 ||
-                    lhs->type_info->kind == TYPE_F64 || lhs->type_info->kind == TYPE_FLOAT;
-                int rhs_is_num =
-                    is_integer_type(rhs->type_info) || rhs->type_info->kind == TYPE_F32 ||
-                    rhs->type_info->kind == TYPE_F64 || rhs->type_info->kind == TYPE_FLOAT;
+                int lhs_is_num = is_integer_type(lhs->type_info) || is_float_type(lhs->type_info);
+                int rhs_is_num = is_integer_type(rhs->type_info) || is_float_type(rhs->type_info);
 
                 if (!skip_check && !type_eq(lhs->type_info, rhs->type_info) &&
                     !(lhs_is_num && rhs_is_num))

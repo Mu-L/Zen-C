@@ -186,9 +186,33 @@ static void codegen_var_expr(ParserContext *ctx, ASTNode *node, FILE *out)
                 char *type_arg = lt + 1;
                 *gt = 0;
 
-                size_t mt_sz = strlen(type_name) + strlen(type_arg) + 2;
+                // Trim leading whitespace from type_arg
+                while (*type_arg && isspace((unsigned char)*type_arg))
+                {
+                    type_arg++;
+                }
+                // Trim trailing whitespace
+                char *end = type_arg + strlen(type_arg) - 1;
+                while (end > type_arg && isspace((unsigned char)*end))
+                {
+                    *end = 0;
+                    end--;
+                }
+
+                char clean_arg[256];
+                strncpy(clean_arg, type_arg, sizeof(clean_arg));
+                clean_arg[sizeof(clean_arg) - 1] = 0;
+                for (int j = 0; clean_arg[j]; j++)
+                {
+                    if (!isalnum(clean_arg[j]))
+                    {
+                        clean_arg[j] = '_';
+                    }
+                }
+
+                size_t mt_sz = strlen(type_name) + strlen(clean_arg) + 2;
                 mangled_type = xmalloc(mt_sz);
-                snprintf(mangled_type, mt_sz, "%s_%s", type_name, type_arg);
+                snprintf(mangled_type, mt_sz, "%s_%s", type_name, clean_arg);
             }
             else
             {
@@ -207,17 +231,51 @@ static void codegen_var_expr(ParserContext *ctx, ASTNode *node, FILE *out)
             const char *alias = (ta && !ta->is_opaque) ? ta->original_type : NULL;
             if (alias)
             {
+
                 fprintf(out, "%s__%s", alias, method_name);
                 free(type_name);
                 free(mangled_type);
                 return;
             }
         }
-
         fprintf(out, "%s__%s", mangled_type, method_name);
         free(type_name);
         free(mangled_type);
         return;
+    }
+
+    if (strcmp(node->var_ref.name, "self") == 0)
+    {
+        if (node->type_info && node->type_info->kind == TYPE_STRUCT)
+        {
+            fprintf(out, "(*self)");
+            return;
+        }
+    }
+
+    // Check for legacy Enum_Variant patterns (single underscore)
+    // Avoid double-mangling if it already has double underscores (generics)
+    char *underscore = strchr(node->var_ref.name, '_');
+    if (underscore && underscore != node->var_ref.name && *(underscore + 1) != '_' &&
+        strstr(node->var_ref.name, "__") == NULL)
+    {
+        char base[256];
+        size_t len = underscore - node->var_ref.name;
+        if (len < sizeof(base))
+        {
+            strncpy(base, node->var_ref.name, len);
+            base[len] = 0;
+
+            ASTNode *def = find_struct_def(ctx, base);
+            int is_common_enum =
+                (strncmp(base, "Result", 6) == 0 || strncmp(base, "Option", 6) == 0 ||
+                 strncmp(base, "JsonType", 8) == 0);
+            if (is_common_enum || (def && def->type == NODE_ENUM))
+            {
+                fprintf(out, "%s__%s", base, underscore + 1);
+                return;
+            }
+        }
     }
 
     fprintf(out, "%s", node->var_ref.name);
@@ -452,7 +510,23 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                 {
                     fprintf(out, "(!");
                 }
-                fprintf(out, "%s__eq(", base);
+                char meth[256];
+                snprintf(meth, sizeof(meth), "%s__Eq_eq", base);
+                FuncSig *sig = find_func(ctx, meth);
+                if (!sig)
+                {
+                    snprintf(meth, sizeof(meth), "%s__eq", base);
+                    sig = find_func(ctx, meth);
+                }
+
+                if (sig)
+                {
+                    fprintf(out, "%s(", sig->name);
+                }
+                else
+                {
+                    fprintf(out, "%s__eq(", base);
+                }
 
                 if (node->binary.left->type == NODE_EXPR_VAR ||
                     node->binary.left->type == NODE_EXPR_INDEX ||
@@ -480,7 +554,36 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
 
                 fprintf(out, ", ");
 
-                codegen_expression(ctx, node->binary.right, out);
+                int needs_ptr =
+                    (sig && sig->total_args > 1 && sig->arg_types[1]->kind == TYPE_POINTER);
+
+                if (needs_ptr && (node->binary.right->type == NODE_EXPR_VAR ||
+                                  node->binary.right->type == NODE_EXPR_INDEX ||
+                                  node->binary.right->type == NODE_EXPR_MEMBER))
+                {
+                    fprintf(out, "&");
+                    codegen_expression(ctx, node->binary.right, out);
+                }
+                else if (needs_ptr && g_config.use_cpp)
+                {
+                    fprintf(out, "({ __typeof__((");
+                    codegen_expression(ctx, node->binary.right, out);
+                    fprintf(out, ")) _tmp = ");
+                    codegen_expression(ctx, node->binary.right, out);
+                    fprintf(out, "; &_tmp; })");
+                }
+                else if (needs_ptr)
+                {
+                    fprintf(out, "(__typeof__((");
+                    codegen_expression(ctx, node->binary.right, out);
+                    fprintf(out, "))[]){");
+                    codegen_expression(ctx, node->binary.right, out);
+                    fprintf(out, "}");
+                }
+                else
+                {
+                    codegen_expression(ctx, node->binary.right, out);
+                }
 
                 fprintf(out, ")");
                 if (strcmp(node->binary.op, "!=") == 0)
@@ -679,14 +782,67 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                 }
             }
 
-            // Check for Static Enum Variant Call: Enum.Variant(...)
+            // Check for Static Enum Variant Call: Enum.Variant(...) or Enum<T>.Variant(...)
             if (target->type == NODE_EXPR_VAR)
             {
-                ASTNode *def = find_struct_def(ctx, target->var_ref.name);
+                char type_name[256];
+                strncpy(type_name, target->var_ref.name, sizeof(type_name));
+                type_name[sizeof(type_name) - 1] = 0;
+
+                char *mangled_type = type_name;
+                char tmp[256];
+
+                char *lt = strchr(type_name, '<');
+                char *gt = strchr(type_name, '>');
+
+                if (lt && gt)
+                {
+                    *lt = 0;
+                    char *type_arg = lt + 1;
+                    *gt = 0;
+
+                    // Trim leading whitespace
+                    while (*type_arg && isspace((unsigned char)*type_arg))
+                    {
+                        type_arg++;
+                    }
+                    // Trim trailing whitespace
+                    char *end_ptr = type_arg + strlen(type_arg) - 1;
+                    while (end_ptr > type_arg && isspace((unsigned char)*end_ptr))
+                    {
+                        *end_ptr = 0;
+                        end_ptr--;
+                    }
+
+                    // Skip leading whitespace
+                    char *start_ptr = type_arg;
+                    while (*start_ptr && isspace((unsigned char)*start_ptr))
+                    {
+                        start_ptr++;
+                    }
+
+                    char clean_arg[256];
+                    strncpy(clean_arg, start_ptr, sizeof(clean_arg));
+                    clean_arg[sizeof(clean_arg) - 1] = 0;
+                    for (int j = 0; clean_arg[j]; j++)
+                    {
+                        if (!isalnum(clean_arg[j]) && clean_arg[j] != '_')
+                        {
+                            clean_arg[j] = '_';
+                        }
+                    }
+
+                    char tmp_mangled[512];
+                    snprintf(tmp_mangled, sizeof(tmp_mangled), "%s_%s", type_name, clean_arg);
+                    strncpy(tmp, tmp_mangled, sizeof(tmp));
+                    mangled_type = tmp;
+                }
+
+                ASTNode *def = find_struct_def(ctx, mangled_type);
                 if (def && def->type == NODE_ENUM)
                 {
-                    char mangled[256];
-                    snprintf(mangled, sizeof(mangled), "%s_%s", target->var_ref.name, method);
+                    char mangled[512];
+                    snprintf(mangled, sizeof(mangled), "%s__%s", mangled_type, method);
                     FuncSig *sig = find_func(ctx, mangled);
                     if (sig)
                     {
@@ -761,7 +917,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
 
                 const char *normalized = normalize_type_name(base);
                 char *mangled_base = (char *)normalized;
-                char base_buf[256];
+                char base_buf[512];
 
                 // Mangle generic types: Slice<int> -> Slice_int, Vec<Point> -> Vec_Point
                 char *lt = strchr(base, '<');
@@ -771,8 +927,45 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                     if (gt)
                     {
                         int prefix_len = lt - base;
-                        int arg_len = gt - lt - 1;
-                        snprintf(base_buf, 255, "%.*s_%.*s", prefix_len, base, arg_len, lt + 1);
+                        char prefix[256];
+                        strncpy(prefix, base, prefix_len);
+                        prefix[prefix_len] = 0;
+                        // Trim trailing whitespace from prefix
+                        char *p_end = prefix + prefix_len - 1;
+                        while (p_end > prefix && isspace((unsigned char)*p_end))
+                        {
+                            *p_end = 0;
+                            p_end--;
+                        }
+
+                        char *type_arg = lt + 1;
+                        while (*type_arg && isspace((unsigned char)*type_arg))
+                        {
+                            type_arg++;
+                        }
+                        char *arg_end = gt - 1;
+                        while (arg_end > type_arg && isspace((unsigned char)*arg_end))
+                        {
+                            arg_end--;
+                        }
+                        int arg_len = arg_end - type_arg + 1;
+
+                        char clean_arg[256];
+                        if (arg_len >= (int)sizeof(clean_arg))
+                        {
+                            arg_len = sizeof(clean_arg) - 1;
+                        }
+                        strncpy(clean_arg, type_arg, arg_len);
+                        clean_arg[arg_len] = 0;
+                        for (int j = 0; clean_arg[j]; j++)
+                        {
+                            if (!isalnum(clean_arg[j]) && clean_arg[j] != '_')
+                            {
+                                clean_arg[j] = '_';
+                            }
+                        }
+
+                        snprintf(base_buf, sizeof(base_buf), "%s_%s", prefix, clean_arg);
                         mangled_base = base_buf;
                     }
                 }
@@ -788,7 +981,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                         mangled_base = type_mangled;
                     }
 
-                    char type_buf[256];
+                    char type_buf[512];
                     char *t_lt = strchr(type, '<');
                     if (t_lt)
                     {
@@ -796,8 +989,44 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                         if (t_gt)
                         {
                             int p_len = t_lt - type;
-                            int a_len = t_gt - t_lt - 1;
-                            snprintf(type_buf, 255, "%.*s_%.*s", p_len, type, a_len, t_lt + 1);
+                            char prefix[256];
+                            strncpy(prefix, type, p_len);
+                            prefix[p_len] = 0;
+                            char *p_end = prefix + p_len - 1;
+                            while (p_end > prefix && isspace((unsigned char)*p_end))
+                            {
+                                *p_end = 0;
+                                p_end--;
+                            }
+
+                            char *type_arg = t_lt + 1;
+                            while (*type_arg && isspace((unsigned char)*type_arg))
+                            {
+                                type_arg++;
+                            }
+                            char *arg_end = t_gt - 1;
+                            while (arg_end > type_arg && isspace((unsigned char)*arg_end))
+                            {
+                                arg_end--;
+                            }
+                            int arg_len = arg_end - type_arg + 1;
+
+                            char clean_arg[256];
+                            if (arg_len >= (int)sizeof(clean_arg))
+                            {
+                                arg_len = sizeof(clean_arg) - 1;
+                            }
+                            strncpy(clean_arg, type_arg, arg_len);
+                            clean_arg[arg_len] = 0;
+                            for (int j = 0; clean_arg[j]; j++)
+                            {
+                                if (!isalnum(clean_arg[j]) && clean_arg[j] != '_')
+                                {
+                                    clean_arg[j] = '_';
+                                }
+                            }
+
+                            snprintf(type_buf, sizeof(type_buf), "%s_%s", prefix, clean_arg);
                             type_mangled = type_buf;
                         }
                     }
@@ -820,7 +1049,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                     char *call_base = mangled_base;
 
                     int need_cast = 0;
-                    char mixin_func_name[512];
+                    char mixin_func_name[1024];
                     snprintf(mixin_func_name, sizeof(mixin_func_name), "%s__%s", call_base, method);
 
                     char *resolved_method_suffix = NULL;
@@ -1019,11 +1248,38 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
             strcmp(node->call.callee->var_ref.name, "panic") == 0)
         {
             fprintf(out, "__zenc_panic");
+            goto skip_callee_gen;
         }
-        else
+        else if (node->call.callee->type == NODE_EXPR_VAR)
         {
-            codegen_expression(ctx, node->call.callee, out);
+            char *name = node->call.callee->var_ref.name;
+            char *underscore = strchr(name, '_');
+            if (underscore && underscore != name && *(underscore + 1) != '_' &&
+                strstr(name, "__") == NULL)
+            {
+                // Potential Enum_Variant patterns (single underscore)
+                char base[256];
+                size_t len = underscore - name;
+                if (len < sizeof(base))
+                {
+                    strncpy(base, name, len);
+                    base[len] = 0;
+                    ASTNode *def = find_struct_def(ctx, base);
+                    // Special case for common enum variants
+                    int is_common_enum =
+                        (strncmp(base, "Result", 6) == 0 || strncmp(base, "Option", 6) == 0 ||
+                         strncmp(base, "JsonType", 8) == 0);
+                    if (is_common_enum || (def && def->type == NODE_ENUM))
+                    {
+                        fprintf(out, "%s__%s", base, underscore + 1);
+                        goto skip_callee_gen;
+                    }
+                }
+            }
         }
+
+        codegen_expression(ctx, node->call.callee, out);
+    skip_callee_gen:
         fprintf(out, "(");
 
         if (node->call.arg_names && node->call.callee->type == NODE_EXPR_VAR)
@@ -1225,6 +1481,22 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
         }
         else
         {
+            // Static enum member access: Enum.Variant
+            if (node->member.target->type == NODE_EXPR_VAR)
+            {
+                ASTNode *def = find_struct_def(ctx, node->member.target->var_ref.name);
+                if (def && def->type == NODE_ENUM)
+                {
+                    if (strstr(node->member.target->var_ref.name, "Option"))
+                    {
+                        fprintf(stderr, "DEBUG CALL 2: target='%s' field='%s'\n",
+                                node->member.target->var_ref.name, node->member.field);
+                    }
+                    fprintf(out, "%s__%s", node->member.target->var_ref.name, node->member.field);
+                    break;
+                }
+            }
+
             codegen_expression(ctx, node->member.target, out);
             char *lt = infer_type(ctx, node->member.target);
             int actually_ptr = 0;
@@ -1612,7 +1884,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
         if (is_enum)
         {
             fprintf(out,
-                    "; if (_try.tag == %s_Err_Tag) return (%s_Err(_try.data.Err)); "
+                    "; if (_try.tag == %s__Err_Tag) return (%s__Err(_try.data.Err)); "
                     "_try.data.Ok; })",
                     search_name, search_name);
         }
@@ -2119,6 +2391,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
         break;
     }
     case NODE_EXPR_ARRAY_LITERAL:
+    {
         fprintf(out, "{");
         ASTNode *elem = node->array_literal.elements;
         int first_arr = 1;
@@ -2134,6 +2407,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
         }
         fprintf(out, "}");
         break;
+    }
     case NODE_EXPR_TUPLE_LITERAL:
     {
         char *type = node->resolved_type ? node->resolved_type

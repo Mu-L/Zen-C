@@ -54,17 +54,17 @@ impl Regex {
         let status = tre_regcomp(preg, pattern, flags);
         if (status != 0) {
             free(preg);
-            return Regex { preg: 0, pattern: 0, flags: flags };
+            return Regex { preg: NULL, pattern: NULL, flags: flags };
         }
         return Regex { preg: preg, pattern: pattern, flags: flags };
     }
 
     fn is_valid(self) -> bool {
-        return self.preg != 0;
+        return self.preg != NULL;
     }
 
     fn match(self, text: char*) -> bool {
-        if (self.preg == 0) { return false; }
+        if (self.preg == NULL) { return false; }
         return tre_regexec(self.preg, text, 0, 0, 0) == 0;
     }
 
@@ -73,7 +73,7 @@ impl Regex {
     }
 
     fn match_at(self, text: char*, offset: int) -> bool {
-        if (self.preg == 0) { return false; }
+        if (self.preg == NULL) { return false; }
         let len = strlen(text);
         if (offset < 0 || offset > len) { return false; }
         return tre_regexec(self.preg, text + offset, 0, 0, 0) == 0;
@@ -84,7 +84,7 @@ impl Regex {
     }
 
     fn find(self, text: char*) -> Option<Match> {
-        if (self.preg == 0) { return Option<Match>::None(); }
+        if (self.preg == NULL) { return Option<Match>::None(); }
         
         let pmatch: ZRegMatch[1];
         if (tre_regexec(self.preg, text, 1, (void*)pmatch, 0) == 0) {
@@ -106,7 +106,7 @@ impl Regex {
     }
 
     fn count(self, text: char*) -> int {
-        if (self.preg == 0) { return 0; }
+        if (self.preg == NULL) { return 0; }
         let count = 0;
         let pos = 0;
         let t_len = strlen(text);
@@ -124,7 +124,7 @@ impl Regex {
 
     fn split(self, text: char*) -> Vec<String> {
         let parts = Vec<String>::new();
-        if (self.preg == 0) {
+        if (self.preg == NULL) {
             parts.push(String::from(text));
             return parts;
         }
@@ -172,7 +172,7 @@ impl Regex {
     }
 
     fn destroy(self) {
-        if (self.preg != 0) {
+        if (self.preg != NULL) {
             tre_regfree(self.preg);
             free(self.preg);
         }

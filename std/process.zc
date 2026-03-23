@@ -30,7 +30,7 @@ impl Command {
     
     fn arg(self, arg: char*) -> Command* {
         self.args.push(String::from(arg));
-        return self;
+        return &self;
     }
     
     fn _build_cmd(self) -> String {
@@ -53,7 +53,7 @@ impl Command {
         
         let fp = _z_popen(cmd_c, "r");
         
-        if (fp == 0) {
+        if (fp == NULL) {
             cmd_str.free();
             // TODO: Better error handling...
             return Output { 
@@ -68,7 +68,7 @@ impl Command {
         
         while (true) {
             let fgets_res = fgets(buf, (c_int)buf_size, fp);
-            if (fgets_res == 0) break;
+            if (fgets_res == NULL) break;
             
             let chunk = String::from(buf);
             out.append(&chunk);

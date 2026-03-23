@@ -105,6 +105,10 @@ void emit_c_decl(ParserContext *ctx, FILE *out, const char *type_str, const char
             int base_len = generic - type_str;
             fprintf(out, "%.*s %s", base_len, type_str, name);
         }
+        else if (gt[1] == '*')
+        {
+            fprintf(out, "*");
+        }
 
         if (bracket)
         {
@@ -213,8 +217,7 @@ char *infer_type(ParserContext *ctx, ASTNode *node)
         return t;
     }
 
-    if (node->resolved_type && strcmp(node->resolved_type, "unknown") != 0 &&
-        strcmp(node->resolved_type, "void*") != 0)
+    if (node->resolved_type && strcmp(node->resolved_type, "unknown") != 0)
     {
         if (strcmp(node->resolved_type, "c_int") == 0)
         {
@@ -312,10 +315,13 @@ char *infer_type(ParserContext *ctx, ASTNode *node)
                 }
             }
 
-            // Fallback for known stdlib memory functions.
+            // Fallback for known stdlib memory/file functions.
             if (strcmp(node->call.callee->var_ref.name, "malloc") == 0 ||
                 strcmp(node->call.callee->var_ref.name, "calloc") == 0 ||
-                strcmp(node->call.callee->var_ref.name, "realloc") == 0)
+                strcmp(node->call.callee->var_ref.name, "realloc") == 0 ||
+                strcmp(node->call.callee->var_ref.name, "fopen") == 0 ||
+                strcmp(node->call.callee->var_ref.name, "popen") == 0 ||
+                strcmp(node->call.callee->var_ref.name, "fdopen") == 0)
             {
                 return "void*";
             }
@@ -991,8 +997,12 @@ int emit_move_invalidation(ParserContext *ctx, ASTNode *node, FILE *out)
                 }
             }
 
-            fprintf(out, "%s__z_drop_flag_%s = 0", df_prefix, node->var_ref.name);
-            return 1;
+            if (strcmp(node->var_ref.name, "self") != 0)
+            {
+                fprintf(out, "%s__z_drop_flag_%s = 0", df_prefix, node->var_ref.name);
+                return 1;
+            }
+            return 0;
         }
         else if (node->type == NODE_EXPR_MEMBER)
         {

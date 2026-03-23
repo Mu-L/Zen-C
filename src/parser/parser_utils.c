@@ -676,7 +676,8 @@ void init_builtins()
 }
 
 void register_func(ParserContext *ctx, const char *name, int count, char **defaults,
-                   Type **arg_types, Type *ret_type, int is_varargs, int is_async, Token decl_token)
+                   Type **arg_types, Type *ret_type, int is_varargs, int is_async, int is_pure,
+                   Token decl_token)
 {
     FuncSig *f = xmalloc(sizeof(FuncSig));
     f->name = xstrdup(name);
@@ -687,6 +688,7 @@ void register_func(ParserContext *ctx, const char *name, int count, char **defau
     f->ret_type = ret_type;
     f->is_varargs = is_varargs;
     f->is_async = is_async;
+    f->is_pure = is_pure;
     f->required = 0; // Default: can discard result
     f->next = ctx->func_registry;
     ctx->func_registry = f;
@@ -1624,7 +1626,16 @@ char *replace_type_str(const char *src, const char *param, const char *concrete,
             char *ret = xmalloc(slen - plen + strlen(c_suffix) + 1);
             strncpy(ret, src, slen - plen);
             ret[slen - plen] = 0;
-            strcat(ret, c_suffix);
+
+            // Avoid double underscore if base already ends with one
+            if (slen > plen && src[slen - plen - 1] == '_' && c_suffix[0] == '_')
+            {
+                strcat(ret, c_suffix + 1);
+            }
+            else
+            {
+                strcat(ret, c_suffix);
+            }
             return ret;
         }
     }
@@ -1907,7 +1918,17 @@ Type *replace_type_formal(Type *t, const char *p, const char *c, const char *os,
                 char *new_name = xmalloc(nlen - slen + strlen(c_suffix) + 1);
                 strncpy(new_name, t->name, nlen - slen);
                 new_name[nlen - slen] = 0;
-                strcat(new_name, c_suffix);
+
+                // If the base name already ends with an underscore and our suffix starts with one,
+                // don't double it up.
+                if (nlen > slen && t->name[nlen - slen - 1] == '_' && c_suffix[0] == '_')
+                {
+                    strcat(new_name, c_suffix + 1);
+                }
+                else
+                {
+                    strcat(new_name, c_suffix);
+                }
                 n->name = new_name;
                 n->kind = TYPE_STRUCT;
                 n->arg_count = 0;
@@ -2151,6 +2172,10 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
         char *n1 = xstrdup(n->var_ref.name);
         if (p && c)
         {
+            char *tmp = replace_in_string(n1, p, c);
+            free(n1);
+            n1 = tmp;
+
             char *clean_c = sanitize_mangled_name(c);
             char *n2 = replace_mangled_part(n1, p, clean_c);
             free(clean_c);
@@ -2778,7 +2803,7 @@ char *instantiate_function_template(ParserContext *ctx, const char *name, const 
 
     register_func(ctx, mangled, new_fn->func.arg_count, new_fn->func.defaults,
                   new_fn->func.arg_types, new_fn->func.ret_type_info, new_fn->func.is_varargs, 0,
-                  new_fn->token);
+                  new_fn->func.pure, new_fn->token);
 
     add_instantiated_func(ctx, new_fn);
     return mangled;
@@ -2944,13 +2969,6 @@ int check_impl(ParserContext *ctx, const char *trait, const char *strct)
         r = r->next;
     }
 
-    char *base_strct = xstrdup(strct);
-    char *ptr = strchr(base_strct, '_');
-    if (ptr)
-    {
-        *ptr = 0;
-    }
-
     r = ctx->registered_impls;
     while (r)
     {
@@ -2959,18 +2977,19 @@ int check_impl(ParserContext *ctx, const char *trait, const char *strct)
         if (ptr2)
         {
             *ptr2 = 0;
-        }
-
-        if (strcmp(r->trait, trait) == 0 && strcmp(base_reg, base_strct) == 0)
-        {
-            free(base_strct);
-            free(base_reg);
-            return 1;
+            size_t blen = strlen(base_reg);
+            if (strncmp(strct, base_reg, blen) == 0 && strct[blen] == '_')
+            {
+                if (strcmp(r->trait, trait) == 0)
+                {
+                    free(base_reg);
+                    return 1;
+                }
+            }
         }
         free(base_reg);
         r = r->next;
     }
-    free(base_strct);
 
     return 0;
 }
@@ -3147,7 +3166,7 @@ void instantiate_methods(ParserContext *ctx, GenericImplTemplate *it,
             meth->func.name = new_name;
             register_func(ctx, new_name, meth->func.arg_count, meth->func.defaults,
                           meth->func.arg_types, meth->func.ret_type_info, meth->func.is_varargs, 0,
-                          meth->token);
+                          meth->func.pure, meth->token);
         }
 
         // Handle generic return types in methods (e.g., Option<T> -> Option_int)
@@ -3335,10 +3354,30 @@ void instantiate_generic(ParserContext *ctx, const char *tpl, const char *arg,
             const char *subst_arg = unmangled_arg ? unmangled_arg : arg;
             nv->variant.payload = replace_type_formal(
                 v->variant.payload, t->struct_node->enm.generic_param, subst_arg, NULL, NULL);
-            size_t mangled_var_sz = strlen(m) + strlen(nv->variant.name) + 2;
+            size_t mangled_var_sz = strlen(m) + strlen(nv->variant.name) + 3;
             char *mangled_var = xmalloc(mangled_var_sz);
-            snprintf(mangled_var, mangled_var_sz, "%s_%s", m, nv->variant.name);
+            snprintf(mangled_var, mangled_var_sz, "%s__%s", m, nv->variant.name);
             register_enum_variant(ctx, m, mangled_var, nv->variant.tag_id);
+
+            // Register Constructor Function Signature for the instantiated variant
+            if (nv->variant.payload)
+            {
+                Type **at = xmalloc(sizeof(Type *));
+                at[0] = nv->variant.payload;
+                Type *ret_t = type_new(TYPE_ENUM);
+                ret_t->name = xstrdup(m);
+
+                register_func(ctx, mangled_var, 1, NULL, at, ret_t, 0, 0, 0, token);
+            }
+            else
+            {
+                // For variants without payload, we still need to register it as a zero-arg function
+                // so that MyOption::None() works and is consistent.
+                Type *ret_t = type_new(TYPE_ENUM);
+                ret_t->name = xstrdup(m);
+                register_func(ctx, mangled_var, 0, NULL, NULL, ret_t, 0, 0, 0, token);
+            }
+
             free(mangled_var);
             if (!h)
             {
@@ -3406,6 +3445,7 @@ void instantiate_generic_multi(ParserContext *ctx, const char *tpl, char **args,
         strcat(m, clean);
         free(clean);
     }
+    fprintf(stderr, "DEBUG: Generic instantiation name for '%s' is '%s'\n", tpl, m);
 
     // Check if already instantiated
     Instantiation *c = ctx->instantiations;
@@ -3482,6 +3522,94 @@ void instantiate_generic_multi(ParserContext *ctx, const char *tpl, char **args,
             i->strct.fields = copy_fields_replacing(ctx, fields, "T", "int");
         }
 
+        ni->struct_node = i;
+        register_struct_def(ctx, m, i);
+
+        i->next = ctx->instantiated_structs;
+        ctx->instantiated_structs = i;
+    }
+    else if (t->struct_node->type == NODE_ENUM)
+    {
+        ASTNode *i = ast_create(NODE_ENUM);
+        i->enm.name = xstrdup(m);
+        i->enm.is_template = 0;
+
+        // Copy type attributes
+        i->type_info = type_new(TYPE_ENUM);
+        i->type_info->name = xstrdup(m);
+        if (t->struct_node->type_info)
+        {
+            i->type_info->traits = t->struct_node->type_info->traits;
+        }
+
+        ASTNode *h = 0, *tl = 0;
+        ASTNode *v = t->struct_node->enm.variants;
+        while (v)
+        {
+            ASTNode *nv = ast_create(NODE_ENUM_VARIANT);
+            nv->variant.name = xstrdup(v->variant.name);
+            nv->variant.tag_id = v->variant.tag_id;
+
+            // Use multi-parameter substitution for payload
+            Type *payload = v->variant.payload;
+            if (payload)
+            {
+                // We need to apply all substitutions
+
+                // Actually, for multi-param enums, we should check how they are stored.
+                // If it's Result<T, E>, generic_param is "T,E".
+                // We use replace_type_formal which handles "T,E" as p and "int,float" as c.
+
+                // Construct comma-separated concrete args string
+                char c_args[1024] = {0};
+                for (int j = 0; j < arg_count; j++)
+                {
+                    if (j > 0)
+                    {
+                        strcat(c_args, ",");
+                    }
+                    strcat(c_args, args[j]);
+                }
+
+                nv->variant.payload = replace_type_formal(
+                    payload, t->struct_node->enm.generic_param, c_args, NULL, NULL);
+            }
+
+            size_t mangled_var_sz = strlen(m) + strlen(nv->variant.name) + 3;
+            char *mangled_var = xmalloc(mangled_var_sz);
+            snprintf(mangled_var, mangled_var_sz, "%s__%s", m, nv->variant.name);
+            register_enum_variant(ctx, m, mangled_var, nv->variant.tag_id);
+
+            // Register Constructor Function Signature for the instantiated variant
+            if (nv->variant.payload)
+            {
+                Type **at = xmalloc(sizeof(Type *));
+                at[0] = nv->variant.payload;
+                Type *ret_t = type_new(TYPE_ENUM);
+                ret_t->name = xstrdup(m);
+
+                register_func(ctx, mangled_var, 1, NULL, at, ret_t, 0, 0, 0, token);
+            }
+            else
+            {
+                Type *ret_t = type_new(TYPE_ENUM);
+                ret_t->name = xstrdup(m);
+                register_func(ctx, mangled_var, 0, NULL, NULL, ret_t, 0, 0, 0, token);
+            }
+
+            free(mangled_var);
+            if (!h)
+            {
+                h = nv;
+            }
+            else
+            {
+                tl->next = nv;
+            }
+            tl = nv;
+            v = v->next;
+        }
+        i->enm.variants = h;
         ni->struct_node = i;
         register_struct_def(ctx, m, i);
 
@@ -4136,111 +4264,34 @@ char *parse_and_convert_args(ParserContext *ctx, Lexer *l, char ***defaults_out,
                 names[count] = xstrdup("self");
                 if (ctx->current_impl_struct)
                 {
-                    Type *st = NULL;
-                    // Check for primitives to avoid creating struct int*
-                    const char *is = ctx->current_impl_struct;
-                    if (strcmp(is, "int") == 0 || strcmp(is, "int32_t") == 0 ||
-                        strcmp(is, "i32") == 0 || strcmp(is, "I32") == 0)
+                    char *buf_type = xmalloc(strlen(ctx->current_impl_struct) + 2);
+                    sprintf(buf_type, "%s*", ctx->current_impl_struct);
+
+                    if (is_primitive_type_name(ctx->current_impl_struct))
                     {
-                        st = type_new(TYPE_INT);
-                    }
-                    else if (strcmp(is, "uint") == 0 || strcmp(is, "uint32_t") == 0 ||
-                             strcmp(is, "u32") == 0 || strcmp(is, "U32") == 0)
-                    {
-                        st = type_new(TYPE_U32);
-                    }
-                    else if (strcmp(is, "float") == 0 || strcmp(is, "f32") == 0 ||
-                             strcmp(is, "F32") == 0)
-                    {
-                        st = type_new(TYPE_F32);
-                    }
-                    else if (strcmp(is, "double") == 0 || strcmp(is, "f64") == 0 ||
-                             strcmp(is, "F64") == 0)
-                    {
-                        st = type_new(TYPE_F64);
-                    }
-                    else if (strcmp(is, "char") == 0)
-                    {
-                        st = type_new(TYPE_CHAR);
-                    }
-                    else if (strcmp(is, "bool") == 0)
-                    {
-                        st = type_new(TYPE_BOOL);
-                    }
-                    else if (strcmp(is, "string") == 0)
-                    {
-                        st = type_new(TYPE_STRING);
-                    }
-                    else if (strcmp(is, "void") == 0)
-                    {
-                        st = type_new(TYPE_VOID);
-                    }
-                    else if (strcmp(is, "usize") == 0 || strcmp(is, "size_t") == 0)
-                    {
-                        st = type_new(TYPE_USIZE);
-                    }
-                    else if (strcmp(is, "isize") == 0 || strcmp(is, "ptrdiff_t") == 0)
-                    {
-                        st = type_new(TYPE_ISIZE);
-                    }
-                    else if (strcmp(is, "byte") == 0 || strcmp(is, "u8") == 0 ||
-                             strcmp(is, "U8") == 0 || strcmp(is, "uint8_t") == 0)
-                    {
-                        st = type_new(TYPE_U8);
-                    }
-                    else if (strcmp(is, "i8") == 0 || strcmp(is, "I8") == 0 ||
-                             strcmp(is, "int8_t") == 0)
-                    {
-                        st = type_new(TYPE_I8);
-                    }
-                    else if (strcmp(is, "i16") == 0 || strcmp(is, "I16") == 0 ||
-                             strcmp(is, "int16_t") == 0)
-                    {
-                        st = type_new(TYPE_I16);
-                    }
-                    else if (strcmp(is, "u16") == 0 || strcmp(is, "U16") == 0 ||
-                             strcmp(is, "uint16_t") == 0)
-                    {
-                        st = type_new(TYPE_U16);
-                    }
-                    else if (strcmp(is, "i64") == 0 || strcmp(is, "I64") == 0 ||
-                             strcmp(is, "int64_t") == 0 || strcmp(is, "long") == 0)
-                    {
-                        st = type_new(TYPE_I64);
-                    }
-                    else if (strcmp(is, "u64") == 0 || strcmp(is, "U64") == 0 ||
-                             strcmp(is, "uint64_t") == 0 || strcmp(is, "ulong") == 0)
-                    {
-                        st = type_new(TYPE_U64);
-                    }
-                    else if (strcmp(is, "i128") == 0 || strcmp(is, "I128") == 0)
-                    {
-                        st = type_new(TYPE_I128);
-                    }
-                    else if (strcmp(is, "u128") == 0 || strcmp(is, "U128") == 0)
-                    {
-                        st = type_new(TYPE_U128);
-                    }
-                    else if (strcmp(is, "rune") == 0)
-                    {
-                        st = type_new(TYPE_RUNE);
+                        // Primitives: self is a pointer in signature and body
+                        TypeKind pk = get_primitive_type_kind(ctx->current_impl_struct);
+                        Type *bt = type_new(pk);
+                        if (pk == TYPE_STRUCT)
+                        { // Fallback if get_primitive_type_kind failed for some reason
+                            bt->name = xstrdup(ctx->current_impl_struct);
+                        }
+                        Type *ptr = type_new_ptr(bt);
+
+                        add_symbol(ctx, "self", buf_type, ptr);
+                        types[count] = ptr;
                     }
                     else
                     {
-                        st = type_new(TYPE_STRUCT);
+                        // Structs: self is a pointer in signature and body
+                        Type *st = type_new(TYPE_STRUCT);
                         st->name = xstrdup(ctx->current_impl_struct);
+                        Type *ptr = type_new_ptr(st);
+
+                        add_symbol(ctx, "self", buf_type, ptr);
+                        types[count] = ptr;
                     }
-                    Type *pt = type_new_ptr(st);
-
-                    size_t bt_len = strlen(ctx->current_impl_struct) + 2;
-                    char *buf_type = xmalloc(bt_len);
-                    sprintf(buf_type, "%s*", ctx->current_impl_struct);
-                    // Register 'self' with actual type in symbol table
-                    add_symbol(ctx, "self", buf_type, pt);
                     free(buf_type);
-
-                    types[count] = pt;
-
                     strcat(buf, "void* self");
                 }
                 else

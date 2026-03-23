@@ -45,6 +45,7 @@ typedef struct DeclarationAttributes
     int cuda_global;
     int cuda_device;
     int cuda_host;
+    int is_pure;
     Attribute *custom_attributes;
     char **derived_traits;
     int derived_count;
@@ -110,6 +111,7 @@ typedef struct FuncSig
     int is_varargs;       ///< 1 if variadic.
     int is_async;         ///< 1 if async.
     int required;         ///< 1 if return value must be used.
+    int is_pure;          ///< 1 if marked @pure.
     struct FuncSig *next; ///< Next function in registry.
 } FuncSig;
 
@@ -508,7 +510,7 @@ const char *normalize_type_name(const char *name);
  * @brief Registers a function.
  */
 void register_func(ParserContext *ctx, const char *name, int count, char **defaults,
-                   Type **arg_types, Type *ret_type, int is_varargs, int is_async,
+                   Type **arg_types, Type *ret_type, int is_varargs, int is_async, int is_pure,
                    Token decl_token);
 
 /**

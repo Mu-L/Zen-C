@@ -5,7 +5,7 @@ enum Result {
 }
 
 fn test_unwrap() -> Result {
-    let res = Result_Ok(42);
+    let res = Result.Ok(42);
     let val = res?; 
     if (val == 42) println "  Unwrap: Success";
     else println "  Unwrap: Failed";

@@ -25,6 +25,8 @@ fn main() -> int {
     let cbll: c_long_long = -30;
     let cc: c_short = -5;
     let cd: c_char = 65; // 'A'
+    if (cc != -5) return 11;
+    if (cd != 65) return 12;
     
     // Test C interaction
     let abs_val = abs(ca);

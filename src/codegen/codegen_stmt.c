@@ -801,6 +801,15 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
         char *prev_ret = g_current_func_ret_type;
         g_current_func_ret_type = node->func.ret_type;
 
+        // Set self_is_pointer flag for codegen of the body
+        int prev_self_is_ptr = ctx->self_is_pointer;
+        ctx->self_is_pointer = 0;
+        if (node->func.arg_count > 0 && node->func.param_names && node->func.param_names[0] &&
+            strcmp(node->func.param_names[0], "self") == 0)
+        {
+            ctx->self_is_pointer = 1;
+        }
+
         // Initialize drop flags for arguments that implement Drop
         for (int i = 0; i < node->func.arg_count; i++)
         {
@@ -852,8 +861,17 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
                     else
                     {
                         stmt_str = xmalloc(256 + strlen(arg_name) * 2 + strlen(drop_type_name));
-                        sprintf(stmt_str, "if (__z_drop_flag_%s) %s__Drop_glue(&%s);", arg_name,
-                                drop_type_name, arg_name);
+                        // If it's self, it's already a pointer in C
+                        if (strcmp(arg_name, "self") == 0)
+                        {
+                            sprintf(stmt_str, "if (__z_drop_flag_%s) %s__Drop_glue(%s);", arg_name,
+                                    drop_type_name, arg_name);
+                        }
+                        else
+                        {
+                            sprintf(stmt_str, "if (__z_drop_flag_%s) %s__Drop_glue(&%s);", arg_name,
+                                    drop_type_name, arg_name);
+                        }
                     }
                     defer_node->raw_stmt.content = stmt_str;
 
@@ -872,6 +890,7 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
             codegen_node_single(ctx, defer_stack[i], out);
         }
         g_current_func_ret_type = prev_ret;
+        ctx->self_is_pointer = prev_self_is_ptr;
 
         fprintf(out, "}\n");
         if (node->cfg_condition)
@@ -1932,11 +1951,22 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
                         fprintf(out, "ZC_AUTO");
                     }
                     fprintf(out, " _z_ret_mv = ");
+                    if (ctx->self_is_pointer && strcmp(node->ret.value->var_ref.name, "self") == 0)
+                    {
+                        fprintf(out, "*");
+                    }
                     codegen_expression(ctx, node->ret.value, out);
                     fprintf(out, "; memset(&");
+                    if (ctx->self_is_pointer && strcmp(node->ret.value->var_ref.name, "self") == 0)
+                    {
+                        fprintf(out, "*");
+                    }
                     codegen_expression(ctx, node->ret.value, out);
                     fprintf(out, ", 0, sizeof(_z_ret_mv)); ");
-                    fprintf(out, "__z_drop_flag_%s = 0; ", node->ret.value->var_ref.name);
+                    if (strcmp(node->ret.value->var_ref.name, "self") != 0)
+                    {
+                        fprintf(out, "__z_drop_flag_%s = 0; ", node->ret.value->var_ref.name);
+                    }
                     for (int i = defer_count - 1; i >= func_defer_boundary; i--)
                     {
                         emit_source_mapping_duplicate(defer_stack[i], out);
@@ -1954,8 +1984,21 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
             if (has_defers && node->ret.value)
             {
                 fprintf(out, "    { ");
-                emit_auto_type(ctx, node->ret.value, node->token, out);
+                if (g_current_func_ret_type && strcmp(g_current_func_ret_type, "void") != 0 &&
+                    strcmp(g_current_func_ret_type, "unknown") != 0)
+                {
+                    fprintf(out, "%s", g_current_func_ret_type);
+                }
+                else
+                {
+                    emit_auto_type(ctx, node->ret.value, node->token, out);
+                }
                 fprintf(out, " _z_ret = ");
+                if (node->ret.value->type == NODE_EXPR_VAR && ctx->self_is_pointer &&
+                    strcmp(node->ret.value->var_ref.name, "self") == 0)
+                {
+                    fprintf(out, "*");
+                }
                 codegen_expression(ctx, node->ret.value, out);
                 fprintf(out, "; ");
                 for (int i = defer_count - 1; i >= func_defer_boundary; i--)
@@ -1977,6 +2020,22 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
             else
             {
                 fprintf(out, "    return ");
+                if (node->ret.value && node->ret.value->type == NODE_EXPR_VAR &&
+                    ctx->self_is_pointer && strcmp(node->ret.value->var_ref.name, "self") == 0)
+                {
+                    // return self; -> return *self; (if returns by value)
+                    fprintf(out, "*");
+                }
+                else if (node->ret.value && node->ret.value->type == NODE_EXPR_UNARY &&
+                         strcmp(node->ret.value->unary.op, "&") == 0 &&
+                         node->ret.value->unary.operand->type == NODE_EXPR_VAR &&
+                         strcmp(node->ret.value->unary.operand->var_ref.name, "self") == 0)
+                {
+                    // return &self; -> return self; (since self is already a pointer in C)
+                    codegen_expression(ctx, node->ret.value->unary.operand, out);
+                    fprintf(out, ";\n");
+                    break;
+                }
                 codegen_expression(ctx, node->ret.value, out);
                 fprintf(out, ";\n");
             }

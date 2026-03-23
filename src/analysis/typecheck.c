@@ -187,6 +187,7 @@ static int integer_type_width(Type *t)
 
 static void check_node(TypeChecker *tc, ASTNode *node);
 static void check_expr_lambda(TypeChecker *tc, ASTNode *node);
+static void apply_implicit_struct_pointer_conversions(ASTNode **expr_ptr, Type *expected_type);
 static int check_type_compatibility(TypeChecker *tc, Type *target, Type *value, Token t);
 
 static void check_move_for_rvalue(TypeChecker *tc, ASTNode *rvalue)
@@ -313,6 +314,13 @@ static void check_expr_unary(TypeChecker *tc, ASTNode *node)
         }
         return;
     }
+
+    // Address-of: &
+    if (strcmp(op, "&") == 0)
+    {
+        node->type_info = type_new_ptr(operand_type);
+        return;
+    }
 }
 
 static void check_expr_binary(TypeChecker *tc, ASTNode *node)
@@ -346,6 +354,8 @@ static void check_expr_binary(TypeChecker *tc, ASTNode *node)
         // Check type compatibility for assignment
         if (left_type && right_type)
         {
+            apply_implicit_struct_pointer_conversions(&node->binary.right, left_type);
+            right_type = node->binary.right->type_info;
             check_type_compatibility(tc, left_type, right_type, node->binary.right->token);
         }
 
@@ -615,6 +625,26 @@ static void check_expr_call(TypeChecker *tc, ASTNode *node)
         arg = arg->next;
     }
 
+    // Enforce @pure constraint
+    if (tc->current_func && tc->current_func->func.pure)
+    {
+        if (!sig || !sig->is_pure)
+        {
+            // Allow _z_str? Wait, _z_str is a compiler macro, it's not strictly "pure", but it's
+            // safe.
+            if (!func_name || strcmp(func_name, "_z_str") != 0)
+            {
+                char msg[256];
+                snprintf(msg, sizeof(msg),
+                         "Pure function '%s' cannot call non-pure or dynamic function '%s'",
+                         tc->current_func->func.name, func_name ? func_name : "unknown");
+                const char *hints[] = {
+                    "Mark the called function as @pure, or remove @pure from the caller", NULL};
+                tc_error_with_hints(tc, node->call.callee->token, msg, hints);
+            }
+        }
+    }
+
     // Validate argument count if we have a signature
     if (sig)
     {
@@ -758,6 +788,94 @@ static void check_block(TypeChecker *tc, ASTNode *block)
     }
     (void)terminator_token; // May be used for enhanced diagnostics later
     tc_exit_scope(tc);
+}
+
+static void extract_base_name(const char *full_name, char *base_buf, size_t max_len)
+{
+    if (!full_name)
+    {
+        base_buf[0] = '\0';
+        return;
+    }
+    size_t i = 0;
+    while (full_name[i] && full_name[i] != '<' && full_name[i] != '_' && i < max_len - 1)
+    {
+        base_buf[i] = full_name[i];
+        i++;
+    }
+    base_buf[i] = '\0';
+}
+
+static int is_struct_base_match(Type *base, Type *instantiated)
+{
+    if (!base || !base->name || !instantiated || !instantiated->name)
+    {
+        return 0;
+    }
+    if (strcmp(base->name, instantiated->name) == 0)
+    {
+        return 1;
+    }
+
+    char base_str[256];
+    char inst_str[256];
+    extract_base_name(base->name, base_str, sizeof(base_str));
+    extract_base_name(instantiated->name, inst_str, sizeof(inst_str));
+
+    if (base_str[0] != '\0' && strcmp(base_str, inst_str) == 0)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+static void apply_implicit_struct_pointer_conversions(ASTNode **expr_ptr, Type *expected_type)
+{
+    if (!expr_ptr || !*expr_ptr || !expected_type)
+    {
+        return;
+    }
+    ASTNode *expr = *expr_ptr;
+    Type *actual_type = expr->type_info;
+    if (!actual_type)
+    {
+        return;
+    }
+
+    Type *e_res = get_inner_type(expected_type);
+    Type *a_res = get_inner_type(actual_type);
+
+    // T* (actual) -> T (expected) => Implicit Dereference *
+    // This allows `return self` to return the struct value when self is a pointer.
+    if (a_res->kind == TYPE_POINTER && a_res->inner &&
+        (a_res->inner->kind == TYPE_STRUCT || a_res->inner->kind == TYPE_ENUM) &&
+        (type_eq(a_res->inner, e_res) || is_struct_base_match(a_res->inner, e_res)))
+    {
+        ASTNode *deref = ast_create(NODE_EXPR_UNARY);
+        deref->unary.op = xstrdup("*");
+        deref->unary.operand = expr;
+        deref->type_info = a_res->inner;
+        deref->token = expr->token;
+        deref->next = expr->next;
+        expr->next = NULL;
+        *expr_ptr = deref;
+    }
+    // T (actual) -> T* (expected) => Implicit Address-Of &
+    else if (e_res->kind == TYPE_POINTER && e_res->inner &&
+             (a_res->kind == TYPE_STRUCT || a_res->kind == TYPE_ENUM) &&
+             (type_eq(a_res, e_res->inner) || is_struct_base_match(a_res, e_res->inner)))
+    {
+        ASTNode *addr = ast_create(NODE_EXPR_UNARY);
+        int is_rvalue = (expr->type == NODE_EXPR_CALL || expr->type == NODE_EXPR_BINARY ||
+                         expr->type == NODE_MATCH);
+        addr->unary.op = is_rvalue ? xstrdup("&_rval") : xstrdup("&");
+        addr->unary.operand = expr;
+        addr->type_info = e_res;
+        addr->token = expr->token;
+        addr->next = expr->next;
+        expr->next = NULL;
+        *expr_ptr = addr;
+    }
 }
 
 static int check_type_compatibility(TypeChecker *tc, Type *target, Type *value, Token t)
@@ -907,6 +1025,8 @@ static void check_var_decl(TypeChecker *tc, ASTNode *node)
 
         if (decl_type && init_type)
         {
+            apply_implicit_struct_pointer_conversions(&node->var_decl.init_expr, decl_type);
+            init_type = node->var_decl.init_expr->type_info;
             check_type_compatibility(tc, decl_type, init_type, node->token);
         }
 
@@ -1028,6 +1148,7 @@ static void check_function(TypeChecker *tc, ASTNode *node)
         {
             Type *param_type =
                 (node->func.arg_types && node->func.arg_types[i]) ? node->func.arg_types[i] : NULL;
+
             tc_add_symbol(tc, node->func.param_names[i], param_type, node->token);
         }
     }
@@ -1565,6 +1686,13 @@ static void check_node(TypeChecker *tc, ASTNode *node)
                 const char *hints[] = {"This function declares a non-void return type",
                                        "Return a value of the expected type", NULL};
                 tc_error_with_hints(tc, node->token, msg, hints);
+            }
+            else if (node->ret.value && tc->current_func->func.ret_type_info)
+            {
+                apply_implicit_struct_pointer_conversions(&node->ret.value,
+                                                          tc->current_func->func.ret_type_info);
+                check_type_compatibility(tc, tc->current_func->func.ret_type_info,
+                                         node->ret.value->type_info, node->ret.value->token);
             }
         }
         tc->is_unreachable = 1;
@@ -2205,6 +2333,16 @@ int check_program(ParserContext *ctx, ASTNode *root)
     }
 
     check_node(&tc, root);
+
+    // Also typecheck instantiated generic functions
+    // This is crucial because AST modifications (like implicit dereferencing of self)
+    // need to be applied to the instantiated bodies as well.
+    ASTNode *inst_func = ctx->instantiated_funcs;
+    while (inst_func)
+    {
+        check_node(&tc, inst_func);
+        inst_func = inst_func->next;
+    }
 
     if (ctx->move_state)
     {

@@ -360,8 +360,12 @@ DeclarationAttributes parse_attributes(ParserContext *ctx, Lexer *l)
         }
         else
         {
-            // Checking for CUDA attributes...
-            if (0 == strncmp(attr.start, "global", 6) && 6 == attr.len)
+            // Checking for CUDA and other attributes...
+            if (0 == strncmp(attr.start, "pure", 4) && 4 == attr.len)
+            {
+                res.is_pure = 1;
+            }
+            else if (0 == strncmp(attr.start, "global", 6) && 6 == attr.len)
             {
                 res.cuda_global = 1;
             }
@@ -1315,12 +1319,19 @@ ASTNode *parse_program_nodes(ParserContext *ctx, Lexer *l)
                 register_deprecated_func(ctx, s->func.name, deprecated_msg);
             }
 
-            if (attr_required && s->func.name)
+            if ((attr_required || attr_pure) && s->func.name)
             {
                 FuncSig *sig = find_func(ctx, s->func.name);
                 if (sig)
                 {
-                    sig->required = 1;
+                    if (attr_required)
+                    {
+                        sig->required = 1;
+                    }
+                    if (attr_pure)
+                    {
+                        sig->is_pure = 1;
+                    }
                 }
             }
         }
@@ -1394,7 +1405,7 @@ static ASTNode *generate_derive_impls(ParserContext *ctx, ASTNode *strct, char *
         if (0 == strcmp(trait, "Clone"))
         {
             code = xmalloc(1024);
-            sprintf(code, "impl %s { fn clone(self) -> %s { return *self; } }", name, name);
+            sprintf(code, "impl %s { fn clone(self) -> %s { return self; } }", name, name);
         }
         else if (0 == strcmp(trait, "Eq"))
         {

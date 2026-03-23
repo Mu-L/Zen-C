@@ -12,7 +12,10 @@ impl Option<T> {
     }
 
     fn None() -> Option<T> {
-         return Option<T> { is_some: false, val: 0 };
+         let opt: Option<T>;
+         opt.is_some = false;
+         memset(&opt.val, 0, sizeof(T));
+         return opt;
     }
 
     fn is_some(self) -> bool {
@@ -61,7 +64,7 @@ impl Option<T> {
     }
     
     fn or_else(self, other: Option<T>) -> Option<T> {
-        if self.is_some { return *self; }
+        if (self.is_some) { return self; }
         return other;
     }
 }

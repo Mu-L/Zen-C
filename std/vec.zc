@@ -21,11 +21,11 @@ struct VecIterResult<T> {
 
 impl VecIterResult<T> {
     fn is_none(self) -> bool {
-        return self.ptr == 0;
+        return self.ptr == NULL;
     }
     
     fn unwrap(self) -> T* {
-        if (self.ptr == 0) {
+        if (self.ptr == NULL) {
             !"Panic: unwrap called on null VecIterResult";
             exit(1);
         }
@@ -50,7 +50,7 @@ impl VecIter<T> {
     }
     
     fn iterator(self) -> VecIter<T> {
-         return *self;
+         return self;
     }
 }
 
@@ -61,22 +61,22 @@ impl VecIterRef<T> {
             self.idx = self.idx + 1;
             return VecIterResult<T> { ptr: item };
         }
-        return VecIterResult<T> { ptr: 0 };
+        return VecIterResult<T> { ptr: NULL };
     }
     
     fn iterator(self) -> VecIterRef<T> {
-        return *self;
+        return self;
     }
 }
 
 impl Vec<T> {
     fn new() -> Vec<T> {
-        return Vec<T> { data: 0, len: 0, cap: 0 };
+        return Vec<T> { data: NULL, len: 0, cap: 0 };
     }
 
     fn with_capacity(cap: usize) -> Vec<T> {
         if (cap == 0) {
-            return Vec<T> { data: 0, len: 0, cap: 0 };
+            return Vec<T> { data: NULL, len: 0, cap: 0 };
         }
         return Vec<T> {
             data: (T*)malloc(cap * sizeof(T)),
@@ -237,7 +237,7 @@ impl Vec<T> {
     
     fn free(self) {
         if (self.data) free(self.data);
-        self.data = 0;
+        self.data = NULL;
         self.len = 0;
         self.cap = 0;
     }
@@ -284,7 +284,7 @@ impl Vec<T> {
 
     // Prevent Drop from freeing memory (simulates move)
     fn forget(self) {
-        self.data = 0;
+        self.data = NULL;
         self.len = 0;
         self.cap = 0;
     }
@@ -314,7 +314,7 @@ impl Vec<T> {
 
     // Operator overload for `>>` (Pop item from vector into pointer)
     fn shr(self, out_item: T*) {
-        if (out_item != 0) {
+        if (out_item != NULL) {
             *out_item = self.pop();
         } else {
             self.pop();
@@ -358,7 +358,7 @@ impl Vec<T> {
 
     fn clone(self) -> Vec<T> {
         if (self.len == 0) {
-            return Vec<T> { data: 0, len: 0, cap: 0 };
+            return Vec<T> { data: NULL, len: 0, cap: 0 };
         }
         let new_data = (T*)malloc(self.len * sizeof(T));
         let i: usize = 0;

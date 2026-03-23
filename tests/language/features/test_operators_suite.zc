@@ -46,11 +46,11 @@ enum Result {
 }
 
 fn make_ok(v: int) -> Result {
-    return Result_Ok(v);
+    return Result::Ok(v);
 }
 
 fn make_err(e: int) -> Result {
-    return Result_Err(e);
+    return Result::Err(e);
 }
 
 fn process_result(fail: int) -> Result {
@@ -58,10 +58,10 @@ fn process_result(fail: int) -> Result {
     
     if (fail) {
         let v2 = make_err(500)?; 
-        return Result_Ok(v2 + 1000); 
+        return Result::Ok(v2 + 1000); 
     }
     
-    return Result_Ok(val + 20);
+    return Result::Ok(val + 20);
 }
 
 fn add(a: int, b: int) -> int {
@@ -135,10 +135,10 @@ test "test_pipe_operator" {
 
 test "test_try_operator" {
     let res_ok = process_result(0);
-    assert(res_ok.tag == Result_Ok_Tag, "Expected Ok");
+    assert(res_ok.tag == Result__Ok_Tag, "Expected Ok");
     assert(res_ok.data.Ok == 30, "Expected 30");
     
     let res_err = process_result(1);
-    assert(res_err.tag == Result_Err_Tag, "Expected Err");
+    assert(res_err.tag == Result__Err_Tag, "Expected Err");
     assert(res_err.data.Err == 500, "Expected Err(500)");
 }

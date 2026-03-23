@@ -435,6 +435,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                 {
                     f->cfg_condition = attrs.cfg_condition;
                 }
+                f->func.pure = attrs.is_pure;
 
                 // Register function for lookup
                 if (f->func.generic_params)
@@ -445,7 +446,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                 {
                     register_func(ctx, mangled, f->func.arg_count, f->func.defaults,
                                   f->func.arg_types, f->func.ret_type_info, f->func.is_varargs,
-                                  f->func.is_async, f->token);
+                                  f->func.is_async, f->func.pure, f->token);
                 }
 
                 if (!h)
@@ -485,7 +486,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                     {
                         register_func(ctx, mangled, f->func.arg_count, f->func.defaults,
                                       f->func.arg_types, f->func.ret_type_info, f->func.is_varargs,
-                                      f->func.is_async, f->token);
+                                      f->func.is_async, f->func.pure, f->token);
                     }
 
                     if (!h)
@@ -747,6 +748,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                         {
                             f->cfg_condition = attrs.cfg_condition;
                         }
+                        f->func.pure = attrs.is_pure;
 
                         if (f->func.generic_params)
                         {
@@ -756,7 +758,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                         {
                             register_func(ctx, mangled, f->func.arg_count, f->func.defaults,
                                           f->func.arg_types, f->func.ret_type_info,
-                                          f->func.is_varargs, 0, f->token);
+                                          f->func.is_varargs, 0, f->func.pure, f->token);
                         }
 
                         if (!h)
@@ -793,7 +795,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                     {
                         register_func(ctx, mangled, f->func.arg_count, f->func.defaults,
                                       f->func.arg_types, f->func.ret_type_info, f->func.is_varargs,
-                                      0, f->token);
+                                      0, f->func.pure, f->token);
                     }
 
                     if (!h)
@@ -829,7 +831,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                         {
                             register_func(ctx, mangled, f->func.arg_count, f->func.defaults,
                                           f->func.arg_types, f->func.ret_type_info,
-                                          f->func.is_varargs, 1, f->token);
+                                          f->func.is_varargs, 1, f->func.pure, f->token);
                         }
                         if (!h)
                         {
@@ -1259,9 +1261,9 @@ ASTNode *parse_enum(ParserContext *ctx, Lexer *l)
             va->variant.payload = payload; // Store Type*
 
             // Register Variant (Mangled name to avoid collisions: Result_Ok)
-            size_t mangled_sz = strlen(ename) + strlen(vname) + 2;
+            size_t mangled_sz = strlen(ename) + strlen(vname) + 3;
             char *mangled = xmalloc(mangled_sz);
-            snprintf(mangled, mangled_sz, "%s_%s", ename, vname);
+            snprintf(mangled, mangled_sz, "%s__%s", ename, vname);
             register_enum_variant(ctx, ename, mangled, va->variant.tag_id);
 
             // Register Constructor Function Signature
@@ -1272,14 +1274,14 @@ ASTNode *parse_enum(ParserContext *ctx, Lexer *l)
                 Type *ret_t = type_new(TYPE_ENUM);
                 ret_t->name = xstrdup(ename);
 
-                register_func(ctx, mangled, 1, NULL, at, ret_t, 0, 0, vt);
+                register_func(ctx, mangled, 1, NULL, at, ret_t, 0, 0, 0, vt);
             }
             else if (!gp)
             {
                 // No payload: fn Name() -> Enum
                 Type *ret_t = type_new(TYPE_ENUM);
                 ret_t->name = xstrdup(ename);
-                register_func(ctx, mangled, 0, NULL, NULL, ret_t, 0, 0, vt);
+                register_func(ctx, mangled, 0, NULL, NULL, ret_t, 0, 0, 0, vt);
             }
             free(mangled);
 

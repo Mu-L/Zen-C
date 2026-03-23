@@ -1,0 +1,24 @@
+
+fn impure_func() {
+    println "I am impure";
+}
+
+@pure
+fn pure_func() {
+    // This should FAIL
+    impure_func();
+}
+
+@pure
+fn another_pure_func() {
+    // This should PASS
+}
+
+@pure
+fn pure_calling_pure() {
+    another_pure_func();
+}
+
+test "pure_enforcement" {
+    pure_calling_pure();
+}

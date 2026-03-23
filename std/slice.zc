@@ -23,7 +23,7 @@ impl SliceIter<T> {
     }
     
     fn iterator(self) -> SliceIter<T> {
-        return *self;
+        return self;
     }
 }
 

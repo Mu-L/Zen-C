@@ -229,8 +229,8 @@ ASTNode *parse_match(ParserContext *ctx, Lexer *l)
                 lexer_next(l); // eat ::
                 Token suffix = lexer_next(l);
                 char *tmp = xmalloc(strlen(p_str) + suffix.len + 2);
-                // Join with underscore: Result::Ok -> Result_Ok
-                sprintf(tmp, "%s_%.*s", p_str, suffix.len, suffix.start);
+                // Join with underscore: Result::Ok -> Result__Ok
+                sprintf(tmp, "%s__%.*s", p_str, suffix.len, suffix.start);
                 free(p_str);
                 p_str = tmp;
             }

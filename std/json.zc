@@ -70,7 +70,7 @@ raw {
         if (**p != '[') return NULL;
         (*p)++;
         struct JsonValue* arr = malloc(sizeof(struct JsonValue));
-        arr->kind = JsonType_JSON_ARRAY();
+        arr->kind = JsonType__JSON_ARRAY();
         arr->string_val = 0; arr->number_val = 0; arr->bool_val = 0; arr->object_val = 0;
         arr->array_val = malloc(sizeof(Vec_JsonValuePtr));
         *(arr->array_val) = Vec_JsonValuePtr__new();
@@ -94,7 +94,7 @@ raw {
         if (**p != '{') return NULL;
         (*p)++;
         struct JsonValue* obj = malloc(sizeof(struct JsonValue));
-        obj->kind = JsonType_JSON_OBJECT();
+        obj->kind = JsonType__JSON_OBJECT();
         obj->string_val = 0; obj->number_val = 0; obj->bool_val = 0; obj->array_val = 0;
         obj->object_val = malloc(sizeof(Map_JsonValuePtr));
         *(obj->object_val) = Map_JsonValuePtr__new();
@@ -128,21 +128,21 @@ raw {
         if (strncmp(*p, "null", 4) == 0) {
             *p += 4;
             struct JsonValue* v = malloc(sizeof(struct JsonValue));
-            v->kind = JsonType_JSON_NULL();
+            v->kind = JsonType__JSON_NULL();
             v->string_val = 0; v->number_val = 0; v->bool_val = 0; v->array_val = 0; v->object_val = 0;
             return v;
         }
         if (strncmp(*p, "true", 4) == 0) {
             *p += 4;
             struct JsonValue* v = malloc(sizeof(struct JsonValue));
-            v->kind = JsonType_JSON_BOOL();
+            v->kind = JsonType__JSON_BOOL();
             v->string_val = 0; v->number_val = 0; v->bool_val = 1; v->array_val = 0; v->object_val = 0;
             return v;
         }
         if (strncmp(*p, "false", 5) == 0) {
             *p += 5;
             struct JsonValue* v = malloc(sizeof(struct JsonValue));
-            v->kind = JsonType_JSON_BOOL();
+            v->kind = JsonType__JSON_BOOL();
             v->string_val = 0; v->number_val = 0; v->bool_val = 0; v->array_val = 0; v->object_val = 0;
             return v;
         }
@@ -150,7 +150,7 @@ raw {
             char* s = _json_parse_string(p);
             if (!s) return NULL;
             struct JsonValue* v = malloc(sizeof(struct JsonValue));
-            v->kind = JsonType_JSON_STRING();
+            v->kind = JsonType__JSON_STRING();
             v->string_val = s; v->number_val = 0; v->bool_val = 0; v->array_val = 0; v->object_val = 0;
             return v;
         }
@@ -160,7 +160,7 @@ raw {
             if (end == *p) return NULL;
             *p = end;
             struct JsonValue* v = malloc(sizeof(struct JsonValue));
-            v->kind = JsonType_JSON_NUMBER();
+            v->kind = JsonType__JSON_NUMBER();
             v->string_val = 0; v->number_val = num; v->bool_val = 0; v->array_val = 0; v->object_val = 0;
             return v;
         }
@@ -177,31 +177,31 @@ raw {
 
 impl JsonValue {
     fn null() -> JsonValue {
-        return JsonValue { kind: JsonType::JSON_NULL(), string_val: 0, number_val: 0, bool_val: false, array_val: 0, object_val: 0 };
+        return JsonValue { kind: JsonType::JSON_NULL(), string_val: NULL, number_val: 0.0, bool_val: false, array_val: NULL, object_val: NULL };
     }
     
     fn bool(b: bool) -> JsonValue {
-        return JsonValue { kind: JsonType::JSON_BOOL(), string_val: 0, number_val: 0, bool_val: b, array_val: 0, object_val: 0 };
+        return JsonValue { kind: JsonType::JSON_BOOL(), string_val: NULL, number_val: 0.0, bool_val: b, array_val: NULL, object_val: NULL };
     }
     
     fn number(n: double) -> JsonValue {
-        return JsonValue { kind: JsonType::JSON_NUMBER(), string_val: 0, number_val: n, bool_val: false, array_val: 0, object_val: 0 };
+        return JsonValue { kind: JsonType::JSON_NUMBER(), string_val: NULL, number_val: n, bool_val: false, array_val: NULL, object_val: NULL };
     }
     
     fn string(s: char*) -> JsonValue {
-        return JsonValue { kind: JsonType::JSON_STRING(), string_val: strdup(s), number_val: 0, bool_val: false, array_val: 0, object_val: 0 };
+        return JsonValue { kind: JsonType::JSON_STRING(), string_val: strdup(s), number_val: 0.0, bool_val: false, array_val: NULL, object_val: NULL };
     }
     
     fn array() -> JsonValue {
         let v: Vec<JsonValue*>* = malloc(sizeof(Vec_JsonValuePtr));
         *v = Vec_JsonValuePtr::new();
-        return JsonValue { kind: JsonType::JSON_ARRAY(), string_val: 0, number_val: 0, bool_val: false, array_val: v, object_val: 0 };
+        return JsonValue { kind: JsonType::JSON_ARRAY(), string_val: NULL, number_val: 0.0, bool_val: false, array_val: v, object_val: NULL };
     }
     
     fn object() -> JsonValue {
         let m: Map<JsonValue*>* = malloc(sizeof(Map_JsonValuePtr));
         *m = Map_JsonValuePtr::new();
-        return JsonValue { kind: JsonType::JSON_OBJECT(), string_val: 0, number_val: 0, bool_val: false, array_val: 0, object_val: m };
+        return JsonValue { kind: JsonType::JSON_OBJECT(), string_val: NULL, number_val: 0.0, bool_val: false, array_val: NULL, object_val: m };
     }
 
     // ============================================

@@ -7,7 +7,7 @@ enum Event {
 
 fn main() {
     // Test tuple in enum variant with pointers
-    let e = Event.Create("dir", "file");
+    let e = Event::Create("dir", "file");
     match e {
         Event::Create(d, f) => {
             assert(strcmp(d, "dir") == 0, "dir == 'dir'");

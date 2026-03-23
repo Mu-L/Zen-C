@@ -1,0 +1,22 @@
+import "std.zc";
+
+struct MyStruct{
+    x:int;
+}
+
+impl Eq for MyStruct{
+    fn eq(self, other:MyStruct*)->bool{
+        printf("Custom EQ called!\n");
+        return self.x == (*other).x;
+    }
+}
+
+test "custom eq work"{
+    let a = MyStruct{x:10};
+    let b = MyStruct{x:10};
+    let c = MyStruct{x:20};
+
+    assert(a == b);
+    assert(a != c);
+    printf("Success!\n");
+}
