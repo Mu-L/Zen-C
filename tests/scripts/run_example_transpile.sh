@@ -1,7 +1,7 @@
 #!/bin/bash
 
-ZC="./zc"
-EXAMPLES_DIR="examples"
+ZC="${ZC:-./zc}"
+EXAMPLES_DIR="${EXAMPLES_DIR:-examples}"
 FAIL_COUNT=0
 PASS_COUNT=0
 

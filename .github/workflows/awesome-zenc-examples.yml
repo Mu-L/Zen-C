@@ -1,0 +1,39 @@
+name: Awesome Zenc Examples Verification
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 0 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-examples:
+    name: Verify Awesome Examples
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout zenc
+      uses: actions/checkout@v4
+      with:
+        path: zenc
+
+    - name: Checkout awesome-zenc
+      uses: actions/checkout@v4
+      with:
+        repository: zenc-lang/awesome-zenc
+        path: awesome-zenc
+
+    - name: Build zenc
+      working-directory: zenc
+      run: make -j$(nproc)
+
+    - name: Run Awesome Examples
+      run: |
+        export ZC_ROOT=$GITHUB_WORKSPACE/zenc
+        cd awesome-zenc
+        ZC=../zenc/zc EXAMPLES_DIR=examples ../zenc/tests/scripts/run_example_transpile.sh
