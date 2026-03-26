@@ -604,13 +604,10 @@ Type *parse_type_base(ParserContext *ctx, Lexer *l)
                 int is_generic_dep = 0;
                 for (int i = 0; i < arg_count; ++i)
                 {
-                    for (int k = 0; k < ctx->known_generics_count; ++k)
+                    if (is_generic_dependent_str(ctx, args[i]))
                     {
-                        if (strcmp(args[i], ctx->known_generics[k]) == 0)
-                        {
-                            is_generic_dep = 1;
-                            break;
-                        }
+                        is_generic_dep = 1;
+                        break;
                     }
                 }
 
@@ -663,15 +660,7 @@ Type *parse_type_base(ParserContext *ctx, Lexer *l)
 
                 char *unmangled_arg = type_to_string(first_arg);
 
-                int is_single_dep = 0;
-                for (int k = 0; k < ctx->known_generics_count; ++k)
-                {
-                    if (strcmp(first_arg_str, ctx->known_generics[k]) == 0)
-                    {
-                        is_single_dep = 1;
-                        break;
-                    }
-                }
+                int is_single_dep = is_generic_dependent_str(ctx, first_arg_str);
 
                 if (!is_single_dep)
                 {

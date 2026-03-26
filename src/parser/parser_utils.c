@@ -765,6 +765,46 @@ int is_known_generic(ParserContext *ctx, char *name)
     return 0;
 }
 
+int is_generic_dependent_str(ParserContext *ctx, const char *type_str)
+{
+    if (!type_str || !ctx)
+    {
+        return 0;
+    }
+    for (int i = 0; i < ctx->known_generics_count; i++)
+    {
+        const char *g = ctx->known_generics[i];
+        const char *p = strstr(type_str, g);
+        while (p)
+        {
+            // Boundaries: Must not be preceded or followed by identifier chars (except Ptr or _)
+            int valid = 1;
+            if (p > type_str && is_ident_char(*(p - 1)) && *(p - 1) != '_')
+            {
+                valid = 0;
+            }
+            if (valid)
+            {
+                const char *next = p + strlen(g);
+                if (*next != '\0' && is_ident_char(*next) && *next != '_')
+                {
+                    // Allow Ptr suffix (mangled)
+                    if (strncmp(next, "Ptr", 3) != 0)
+                    {
+                        valid = 0;
+                    }
+                }
+            }
+            if (valid)
+            {
+                return 1;
+            }
+            p = strstr(p + 1, g);
+        }
+    }
+    return 0;
+}
+
 void register_impl_template(ParserContext *ctx, const char *sname, const char *param, ASTNode *node)
 {
     GenericImplTemplate *t = xmalloc(sizeof(GenericImplTemplate));
@@ -1652,8 +1692,52 @@ char *replace_type_str(const char *src, const char *param, const char *concrete,
         size_t slen = strlen(src);
         size_t plen = strlen(p_suffix);
 
+        int match = 0;
+        int found_plen = 0;
+        int num_ptr_suffixes = 0;
         if (slen >= plen && strcmp(src + slen - plen, p_suffix) == 0)
         {
+            match = 1;
+            found_plen = plen;
+        }
+        else if (slen > plen)
+        {
+            // Try matching with Ptr suffix
+            const char *p_match = strstr(src, p_suffix);
+            while (p_match)
+            {
+                const char *after = p_match + plen;
+                int is_all_ptr = 1;
+                if (*after == '\0')
+                {
+                    is_all_ptr = 0; // Handled by exact match above
+                }
+                while (*after)
+                {
+                    if (strncmp(after, "Ptr", 3) == 0)
+                    {
+                        after += 3;
+                    }
+                    else
+                    {
+                        is_all_ptr = 0;
+                        break;
+                    }
+                }
+                if (is_all_ptr)
+                {
+                    match = 1;
+                    found_plen = slen - (p_match - src);
+                    num_ptr_suffixes = (slen - (p_match - src) - plen) / 3;
+                    break;
+                }
+                p_match = strstr(p_match + 1, p_suffix);
+            }
+        }
+
+        if (match)
+        {
+            plen = found_plen;
             // Construct replacement suffix from concrete ("int,float" -> "_int_float")
             char c_suffix[1024];
             c_suffix[0] = 0;
@@ -1671,7 +1755,8 @@ char *replace_type_str(const char *src, const char *param, const char *concrete,
             free(c_temp);
 
             // Perform replacement
-            char *ret = xmalloc(slen - plen + strlen(c_suffix) + 1);
+            size_t ret_len = slen - plen + strlen(c_suffix) + (num_ptr_suffixes * 3) + 1;
+            char *ret = xmalloc(ret_len);
             strncpy(ret, src, slen - plen);
             ret[slen - plen] = 0;
 
@@ -1683,6 +1768,12 @@ char *replace_type_str(const char *src, const char *param, const char *concrete,
             else
             {
                 strcat(ret, c_suffix);
+            }
+
+            // Restore Ptr suffixes that were stripped by plen
+            for (int k = 0; k < num_ptr_suffixes; k++)
+            {
+                strcat(ret, "Ptr");
             }
             return ret;
         }
@@ -1947,8 +2038,52 @@ Type *replace_type_formal(Type *t, const char *p, const char *c, const char *os,
             size_t nlen = strlen(t->name);
             size_t slen = strlen(p_suffix);
 
+            int match = 0;
+            int found_slen = 0;
+            int num_ptr_suffixes = 0;
             if (nlen >= slen && strcmp(t->name + nlen - slen, p_suffix) == 0)
             {
+                match = 1;
+                found_slen = slen;
+            }
+            else if (nlen > slen)
+            {
+                // Try matching with Ptr suffix
+                const char *p_match = strstr(t->name, p_suffix);
+                while (p_match)
+                {
+                    const char *after = p_match + slen;
+                    int is_all_ptr = 1;
+                    if (*after == '\0')
+                    {
+                        is_all_ptr = 0; // Handled by exact match above
+                    }
+                    while (*after)
+                    {
+                        if (strncmp(after, "Ptr", 3) == 0)
+                        {
+                            after += 3;
+                        }
+                        else
+                        {
+                            is_all_ptr = 0;
+                            break;
+                        }
+                    }
+                    if (is_all_ptr)
+                    {
+                        match = 1;
+                        found_slen = nlen - (p_match - t->name);
+                        num_ptr_suffixes = (nlen - (p_match - t->name) - slen) / 3;
+                        break;
+                    }
+                    p_match = strstr(p_match + 1, p_suffix);
+                }
+            }
+
+            if (match)
+            {
+                slen = found_slen;
                 char c_suffix[1024];
                 c_suffix[0] = 0;
                 char *c_temp = xstrdup(c);
@@ -1963,7 +2098,8 @@ Type *replace_type_formal(Type *t, const char *p, const char *c, const char *os,
                 }
                 free(c_temp);
 
-                char *new_name = xmalloc(nlen - slen + strlen(c_suffix) + 1);
+                char *new_name =
+                    xmalloc(nlen - slen + strlen(c_suffix) + (num_ptr_suffixes * 3) + 1);
                 strncpy(new_name, t->name, nlen - slen);
                 new_name[nlen - slen] = 0;
 
@@ -1976,6 +2112,12 @@ Type *replace_type_formal(Type *t, const char *p, const char *c, const char *os,
                 else
                 {
                     strcat(new_name, c_suffix);
+                }
+
+                // Restore Ptr suffixes
+                for (int k = 0; k < num_ptr_suffixes; k++)
+                {
+                    strcat(new_name, "Ptr");
                 }
                 n->name = new_name;
                 n->kind = TYPE_STRUCT;
@@ -2052,7 +2194,12 @@ char *replace_mangled_part(const char *src, const char *param, const char *concr
             // Check Next: End of string OR Underscore
             if (valid && curr[plen] != 0 && curr[plen] != '_' && is_ident_char(curr[plen]))
             {
-                valid = 0;
+                // Allow Ptr suffix, but not other alphanumeric characters that would make it a
+                // different identifier
+                if (strncmp(curr + plen, "Ptr", 3) != 0)
+                {
+                    valid = 0;
+                }
             }
             if (valid && curr[plen] == '_')
             {

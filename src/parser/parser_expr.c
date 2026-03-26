@@ -2960,13 +2960,10 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                         int is_generic_dep = 0;
                         for (int i = 0; i < arg_count; ++i)
                         {
-                            for (int k = 0; k < ctx->known_generics_count; ++k)
+                            if (is_generic_dependent_str(ctx, concrete_types[i]))
                             {
-                                if (strcmp(concrete_types[i], ctx->known_generics[k]) == 0)
-                                {
-                                    is_generic_dep = 1;
-                                    break;
-                                }
+                                is_generic_dep = 1;
+                                break;
                             }
                         }
 

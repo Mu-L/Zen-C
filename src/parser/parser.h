@@ -461,6 +461,11 @@ void warn_c_reserved_word(Token t, const char *name);
 /**
  * @brief Enters a new scope (pushes to scope stack).
  */
+/**
+ * @brief Checks if a character is valid in an identifier (isalnum or underscore).
+ */
+int is_ident_char(char c);
+
 void enter_scope(ParserContext *ctx);
 
 /**
@@ -534,6 +539,12 @@ void register_generic(ParserContext *ctx, char *name);
  * @brief Checks if a name is a known generic parameter.
  */
 int is_known_generic(ParserContext *ctx, char *name);
+
+/**
+ * @brief Checks if a type name string depends on any known generic parameters.
+ * (e.g. "T*" returns 1 if T is a known generic).
+ */
+int is_generic_dependent_str(ParserContext *ctx, const char *type_str);
 
 /**
  * @brief Checks if a name is a primitive type.
