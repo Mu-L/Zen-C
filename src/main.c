@@ -128,6 +128,18 @@ int main(int argc, char **argv)
     {
         // default mode
     }
+    else if (strcmp(command, "help") == 0)
+    {
+        if (argc > 2)
+        {
+            print_command_help(argv[2]);
+        }
+        else
+        {
+            print_usage();
+        }
+        return 0;
+    }
     else if (strcmp(command, "--help") == 0 || strcmp(command, "-h") == 0)
     {
         print_usage();

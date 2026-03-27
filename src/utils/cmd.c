@@ -58,7 +58,7 @@ static void print_help_item(const char *option, const char *description)
 {
     printf("  %s", option);
     int visible_len = get_visible_length(option) + 2; // +2 for the leading spaces
-    int target_col = 30;
+    int target_col = 22;                              // Reduced from 30
 
     if (visible_len >= target_col - 1)
     {
@@ -76,73 +76,94 @@ static void print_help_item(const char *option, const char *description)
 
 void print_usage()
 {
-    printf(COLOR_BOLD "Zen C" COLOR_RESET " - The language of monks\n\n");
-    printf(COLOR_BOLD "USAGE:" COLOR_RESET " zc [COMMAND] [OPTIONS] [FILES...]\n\n");
-    printf("A modern, high-performance C transpiler with advanced features.\n\n");
+    printf(
+        "usage: zc [-v | -h | -q | -V] [-I | -L | -l | -D <path/macro>] [--cc <c>] [-O<l>] [-g]\n");
+    printf("          [--release] [--json] [--paths] [--zen] <command> [<args>]\n\n");
 
-    printf(COLOR_BOLD "COMMANDS:" COLOR_RESET "\n");
-    print_help_item(COLOR_GREEN "run" COLOR_RESET, "Compile and execute the program immediately");
-    print_help_item(COLOR_GREEN "build" COLOR_RESET, "Compile to a standalone executable");
-    print_help_item(COLOR_GREEN "check" COLOR_RESET, "Perform syntax and type checking only");
-    print_help_item(COLOR_GREEN "repl" COLOR_RESET, "Start the interactive REPL shell");
-    print_help_item(COLOR_GREEN "transpile" COLOR_RESET, "Generate C code without compilation");
-    print_help_item(COLOR_GREEN "lsp" COLOR_RESET, "Start the Language Server (LSP)");
+    printf("common commands:\n");
+    print_help_item(COLOR_GREEN "build, run" COLOR_RESET,
+                    "Compile program (default / run immediately)");
+    print_help_item(COLOR_GREEN "check, transpile" COLOR_RESET,
+                    "Type check only / generate C code");
+    print_help_item(COLOR_GREEN "repl, lsp" COLOR_RESET, "Start REPL / Language Server");
 
-    printf("\n" COLOR_BOLD "GENERAL OPTIONS:" COLOR_RESET "\n");
-    print_help_item(COLOR_CYAN "-o" COLOR_RESET " <file>", "Set the output executable name");
-    print_help_item(COLOR_CYAN "-I" COLOR_RESET " <dir>", "Add directory to include search path");
-    print_help_item(COLOR_CYAN "-L" COLOR_RESET " <dir>", "Add directory to library search path");
-    print_help_item(COLOR_CYAN "-l" COLOR_RESET " <lib>", "Link against a specific library");
-    print_help_item(COLOR_CYAN "-D" COLOR_RESET " <name>[=val]", "Define a preprocessor macro");
-    print_help_item(COLOR_CYAN "--cc" COLOR_RESET " <compiler>",
-                    "Specify the backend C compiler (gcc, clang, tcc)");
+    printf("\ncommon options:\n");
+    print_help_item(COLOR_CYAN "-o <f>, --cc <c>" COLOR_RESET,
+                    "Set output name / backend compiler");
+    print_help_item(COLOR_CYAN "-I, -L, -l <p>" COLOR_RESET, "Include/Library paths and linking");
+    print_help_item(COLOR_CYAN "-D <n>, -O<l>" COLOR_RESET,
+                    "Define macro / Set optimization level");
+    print_help_item(COLOR_CYAN "-g, -g0, --release" COLOR_RESET,
+                    "Debug info (on/off) or Release mode");
+    print_help_item(COLOR_CYAN "-v, -q, --json" COLOR_RESET, "Verbose, quiet, or JSON output");
 
-    printf("\n" COLOR_BOLD "BUILD & OPTIMIZATION:" COLOR_RESET "\n");
-    print_help_item(COLOR_CYAN "-O" COLOR_RESET "<level>", "Set optimization level (0-3)");
-    print_help_item(COLOR_CYAN "-g" COLOR_RESET, "Include debug information (default)");
-    print_help_item(COLOR_CYAN "-g0" COLOR_RESET ", " COLOR_CYAN "--no-debug" COLOR_RESET,
-                    "Disable debug information");
-    print_help_item(COLOR_CYAN "--release" COLOR_RESET, "Enable release mode (no-debug + -O3)");
-    print_help_item(COLOR_CYAN "-c" COLOR_RESET, "Compile only; do not link");
-    print_help_item(COLOR_CYAN "-S" COLOR_RESET, "Produce assembly code instead of executable");
-    print_help_item(COLOR_CYAN "-E" COLOR_RESET, "Preprocess the source files only");
-    print_help_item(COLOR_CYAN "-shared" COLOR_RESET, "Create a shared library (.so, .dll)");
+    printf("\nlanguage & advanced:\n");
+    print_help_item(COLOR_CYAN "--check, --free" COLOR_RESET,
+                    "Borrow checker / No standard library");
+    print_help_item(COLOR_CYAN "--cpp, --cuda" COLOR_RESET, "C++ or CUDA compatibility modes");
+    print_help_item(COLOR_CYAN "-c, -S, -E, -shared" COLOR_RESET,
+                    "Compile/Asm/Preprocess only / DLL");
 
-    printf("\n" COLOR_BOLD "LANGUAGE & SEMANTICS:" COLOR_RESET "\n");
-    print_help_item(COLOR_CYAN "--check" COLOR_RESET,
-                    "Enable full semantic analysis (borrow/move checker)");
-    print_help_item(COLOR_CYAN "--cpp" COLOR_RESET, "Enable C++ compatibility mode");
-    print_help_item(COLOR_CYAN "--objective-c" COLOR_RESET,
-                    "Enable Objective-C compatibility mode");
-    print_help_item(COLOR_CYAN "--cuda" COLOR_RESET,
-                    "Enable CUDA compatibility mode (requires nvcc)");
-    print_help_item(COLOR_CYAN "--freestanding" COLOR_RESET,
-                    "Enable freestanding mode (no standard library)");
+    printf("\n'zc -h' for help, 'zc --version' for version. See 'zc help <command>' for info.\n");
+}
 
-    printf("\n" COLOR_BOLD "OUTPUT & DEBUGGING:" COLOR_RESET "\n");
-    print_help_item(COLOR_CYAN "-v" COLOR_RESET ", " COLOR_CYAN "--verbose" COLOR_RESET,
-                    "Display verbose compilation output");
-    print_help_item(COLOR_CYAN "-q" COLOR_RESET ", " COLOR_CYAN "--quiet" COLOR_RESET,
-                    "Suppress all non-essential output");
-    print_help_item(COLOR_CYAN "--json" COLOR_RESET, "Emit compilation diagnostics in JSON format");
-    print_help_item(COLOR_CYAN "--no-suppress-warnings" COLOR_RESET,
-                    "Display all default C backend warnings");
-    print_help_item(COLOR_CYAN "--emit-c" COLOR_RESET, "Keep the generated C source files");
-    print_help_item(COLOR_CYAN "--keep-comments" COLOR_RESET,
-                    "Preserve comments in the generated C code");
-
-    printf("\n" COLOR_BOLD "ADVANCED C-BACKEND OPTIONS:" COLOR_RESET "\n");
-    print_help_item(COLOR_CYAN "-W" COLOR_RESET "<warn>", "Forward warning flag to C compiler");
-    print_help_item(COLOR_CYAN "-f" COLOR_RESET "<feat>", "Forward feature flag to C compiler");
-    print_help_item(COLOR_CYAN "-m" COLOR_RESET "<arch>",
-                    "Forward architecture flag to C compiler");
-    print_help_item(COLOR_CYAN "-x" COLOR_RESET "<lang>", "Specify input language to C compiler");
-
-    printf("\n" COLOR_BOLD "INFO & MISC:" COLOR_RESET "\n");
-    print_help_item(COLOR_CYAN "--help" COLOR_RESET, "Display this help message and exit");
-    print_help_item(COLOR_CYAN "--paths" COLOR_RESET, "Display library search paths");
-    print_help_item(COLOR_CYAN "--version" COLOR_RESET, "Display version information and exit");
-    print_help_item(COLOR_CYAN "--zen" COLOR_RESET, "Display Zen facts and easter eggs");
+void print_command_help(const char *command)
+{
+    if (strcmp(command, "build") == 0)
+    {
+        printf("usage: zc build [options] <file>\n\n");
+        printf("Compile Zen C source into a standalone executable.\n\n");
+        printf("options:\n");
+        print_help_item("-o <file>", "Set the name of the output binary");
+        print_help_item("-O<level>", "Optimization level (0-3, default 1)");
+        print_help_item("-g, -g0", "Enable/disable debug information");
+        print_help_item("--release", "Release mode (equivalent to -O3 -g0)");
+        print_help_item("-shared", "Build a shared library (.so, .dll)");
+    }
+    else if (strcmp(command, "run") == 0)
+    {
+        printf("usage: zc run [options] <file> [<args>]\n\n");
+        printf("Compile and execute a Zen C program immediately.\n\n");
+        printf("options:\n");
+        print_help_item("-o <file>", "Temp binary name (default: a.out)");
+        print_help_item("-O<level>", "Backend optimization level");
+    }
+    else if (strcmp(command, "check") == 0)
+    {
+        printf("usage: zc check [options] <file>\n\n");
+        printf("Verify syntax and type safety without generating code.\n\n");
+        printf("options:\n");
+        print_help_item("--json", "Output diagnostics in structured JSON");
+        print_help_item("--check", "Enable advanced borrow/move checking");
+    }
+    else if (strcmp(command, "transpile") == 0)
+    {
+        printf("usage: zc transpile [options] <file>\n\n");
+        printf("Convert Zen C source code into human-readable C.\n\n");
+        printf("options:\n");
+        print_help_item("-o <file>", "Output C file name");
+        print_help_item("--emit-c", "Keep the generated C file (implied)");
+    }
+    else if (strcmp(command, "debug") == 0)
+    {
+        printf("usage: zc debug <file> [<args>]\n\n");
+        printf("Compile and run with full debug information and GDB/LLDB support.\n");
+    }
+    else if (strcmp(command, "repl") == 0)
+    {
+        printf("usage: zc repl\n\n");
+        printf("Start an interactive Read-Eval-Print Loop session.\n");
+    }
+    else if (strcmp(command, "lsp") == 0)
+    {
+        printf("usage: zc lsp\n\n");
+        printf("Start the Language Server for IDE integration.\n");
+    }
+    else
+    {
+        printf("Unknown command '%s'.\n", command);
+        print_usage();
+    }
 }
 
 void build_compile_arg_list(ArgList *list, const char *outfile, const char *temp_source_file)

@@ -65,6 +65,7 @@ void print_version();
  * @brief Print compiler usage string
  */
 void print_usage();
+void print_command_help(const char *command);
 
 /**
  * @brief Initialize a new argument list
