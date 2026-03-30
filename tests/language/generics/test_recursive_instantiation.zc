@@ -22,7 +22,7 @@ impl Handle<T> {
 }
 
 test "recursive generic instantiation" {
-    // Instantiate Handle<int>, which should instantiate alloc<int32_t> inside new()
+    // Instantiate Handle<int>, which should instantiate alloc<i32> inside new()
     let h = Handle<int>::new(42);
     
     // Verify the value

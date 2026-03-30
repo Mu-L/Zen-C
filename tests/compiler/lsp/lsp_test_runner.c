@@ -184,7 +184,8 @@ char *wait_for_response(int id)
 void test_initialize()
 {
     printf("Running test_initialize...\n");
-    send_request("{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {}}");
+    send_request("{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": "
+                 "{\"rootUri\": \"file:///tmp\"}}");
     char *resp = wait_for_response(1);
     if (!resp)
     {
@@ -265,14 +266,14 @@ void test_completion()
     if (fd >= 0)
     {
         // Function with local variable 'local_idx' and argument 'arg_val'
-        const char *code = "fn test_func(arg_val: int) { var local_idx = 10; \n    \n }";
+        const char *code = "fn test_func(arg_val: int) { let local_idx = 10; \n    \n }";
         write(fd, code, strlen(code));
         close(fd);
     }
 
     send_request("{\"jsonrpc\": \"2.0\", \"method\": \"textDocument/didOpen\", \"params\": "
                  "{\"textDocument\": {\"uri\": \"file:///tmp/test_compl.zc\", \"languageId\": "
-                 "\"zenc\", \"version\": 1, \"text\": \"fn test_func(arg_val: int) { var local_idx "
+                 "\"zenc\", \"version\": 1, \"text\": \"fn test_func(arg_val: int) { let local_idx "
                  "= 10; \\n    \\n }\"}}}");
     usleep(100000);
 
@@ -318,7 +319,7 @@ void test_struct_completion()
     {
         const char *code = "struct Point { x: int; y: int; }\n"
                            "fn main() {\n"
-                           "    var my_point: Point;\n"
+                           "    let my_point: Point;\n"
                            "    my_point.\n"
                            "}";
         write(fd, code, strlen(code));
@@ -328,7 +329,7 @@ void test_struct_completion()
     send_request("{\"jsonrpc\": \"2.0\", \"method\": \"textDocument/didOpen\", \"params\": "
                  "{\"textDocument\": {\"uri\": \"file:///tmp/test_struct.zc\", \"languageId\": "
                  "\"zenc\", \"version\": 1, \"text\": \"struct Point { x: int; y: int; }\\nfn "
-                 "main() {\\n    var my_point: Point;\\n    my_point.\\n}\"}}}");
+                 "main() {\\n    let my_point: Point;\\n    my_point.\\n}\"}}}");
     usleep(100000);
 
     // Request completion at 'my_point.' (line 3, character 13)
@@ -360,11 +361,11 @@ void test_diagnostics()
 {
     printf("Running test_diagnostics...\n");
     // Create a file with a syntax error
-    // "fn main() { var x: int = ; }" -> Syntax error
+    // "fn main() { let x: int = ; }" -> Syntax error
     int fd = open("/tmp/test_error.zc", O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd >= 0)
     {
-        const char *code = "fn main() { var x: int = ; }";
+        const char *code = "fn main() { let x: int = ; }";
         write(fd, code, strlen(code));
         close(fd);
     }
@@ -372,7 +373,7 @@ void test_diagnostics()
     // Open file - should trigger publishDiagnostics
     send_request("{\"jsonrpc\": \"2.0\", \"method\": \"textDocument/didOpen\", \"params\": "
                  "{\"textDocument\": {\"uri\": \"file:///tmp/test_error.zc\", \"languageId\": "
-                 "\"zenc\", \"version\": 1, \"text\": \"fn main() { var x: int = ; }\"}}}");
+                 "\"zenc\", \"version\": 1, \"text\": \"fn main() { let x: int = ; }\"}}}");
 
     // Check for notification
     int found = 0;
@@ -410,20 +411,20 @@ void test_semantic_tokens()
     int fd = open("/tmp/test_semantic.zc", O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd >= 0)
     {
-        // fn hello() { var x = 10; }
+        // fn hello() { let x = 10; }
         // fn: function (modifier?) or keyword? Actually keyword 'fn'.
         // hello: function
-        // var: keyword
+        // let: keyword
         // x: variable
         // 10: number
-        const char *code = "fn hello() { var x = 10; }";
+        const char *code = "fn hello() { let x = 10; }";
         write(fd, code, strlen(code));
         close(fd);
     }
 
     send_request("{\"jsonrpc\": \"2.0\", \"method\": \"textDocument/didOpen\", \"params\": "
                  "{\"textDocument\": {\"uri\": \"file:///tmp/test_semantic.zc\", \"languageId\": "
-                 "\"zenc\", \"version\": 1, \"text\": \"fn hello() { var x = 10; }\"}}}");
+                 "\"zenc\", \"version\": 1, \"text\": \"fn hello() { let x = 10; }\"}}}");
     usleep(100000);
 
     send_request(
@@ -612,8 +613,8 @@ void test_formatting()
     int fd = open("/tmp/test_format.zc", O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd >= 0)
     {
-        const char *code =
-            "fn main() {\n  let x = 1;\n    if (x == 1) {\n      println(\"hi\");\n    }\n}\n";
+        const char *code = "fn my_func(a: int) {}\nfn main() {\n  let x = 1;\n    if (x == 1) {\n  "
+                           "    my_func(1);\n    }\n}\n";
         write(fd, code, strlen(code));
         close(fd);
     }
@@ -621,8 +622,9 @@ void test_formatting()
     send_request(
         "{\"jsonrpc\": \"2.0\", \"method\": \"textDocument/didOpen\", \"params\": "
         "{\"textDocument\": {\"uri\": \"file:///tmp/test_format.zc\", \"languageId\": \"zenc\", "
-        "\"version\": 1, \"text\": \"fn main() {\\n  let x = 1;\\n    if (x == 1) {\\n      "
-        "println(\\\"hi\\\");\\n    }\\n}\\n\"}}}");
+        "\"version\": 1, \"text\": \"fn my_func(a: int) {}\\nfn main() {\\n  let x = 1;\\n    if "
+        "(x == 1) {\\n      "
+        "my_func(1);\\n    }\\n}\\n\"}}}");
     usleep(100000);
 
     send_request("{\"jsonrpc\": \"2.0\", \"id\": 95, \"method\": \"textDocument/formatting\", "
@@ -645,7 +647,7 @@ void test_signature_help()
     printf("Running test_signature_help...\n");
     send_request("{\"jsonrpc\": \"2.0\", \"id\": 96, \"method\": \"textDocument/signatureHelp\", "
                  "\"params\": {\"textDocument\": {\"uri\": \"file:///tmp/test_format.zc\"}, "
-                 "\"position\": {\"line\": 3, \"character\": 14}}}"); // After println(
+                 "\"position\": {\"line\": 4, \"character\": 14}}}"); // Inside my_func(
 
     char *resp = wait_for_response(96);
     if (resp && strstr(resp, "signatures"))

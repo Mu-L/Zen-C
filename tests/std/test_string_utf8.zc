@@ -9,13 +9,13 @@ test "string utf8 and rune operations" {
     assert(s.utf8_len() == 7, "utf8_len failed");
     
     // Test utf8_get
-    assert((uint32_t)s.utf8_get(1) == 233, "utf8_get(1) failed (é)");
-    assert((uint32_t)s.utf8_get(6) == 0x1F680, "utf8_get(6) failed (🚀)");
+    assert((u32)s.utf8_get(1) == 233, "utf8_get(1) failed (é)");
+    assert((u32)s.utf8_get(6) == 0x1F680, "utf8_get(6) failed (🚀)");
     
     // Test runes()
     let runes = s.runes();
     assert(runes.len == 7, "String::runes length failed");
-    assert((uint32_t)runes.get(6) == 0x1F680, "String::runes content failed");
+    assert((u32)runes.get(6) == 0x1F680, "String::runes content failed");
     runes.free();
     
     // Test chars iterator
@@ -34,10 +34,10 @@ test "string utf8 and rune operations" {
     assert(s.utf8_len() == 8, "After insert_rune len failed");
     let r_at_1 = s.utf8_get(1);
     let expected_n: rune = 'ñ';
-    assert((uint32_t)r_at_1 == (uint32_t)expected_n, "After insert_rune content failed");
+    assert((u32)r_at_1 == (u32)expected_n, "After insert_rune content failed");
     
     let removed = s.remove_rune_at(2); // removes 'é' -> "Hñllö 🚀"
-    assert((uint32_t)removed == 233, "remove_rune_at returned wrong char");
+    assert((u32)removed == 233, "remove_rune_at returned wrong char");
     assert(s.utf8_len() == 7, "After remove_rune_at len failed");
     
     // Test Utf8 tools

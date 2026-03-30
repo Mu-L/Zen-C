@@ -4099,7 +4099,8 @@ ASTNode *parse_import(ParserContext *ctx, Lexer *l)
         free(module_base_name);
     }
 
-    free(fn);
+    // Do not free(fn) here, because the Lexer tokens generated during
+    // parse_program_nodes hold a direct pointer (t.file) to this string!
     return r;
 }
 

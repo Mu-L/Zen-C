@@ -6,11 +6,11 @@ test "character codes conversion" {
     assert((char)code == 'b', "code 98 should map to 'b'");
     
     let r: rune = '🚀';
-    assert((uint32_t)r == 128640, "rune rocket code should be 128640");
+    assert((u32)r == 128640, "rune rocket code should be 128640");
     
-    let r_code: uint32_t = 128640;
+    let r_code: u32 = 128640;
     assert((rune)r_code == '🚀', "code 128640 should map to rocket");
     
     let r_euro: rune = '€';
-    assert((uint32_t)r_euro == 0x20AC, "Euro sign code should be 0x20AC");
+    assert((u32)r_euro == 0x20AC, "Euro sign code should be 0x20AC");
 }

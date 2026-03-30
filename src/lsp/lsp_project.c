@@ -175,6 +175,34 @@ void lsp_project_update_file(const char *uri, const char *src)
     Lexer l;
     lexer_init(&l, src);
 
+    // Reset parser context globals so that imports don't trigger redefinition errors
+    // from previously indexed files in the workspace.
+    g_project->ctx->struct_defs = NULL;
+    g_project->ctx->parsed_structs_list = NULL;
+    g_project->ctx->parsed_enums_list = NULL;
+    g_project->ctx->parsed_funcs_list = NULL;
+    g_project->ctx->parsed_impls_list = NULL;
+    g_project->ctx->parsed_globals_list = NULL;
+    g_project->ctx->enum_variants = NULL;
+    g_project->ctx->registered_impls = NULL;
+    g_project->ctx->used_slices = NULL;
+    g_project->ctx->used_tuples = NULL;
+    g_project->ctx->type_aliases = NULL;
+    g_project->ctx->modules = NULL;
+    g_project->ctx->imported_files = NULL;
+    g_project->ctx->selective_imports = NULL;
+    g_project->ctx->templates = NULL;
+    g_project->ctx->func_templates = NULL;
+    g_project->ctx->impl_templates = NULL;
+    g_project->ctx->instantiations = NULL;
+    g_project->ctx->instantiated_structs = NULL;
+    g_project->ctx->instantiated_funcs = NULL;
+
+    if (!is_file_imported(g_project->ctx, pf->path))
+    {
+        mark_file_imported(g_project->ctx, pf->path);
+    }
+
     ASTNode *root = parse_program(g_project->ctx, &l);
 
     pf->ast = root;
