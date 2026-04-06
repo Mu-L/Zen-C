@@ -1060,7 +1060,7 @@ ASTNode *parse_program_nodes(ParserContext *ctx, Lexer *l)
                 Token next = lexer_peek(l);
                 if (next.type == TOK_IDENT && 2 == next.len && 0 == strncmp(next.start, "fn", 2))
                 {
-                    s = parse_function(ctx, l, 0);
+                    s = parse_function(ctx, l, 0, 0);
                     attr_inline = 1;
                 }
                 else
@@ -1070,7 +1070,7 @@ ASTNode *parse_program_nodes(ParserContext *ctx, Lexer *l)
             }
             else if (0 == strncmp(t.start, "fn", 2) && 2 == t.len)
             {
-                s = parse_function(ctx, l, 0);
+                s = parse_function(ctx, l, 0, 0);
             }
             else if (0 == strncmp(t.start, "struct", 6) && 6 == t.len)
             {
@@ -1137,7 +1137,7 @@ ASTNode *parse_program_nodes(ParserContext *ctx, Lexer *l)
                 Token peek = lexer_peek(l);
                 if (peek.type == TOK_IDENT && peek.len == 2 && strncmp(peek.start, "fn", 2) == 0)
                 {
-                    s = parse_function(ctx, l, 0);
+                    s = parse_function(ctx, l, 0, 1);
                 }
                 else if (peek.type == TOK_IDENT && peek.len == 6 &&
                          strncmp(peek.start, "struct", 6) == 0)
@@ -1162,6 +1162,19 @@ ASTNode *parse_program_nodes(ParserContext *ctx, Lexer *l)
                 }
                 else
                 {
+                    Token peek_v = lexer_peek(l);
+                    if (peek_v.type == TOK_IDENT && peek_v.len == 3 &&
+                        strncmp(peek_v.start, "var", 3) == 0)
+                    {
+                        zpanic_at(peek_v, "'extern var' is not allowed. Use 'extern let' instead.");
+                    }
+
+                    if (peek_v.type == TOK_IDENT && peek_v.len == 3 &&
+                        strncmp(peek_v.start, "let", 3) == 0)
+                    {
+                        lexer_next(l); // eat let
+                    }
+
                     while (1)
                     {
                         Token sym = lexer_next(l);
@@ -1273,7 +1286,7 @@ ASTNode *parse_program_nodes(ParserContext *ctx, Lexer *l)
             Token next = lexer_peek(l);
             if (0 == strncmp(next.start, "fn", 2) && 2 == next.len)
             {
-                s = parse_function(ctx, l, 1);
+                s = parse_function(ctx, l, 1, 0);
             }
             else
             {

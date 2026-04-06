@@ -1,0 +1,64 @@
+struct Point {
+    x: int;
+    y: int;
+}
+
+struct Inner {
+    val: int;
+}
+
+struct Outer {
+    inner: Inner;
+}
+
+test "auto_dereference" {
+    let p = Point { x: 10, y: 20 };
+    let ptr = &p;
+    
+    // In Zen-C w/ Auto-Deref, . works on pointers like -> in C
+    assert(ptr.x == 10);
+    
+    ptr.y = 30;
+    assert(p.y == 30);
+    assert(ptr.y == 30);
+
+    let o = Outer { inner: Inner { val: 42 } };
+    let p_out = &o;
+    
+    // Nested access: p_out.inner.val -> p_out->inner.val
+    assert(p_out.inner.val == 42);
+}
+
+struct Vec2 {
+    x: float;
+    y: float;
+}
+
+impl Vec2 {
+    fn length_squared(self) -> float {
+        return .x * .x + .y * .y;
+    }
+
+    fn scale(self, factor: float) {
+        .x = .x * factor;
+        .y = .y * factor;
+    }
+
+    fn add(self, other: Vec2) -> Vec2 {
+        return Vec2 { x: .x + other.x, y: .y + other.y };
+    }
+}
+
+test "self_shorthand" {
+    let v = Vec2 { x: 3.0, y: 4.0 };
+    assert(v.length_squared() == 25.0);
+
+    v.scale(2.0);
+    assert(v.x == 6.0);
+    assert(v.y == 8.0);
+
+    let v2 = Vec2 { x: 1.0, y: 1.0 };
+    let sum = v.add(v2);
+    assert(sum.x == 7.0);
+    assert(sum.y == 9.0);
+}

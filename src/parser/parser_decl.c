@@ -14,7 +14,7 @@
 #include "../codegen/codegen.h"
 #include "analysis/move_check.h"
 
-ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async)
+ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async, int is_extern)
 {
     lexer_next(l);
     Token name_tok = lexer_next(l);
@@ -138,7 +138,8 @@ ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async)
     // Auto-prefix function name if in module context
     // Don't prefix generic templates or functions inside impl blocks (already
     // mangled)
-    if (ctx->current_module_prefix && !gen_param && !ctx->current_impl_struct)
+    if (ctx->current_module_prefix && !gen_param && !ctx->current_impl_struct && !is_extern &&
+        !is_extern_symbol(ctx, name))
     {
         char *prefixed_name = xmalloc(strlen(ctx->current_module_prefix) + strlen(name) + 3);
         sprintf(prefixed_name, "%s__%s", ctx->current_module_prefix, name);

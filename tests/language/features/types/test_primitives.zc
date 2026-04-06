@@ -1,0 +1,75 @@
+// Test methods on primitive types
+impl int {
+    fn abs(self) -> int {
+        return *self < 0 ? -(*self) : *self;
+    }
+    
+    fn is_positive(self) -> bool {
+        return *self > 0;
+    }
+
+    fn plus_one(self) -> int {
+        return *self + 1;
+    }
+}
+
+impl f64 {
+    fn abs(self) -> f64 {
+        return *self < 0.0 ? -(*self) : *self;
+    }
+}
+
+test "int_methods" {
+    let x: int = -42;
+    assert(x.abs() == 42);
+    assert(x.is_positive() == false);
+    assert((-123).abs() == 123);
+    assert(10.plus_one() == 11);
+}
+
+test "f64_methods" {
+    let x = -10.0;
+    assert(x.abs() == 10.0);
+    assert((-10.0).abs() == 10.0);
+    assert(10.0.abs() == 10.0);
+}
+
+test "boolean_mutability" {
+    let b = true;
+    assert(b);
+    b = false;
+    assert(!b);
+    
+    let c: bool = true;
+    c = false;
+    assert(!c);
+}
+
+test "char_rune_codes" {
+    let c = 'a';
+    assert((int)c == 97);
+    assert((char)98 == 'b');
+    
+    let r: rune = '🚀';
+    assert((u32)r == 128640);
+    assert((rune)128640 == '🚀');
+    
+    let r_euro: rune = '€';
+    assert((u32)r_euro == 0x20AC);
+}
+
+test "zero_initialization" {
+    let i: int;
+    let f: float;
+    let b: bool;
+    let c: char;
+    let arr: int[5];
+    let d: double;
+    
+    assert(i == 0);
+    assert(!b);
+    assert(c == 0);
+    assert(arr[0] == 0);
+    assert(f == 0.0f);
+    assert(d == 0.0);
+}

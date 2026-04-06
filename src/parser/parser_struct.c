@@ -388,7 +388,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
 
             if (lexer_peek(l).type == TOK_IDENT && strncmp(lexer_peek(l).start, "fn", 2) == 0)
             {
-                ASTNode *f = parse_function(ctx, l, 0);
+                ASTNode *f = parse_function(ctx, l, 0, 0);
                 // Mangle: Type_Trait_Method
                 {
                     char tmp[512];
@@ -435,7 +435,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                 lexer_next(l); // eat async
                 if (lexer_peek(l).type == TOK_IDENT && strncmp(lexer_peek(l).start, "fn", 2) == 0)
                 {
-                    ASTNode *f = parse_function(ctx, l, 1);
+                    ASTNode *f = parse_function(ctx, l, 1, 0);
                     f->func.is_async = 1;
                     // Mangle: Type_Trait_Method
                     {
@@ -579,7 +579,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                 }
                 if (lexer_peek(l).type == TOK_IDENT && strncmp(lexer_peek(l).start, "fn", 2) == 0)
                 {
-                    ASTNode *f = parse_function(ctx, l, 0);
+                    ASTNode *f = parse_function(ctx, l, 0, 0);
                     // Standard Mangle for template: Box_method
                     {
                         char *tmp = xmalloc(strlen(name1) + strlen(f->func.name) + 3);
@@ -627,7 +627,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                     if (lexer_peek(l).type == TOK_IDENT &&
                         strncmp(lexer_peek(l).start, "fn", 2) == 0)
                     {
-                        ASTNode *f = parse_function(ctx, l, 1);
+                        ASTNode *f = parse_function(ctx, l, 1, 0);
                         f->func.is_async = 1;
                         {
                             char *tmp = xmalloc(strlen(name1) + strlen(f->func.name) + 3);
@@ -711,7 +711,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                     if (lexer_peek(l).type == TOK_IDENT &&
                         strncmp(lexer_peek(l).start, "fn", 2) == 0)
                     {
-                        ASTNode *f = parse_function(ctx, l, 0);
+                        ASTNode *f = parse_function(ctx, l, 0, 0);
 
                         // Standard Mangle: Struct_method
                         {
@@ -758,7 +758,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                 else if (lexer_peek(l).type == TOK_IDENT &&
                          strncmp(lexer_peek(l).start, "fn", 2) == 0)
                 {
-                    ASTNode *f = parse_function(ctx, l, 0);
+                    ASTNode *f = parse_function(ctx, l, 0, 0);
 
                     // Standard Mangle: Struct_method
                     {
@@ -800,7 +800,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                     if (lexer_peek(l).type == TOK_IDENT &&
                         strncmp(lexer_peek(l).start, "fn", 2) == 0)
                     {
-                        ASTNode *f = parse_function(ctx, l, 1);
+                        ASTNode *f = parse_function(ctx, l, 1, 0);
                         f->func.is_async = 1;
                         {
                             char *tmp = xmalloc(strlen(name1) + strlen(f->func.name) + 3);

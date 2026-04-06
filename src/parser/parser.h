@@ -1013,7 +1013,7 @@ ASTNode *parse_type_alias(ParserContext *ctx, Lexer *l, int is_opaque);
 /**
  * @brief Parses a function definition.
  */
-ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async);
+ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async, int is_extern);
 
 /**
  * @brief Parses a struct definition.
