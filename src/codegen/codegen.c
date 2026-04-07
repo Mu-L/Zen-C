@@ -949,10 +949,10 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                     char *call_base = mangled_base;
 
                     int need_cast = 0;
-                    char mixin_func_base[1024];
+                    char mixin_func_base[2048];
                     snprintf(mixin_func_base, sizeof(mixin_func_base), "%s__%s", call_base, method);
                     char *mixin_func_name_ptr = merge_underscores(mixin_func_base);
-                    char mixin_func_name[1024];
+                    char mixin_func_name[2048];
                     strncpy(mixin_func_name, mixin_func_name_ptr, sizeof(mixin_func_name) - 1);
                     mixin_func_name[sizeof(mixin_func_name) - 1] = 0;
                     free(mixin_func_name_ptr);
@@ -1277,14 +1277,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                         snprintf(msg, sizeof(msg), "Undefined function '%s'", name);
                         const char *hint = get_missing_function_hint(ctx, name);
 
-                        if (hint)
-                        {
-                            zwarn_with_suggestion(t, msg, hint);
-                        }
-                        else
-                        {
-                            zwarn_at(t, "%s", msg);
-                        }
+                        zwarn_diag(DIAG_INTEROP_UNDEF_FUNC, t, msg, hint);
                     }
                 }
             }

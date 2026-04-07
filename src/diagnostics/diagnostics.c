@@ -690,6 +690,10 @@ void error_cannot_index(Token t, const char *type_name)
 
 void warn_unused_variable(Token t, const char *var_name)
 {
+    if (!is_diag_enabled(DIAG_UNUSED_VAR))
+    {
+        return;
+    }
     char msg[256];
     snprintf(msg, sizeof(msg), "Unused variable '%s'", var_name);
     zwarn_with_suggestion(t, msg, "Consider removing it or prefixing with '_'");
@@ -697,6 +701,10 @@ void warn_unused_variable(Token t, const char *var_name)
 
 void warn_shadowing(Token t, const char *var_name)
 {
+    if (!is_diag_enabled(DIAG_STYLE_SHADOWING))
+    {
+        return;
+    }
     char msg[256];
     snprintf(msg, sizeof(msg), "Variable '%s' shadows a previous declaration", var_name);
     zwarn_with_suggestion(t, msg, "This can lead to confusion");
@@ -704,11 +712,19 @@ void warn_shadowing(Token t, const char *var_name)
 
 void warn_unreachable_code(Token t)
 {
+    if (!is_diag_enabled(DIAG_LOGIC_UNREACHABLE))
+    {
+        return;
+    }
     zwarn_with_suggestion(t, "Unreachable code detected", "This code will never execute");
 }
 
 void warn_implicit_conversion(Token t, const char *from_type, const char *to_type)
 {
+    if (!is_diag_enabled(DIAG_CONVERSION_IMPLICIT))
+    {
+        return;
+    }
     char msg[256];
     snprintf(msg, sizeof(msg), "Implicit conversion from '%s' to '%s'", from_type, to_type);
     zwarn_with_suggestion(t, msg, "Consider using an explicit cast");
@@ -716,6 +732,10 @@ void warn_implicit_conversion(Token t, const char *from_type, const char *to_typ
 
 void warn_missing_return(Token t, const char *func_name)
 {
+    if (!is_diag_enabled(DIAG_LOGIC_MISSING_RETURN))
+    {
+        return;
+    }
     char msg[256];
     snprintf(msg, sizeof(msg), "Function '%s' may not return a value in all paths", func_name);
     zwarn_with_suggestion(t, msg, "Add a return statement or make the function return 'void'");
@@ -723,16 +743,28 @@ void warn_missing_return(Token t, const char *func_name)
 
 void warn_comparison_always_true(Token t, const char *reason)
 {
+    if (!is_diag_enabled(DIAG_LOGIC_ALWAYS_TRUE))
+    {
+        return;
+    }
     zwarn_with_suggestion(t, "Comparison is always true", reason);
 }
 
 void warn_comparison_always_false(Token t, const char *reason)
 {
+    if (!is_diag_enabled(DIAG_LOGIC_ALWAYS_FALSE))
+    {
+        return;
+    }
     zwarn_with_suggestion(t, "Comparison is always false", reason);
 }
 
 void warn_unused_parameter(Token t, const char *param_name, const char *func_name)
 {
+    if (!is_diag_enabled(DIAG_UNUSED_PARAM))
+    {
+        return;
+    }
     char msg[256];
     snprintf(msg, sizeof(msg), "Unused parameter '%s' in function '%s'", param_name, func_name);
     zwarn_with_suggestion(t, msg, "Consider prefixing with '_' if intentionally unused");
@@ -740,6 +772,10 @@ void warn_unused_parameter(Token t, const char *param_name, const char *func_nam
 
 void warn_narrowing_conversion(Token t, const char *from_type, const char *to_type)
 {
+    if (!is_diag_enabled(DIAG_CONVERSION_NARROWING))
+    {
+        return;
+    }
     char msg[256];
     snprintf(msg, sizeof(msg), "Narrowing conversion from '%s' to '%s'", from_type, to_type);
     zwarn_with_suggestion(t, msg, "This may cause data loss");
@@ -747,11 +783,19 @@ void warn_narrowing_conversion(Token t, const char *from_type, const char *to_ty
 
 void warn_division_by_zero(Token t)
 {
+    if (!is_diag_enabled(DIAG_SAFETY_DIV_ZERO))
+    {
+        return;
+    }
     zwarn_with_suggestion(t, "Division by zero", "This will cause undefined behavior at runtime");
 }
 
 void warn_integer_overflow(Token t, const char *type_name, long long value)
 {
+    if (!is_diag_enabled(DIAG_SAFETY_INTEGER_OVERFLOW))
+    {
+        return;
+    }
     char msg[256];
     snprintf(msg, sizeof(msg), "Integer literal %lld overflows type '%s'", value, type_name);
     zwarn_with_suggestion(t, msg, "Value will be truncated");
@@ -759,6 +803,10 @@ void warn_integer_overflow(Token t, const char *type_name, long long value)
 
 void warn_array_bounds(Token t, int index, int size)
 {
+    if (!is_diag_enabled(DIAG_SAFETY_ARRAY_BOUNDS))
+    {
+        return;
+    }
     char msg[256];
     snprintf(msg, sizeof(msg), "Array index %d is out of bounds for array of size %d", index, size);
     char note[256];
@@ -768,6 +816,10 @@ void warn_array_bounds(Token t, int index, int size)
 
 void warn_format_string(Token t, int arg_num, const char *expected, const char *got)
 {
+    if (!is_diag_enabled(DIAG_STYLE_FORMAT))
+    {
+        return;
+    }
     char msg[256];
     snprintf(msg, sizeof(msg), "Format argument %d: expected '%s', got '%s'", arg_num, expected,
              got);
@@ -776,6 +828,10 @@ void warn_format_string(Token t, int arg_num, const char *expected, const char *
 
 void warn_null_pointer(Token t, const char *expr)
 {
+    if (!is_diag_enabled(DIAG_SAFETY_NULL_PTR))
+    {
+        return;
+    }
     char msg[256];
     snprintf(msg, sizeof(msg), "Potential null pointer access in '%s'", expr);
     zwarn_with_suggestion(t, msg, "Add a null check before accessing");
@@ -783,6 +839,176 @@ void warn_null_pointer(Token t, const char *expr)
 
 void warn_void_main(Token t)
 {
+    if (!is_diag_enabled(DIAG_PEDANTIC_STRICT_TYPING))
+    {
+        return;
+    }
     zwarn_with_suggestion(t, "'void main()' is non-standard and leads to undefined behavior",
                           "Consider using 'fn main()' or 'fn main() -> c_int' instead");
+}
+
+int is_diag_enabled(DiagnosticID id)
+{
+    if (id == DIAG_NONE || id >= DIAG_MAX)
+    {
+        return 0;
+    }
+    // Check bitmask in g_config
+    return (g_config.diag_mask & ((uint64_t)1 << id)) != 0;
+}
+
+void zwarn_diag(DiagnosticID id, Token t, const char *msg, const char *hint)
+{
+    if (!is_diag_enabled(id))
+    {
+        return;
+    }
+
+    char final_hint[512];
+    if (id == DIAG_INTEROP_UNDEF_FUNC)
+    {
+        if (hint)
+        {
+            // Strip trailing period from hint if it exists to avoid double period
+            char hint_copy[256];
+            strncpy(hint_copy, hint, sizeof(hint_copy) - 1);
+            hint_copy[sizeof(hint_copy) - 1] = '\0';
+            size_t len = strlen(hint_copy);
+            if (len > 0 && hint_copy[len - 1] == '.')
+            {
+                hint_copy[len - 1] = '\0';
+            }
+
+            snprintf(final_hint, sizeof(final_hint),
+                     "%s. If this is a C function, it might need to be whitelisted in 'zenc.json'",
+                     hint_copy);
+        }
+        else
+        {
+            snprintf(final_hint, sizeof(final_hint),
+                     "If this is a C function, it might need to be whitelisted in 'zenc.json'");
+        }
+        zwarn_with_suggestion(t, msg, final_hint);
+    }
+    else
+    {
+        zwarn_with_suggestion(t, msg, hint);
+    }
+}
+
+int set_diag_by_name(const char *name, int enabled)
+{
+    if (strcmp(name, "interop") == 0)
+    {
+        if (enabled)
+        {
+            g_config.diag_mask |= ((uint64_t)1 << DIAG_INTEROP_UNDEF_FUNC);
+        }
+        else
+        {
+            g_config.diag_mask &= ~((uint64_t)1 << DIAG_INTEROP_UNDEF_FUNC);
+        }
+        return 1;
+    }
+    else if (strcmp(name, "pedantic") == 0)
+    {
+        if (enabled)
+        {
+            g_config.diag_mask |= ((uint64_t)1 << DIAG_PEDANTIC_STRICT_TYPING);
+            g_config.diag_mask |= ((uint64_t)1 << DIAG_INTEROP_UNDEF_FUNC);
+        }
+        else
+        {
+            g_config.diag_mask &= ~((uint64_t)1 << DIAG_PEDANTIC_STRICT_TYPING);
+            g_config.diag_mask &= ~((uint64_t)1 << DIAG_INTEROP_UNDEF_FUNC);
+        }
+        return 1;
+    }
+    else if (strcmp(name, "unused") == 0)
+    {
+        if (enabled)
+        {
+            g_config.diag_mask |= ((uint64_t)1 << DIAG_UNUSED_VAR);
+            g_config.diag_mask |= ((uint64_t)1 << DIAG_UNUSED_PARAM);
+        }
+        else
+        {
+            g_config.diag_mask &= ~((uint64_t)1 << DIAG_UNUSED_VAR);
+            g_config.diag_mask &= ~((uint64_t)1 << DIAG_UNUSED_PARAM);
+        }
+        return 1;
+    }
+    else if (strcmp(name, "safety") == 0)
+    {
+        if (enabled)
+        {
+            g_config.diag_mask |= ((uint64_t)1 << DIAG_SAFETY_NULL_PTR);
+            g_config.diag_mask |= ((uint64_t)1 << DIAG_SAFETY_DIV_ZERO);
+            g_config.diag_mask |= ((uint64_t)1 << DIAG_SAFETY_ARRAY_BOUNDS);
+        }
+        else
+        {
+            g_config.diag_mask &= ~((uint64_t)1 << DIAG_SAFETY_NULL_PTR);
+            g_config.diag_mask &= ~((uint64_t)1 << DIAG_SAFETY_DIV_ZERO);
+            g_config.diag_mask &= ~((uint64_t)1 << DIAG_SAFETY_ARRAY_BOUNDS);
+        }
+        return 1;
+    }
+    else if (strcmp(name, "logic") == 0)
+    {
+        if (enabled)
+        {
+            g_config.diag_mask |= ((uint64_t)1 << DIAG_LOGIC_UNREACHABLE);
+            g_config.diag_mask |= ((uint64_t)1 << DIAG_LOGIC_ALWAYS_TRUE);
+            g_config.diag_mask |= ((uint64_t)1 << DIAG_LOGIC_ALWAYS_FALSE);
+        }
+        else
+        {
+            g_config.diag_mask &= ~((uint64_t)1 << DIAG_LOGIC_UNREACHABLE);
+            g_config.diag_mask &= ~((uint64_t)1 << DIAG_LOGIC_ALWAYS_TRUE);
+            g_config.diag_mask &= ~((uint64_t)1 << DIAG_LOGIC_ALWAYS_FALSE);
+        }
+        return 1;
+    }
+    else if (strcmp(name, "conversion") == 0)
+    {
+        if (enabled)
+        {
+            g_config.diag_mask |= ((uint64_t)1 << DIAG_CONVERSION_IMPLICIT);
+            g_config.diag_mask |= ((uint64_t)1 << DIAG_CONVERSION_NARROWING);
+        }
+        else
+        {
+            g_config.diag_mask &= ~((uint64_t)1 << DIAG_CONVERSION_IMPLICIT);
+            g_config.diag_mask &= ~((uint64_t)1 << DIAG_CONVERSION_NARROWING);
+        }
+        return 1;
+    }
+    else if (strcmp(name, "style") == 0)
+    {
+        if (enabled)
+        {
+            g_config.diag_mask |= ((uint64_t)1 << DIAG_STYLE_SHADOWING);
+            g_config.diag_mask |= ((uint64_t)1 << DIAG_STYLE_FORMAT);
+        }
+        else
+        {
+            g_config.diag_mask &= ~((uint64_t)1 << DIAG_STYLE_SHADOWING);
+            g_config.diag_mask &= ~((uint64_t)1 << DIAG_STYLE_FORMAT);
+        }
+        return 1;
+    }
+    else if (strcmp(name, "all") == 0)
+    {
+        if (enabled)
+        {
+            g_config.diag_mask = 0xFFFFFFFFFFFFFFFF;
+        }
+        else
+        {
+            g_config.diag_mask = 0;
+        }
+        return 1;
+    }
+    return 0;
 }

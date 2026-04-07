@@ -33,6 +33,13 @@ int main(int argc, char **argv)
         g_config.cc[sizeof(g_config.cc) - 1] = '\0';
     }
 
+    // Default diagnostics: Enable standard Zen C diagnostics
+    set_diag_by_name("unused", 1);
+    set_diag_by_name("safety", 1);
+    set_diag_by_name("logic", 1);
+    set_diag_by_name("conversion", 1);
+    set_diag_by_name("style", 1);
+
     char self_path[MAX_PATH_SIZE];
     z_get_executable_path(self_path, sizeof(self_path));
 
@@ -377,20 +384,33 @@ int main(int argc, char **argv)
             }
             append_flag(g_config.gcc_flags, sizeof(g_config.gcc_flags), "-D", def);
         }
-        else if (strncmp(arg, "-W", 2) == 0 || strncmp(arg, "-f", 2) == 0 ||
-                 strncmp(arg, "-m", 2) == 0 || strncmp(arg, "-x", 2) == 0 ||
-                 strcmp(arg, "-S") == 0 || strcmp(arg, "-E") == 0 || strcmp(arg, "-shared") == 0 ||
-                 strcmp(arg, "--shared") == 0)
+        else if (strncmp(arg, "-Wno-", 5) == 0)
+        {
+            if (!set_diag_by_name(arg + 5, 0))
+            {
+                append_flag(g_config.gcc_flags, sizeof(g_config.gcc_flags), arg, NULL);
+            }
+        }
+        else if (strncmp(arg, "-W", 2) == 0)
+        {
+            if (!set_diag_by_name(arg + 2, 1))
+            {
+                append_flag(g_config.gcc_flags, sizeof(g_config.gcc_flags), arg, NULL);
+                if (!g_config.warn_as_errors && strcmp(arg, "-Werror") == 0)
+                {
+                    g_config.warn_as_errors = 1;
+                }
+            }
+        }
+        else if (strncmp(arg, "-f", 2) == 0 || strncmp(arg, "-m", 2) == 0 ||
+                 strncmp(arg, "-x", 2) == 0 || strcmp(arg, "-S") == 0 || strcmp(arg, "-E") == 0 ||
+                 strcmp(arg, "-shared") == 0 || strcmp(arg, "--shared") == 0)
         {
             // Standard C compiler flags that we want to pass directly to the backend
             append_flag(g_config.gcc_flags, sizeof(g_config.gcc_flags), arg, NULL);
             if (strcmp(arg, "-shared") == 0 || strcmp(arg, "--shared") == 0)
             {
                 append_flag(g_config.gcc_flags, sizeof(g_config.gcc_flags), "-fPIC", NULL);
-            }
-            else if (!g_config.warn_as_errors && strcmp(arg, "-Werror") == 0)
-            {
-                g_config.warn_as_errors = 1;
             }
         }
         else if (arg[0] == '-')

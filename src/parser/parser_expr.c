@@ -6539,7 +6539,7 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
                             if (strcmp(it->struct_name, base) == 0)
                             {
                                 ASTNode *m = it->impl_node->impl.methods;
-                                size_t base_len = strlen(base);
+
                                 char idx_raw[512];
                                 sprintf(idx_raw, "%s__index", base);
                                 char *mangled_idx = merge_underscores(idx_raw);

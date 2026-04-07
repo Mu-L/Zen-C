@@ -100,6 +100,7 @@ void print_usage()
     printf("\nlanguage & advanced:\n");
     print_help_item(COLOR_CYAN "--check, --free" COLOR_RESET,
                     "Borrow checker / No standard library");
+    print_help_item(COLOR_CYAN "-Wpedantic" COLOR_RESET, "Enable pedantic warnings");
     print_help_item(COLOR_CYAN "--cpp, --cuda" COLOR_RESET, "C++ or CUDA compatibility modes");
     print_help_item(COLOR_CYAN "-c, -S, -E, -shared" COLOR_RESET,
                     "Compile/Asm/Preprocess only / DLL");

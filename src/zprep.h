@@ -249,6 +249,8 @@ typedef struct
     int warn_as_errors;  ///< 1 if --warn-errors or -Werror (treat Zen C warnings as errors).
     int no_suppress_warnings; ///< 1 if --no-suppress-warnings (disable default C warning
                               ///< suppressions).
+    int warn_pedantic;        ///< 1 if -Wpedantic or --pedantic (show extra diagnostics).
+    uint64_t diag_mask;       ///< Bitmask of enabled diagnostics.
 
     int keep_comments; ///< 1 if --keep-comments (preserve comments in output).
 
