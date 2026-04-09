@@ -79,6 +79,35 @@ else
     ((PASSED++))
 fi
 
+#
+# Test 3: Slice Instantiation Naming
+#
+
+TEST_NAME="slice_instantiation_offset.zc"
+echo -n "Testing $TEST_DIR/$TEST_NAME (Slice Naming)... "
+
+$ZC "$TEST_DIR/$TEST_NAME" --emit-c > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo "FAIL (Compilation error)"
+    ((FAILED++))
+else
+    # Verify that Slice__Inner is used and NOT Slice___Inner
+    # Also check that typedef is correct
+    TRIPLE_UNDERSCORE=$(grep -c "Slice___Inner" "${TEST_NAME%.zc}.c")
+    DOUBLE_UNDERSCORE=$(grep -c "Slice__Inner" "${TEST_NAME%.zc}.c")
+    
+    if [ "$TRIPLE_UNDERSCORE" -eq 0 ] && [ "$DOUBLE_UNDERSCORE" -gt 0 ]; then
+        echo "PASS"
+        ((PASSED++))
+    else
+        echo "FAIL (Found $TRIPLE_UNDERSCORE mangled names, $DOUBLE_UNDERSCORE correct names)"
+        ((FAILED++))
+    fi
+fi
+
+# Cleanup
+rm -f "${TEST_NAME%.zc}.c" "${TEST_NAME%.zc}" a.out
+
 echo "----------------------------------------"
 echo "Summary:"
 echo "-> Passed: $PASSED"

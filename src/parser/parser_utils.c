@@ -1043,6 +1043,11 @@ int should_suppress_undef_warning(ParserContext *ctx, const char *name)
 
 void register_slice(ParserContext *ctx, const char *type)
 {
+    if (is_known_generic(ctx, (char *)type))
+    {
+        return;
+    }
+
     SliceType *c = ctx->used_slices;
     while (c)
     {
@@ -3801,7 +3806,7 @@ void instantiate_generic(ParserContext *ctx, const char *tpl, const char *arg,
         {
             if (fld->field.type && strncmp(fld->field.type, "Slice__", 7) == 0)
             {
-                register_slice(ctx, fld->field.type + 6);
+                register_slice(ctx, fld->field.type + 7);
             }
             fld = fld->next;
         }

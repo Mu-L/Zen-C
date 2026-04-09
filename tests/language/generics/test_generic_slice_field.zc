@@ -1,0 +1,18 @@
+struct Inner {
+    val: i32;
+}
+
+struct Wrapper<T> {
+    data: T[];
+}
+
+test "generic_slice_field" {
+    let w: Wrapper<Inner>;
+    let arr = [Inner { val: 42 }, Inner { val: 100 }];
+    w.data.data = arr;
+    w.data.len = 2;
+    
+    assert(w.data.len == 2);
+    assert(w.data[0].val == 42);
+    assert(w.data[1].val == 100);
+}

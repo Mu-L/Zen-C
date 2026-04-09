@@ -1657,6 +1657,30 @@ void print_type_defs(ParserContext *ctx, FILE *out, ASTNode *nodes)
                      "|| index >= limit) { __builtin_trap(); } return index; }\n");
     }
 
+    ASTNode *local = nodes;
+    while (local)
+    {
+        if (local->type == NODE_STRUCT && !local->strct.is_template)
+        {
+            if (local->type_info && local->type_info->kind == TYPE_VECTOR)
+            {
+                // For vectors, we emit a custom typedef in emit_struct_defs.
+                // Standard 'typedef struct Name Name' would conflict.
+            }
+            else
+            {
+                const char *keyword = local->strct.is_union ? "union" : "struct";
+                fprintf(out, "typedef %s %s %s;\n", keyword, local->strct.name, local->strct.name);
+            }
+        }
+        if (local->type == NODE_ENUM && !local->enm.is_template)
+        {
+            fprintf(out, "typedef struct %s %s;\n", local->enm.name, local->enm.name);
+        }
+        local = local->next;
+    }
+    fprintf(out, "\n");
+
     SliceType *rev = NULL;
     SliceType *c = ctx->used_slices;
     while (c)
@@ -1710,28 +1734,7 @@ void print_type_defs(ParserContext *ctx, FILE *out, ASTNode *nodes)
     }
     fprintf(out, "\n");
 
-    ASTNode *local = nodes;
-    while (local)
-    {
-        if (local->type == NODE_STRUCT && !local->strct.is_template)
-        {
-            if (local->type_info && local->type_info->kind == TYPE_VECTOR)
-            {
-                // For vectors, we emit a custom typedef in emit_struct_defs.
-                // Standard 'typedef struct Name Name' would conflict.
-            }
-            else
-            {
-                const char *keyword = local->strct.is_union ? "union" : "struct";
-                fprintf(out, "typedef %s %s %s;\n", keyword, local->strct.name, local->strct.name);
-            }
-        }
-        if (local->type == NODE_ENUM && !local->enm.is_template)
-        {
-            fprintf(out, "typedef struct %s %s;\n", local->enm.name, local->enm.name);
-        }
-        local = local->next;
-    }
+    // End of type definitions
 }
 
 static int last_source_mapping_line = -1;

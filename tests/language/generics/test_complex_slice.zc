@@ -1,0 +1,27 @@
+struct Inner {
+    val: i32;
+}
+
+struct Node<T> {
+    value: T;
+}
+
+struct Wrapper<T> {
+    data: T[];
+}
+
+test "complex_generic_slice" {
+    // This creates Wrapper<Node<Inner>>
+    // Which has a field: data: Node<Inner>[]
+    // Which means fld->field.type will be Slice__Node__Inner
+    // register_slice will be called for Node__Inner
+    // Node__Inner should have Been forward declared.
+    let w: Wrapper<Node<Inner>>;
+    
+    let items = [Node<Inner> { value: Inner { val: 42 } }];
+    w.data.data = items;
+    w.data.len = 1;
+    
+    assert(w.data.len == 1);
+    assert(w.data[0].value.val == 42);
+}
