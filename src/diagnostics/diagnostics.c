@@ -4,7 +4,8 @@
 #include "lsp/cJSON.h"
 #include <stdio.h>
 
-static void emit_json(const char *level, Token t, const char *msg, const char *suggestion)
+static void emit_json(const char *level, Token t, const char *msg, const char *suggestion,
+                      int diag_id)
 {
     cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject(
@@ -13,15 +14,48 @@ static void emit_json(const char *level, Token t, const char *msg, const char *s
     cJSON_AddNumberToObject(root, "col", t.col);
     cJSON_AddStringToObject(root, "level", level);
     cJSON_AddStringToObject(root, "message", msg);
+    if (diag_id != DIAG_NONE)
+    {
+        cJSON_AddNumberToObject(root, "code", diag_id);
+    }
     if (suggestion)
     {
         cJSON_AddStringToObject(root, "suggestion", suggestion);
     }
 
     char *json = cJSON_PrintUnformatted(root);
-    fprintf(stderr, "%s\n", json);
+    if (!g_config.mode_lsp)
+    {
+        fprintf(stderr, "%s\n", json);
+    }
     free(json);
     cJSON_Delete(root);
+
+    // Call LSP diagnostics hook
+    if (g_parser_ctx && g_parser_ctx->is_fault_tolerant && g_parser_ctx->on_diagnostic)
+    {
+        int severity = 1; // Error
+        if (strcmp(level, "warning") == 0)
+        {
+            severity = 2; // Warning
+        }
+        else if (strcmp(level, "info") == 0)
+        {
+            severity = 3; // Info
+        }
+
+        char full_msg[MAX_ERROR_MSG_LEN * 2];
+        if (suggestion)
+        {
+            snprintf(full_msg, sizeof(full_msg), "%s (Suggestion: %s)", msg, suggestion);
+        }
+        else
+        {
+            snprintf(full_msg, sizeof(full_msg), "%s", msg);
+        }
+        g_parser_ctx->on_diagnostic(g_parser_ctx->error_callback_data, t, severity, full_msg,
+                                    diag_id);
+    }
 }
 
 void zpanic(const char *fmt, ...)
@@ -33,7 +67,7 @@ void zpanic(const char *fmt, ...)
         va_start(a, fmt);
         vsnprintf(msg, sizeof(msg), fmt, a);
         va_end(a);
-        emit_json("error", (Token){0}, msg, NULL);
+        emit_json("error", (Token){0}, msg, NULL, DIAG_NONE);
         exit(1);
     }
     va_list a;
@@ -70,7 +104,7 @@ void zwarn(const char *fmt, ...)
         va_start(a, fmt);
         vsnprintf(msg, sizeof(msg), fmt, a);
         va_end(a);
-        emit_json("warning", (Token){0}, msg, NULL);
+        emit_json("warning", (Token){0}, msg, NULL, DIAG_NONE);
         return;
     }
     g_warning_count++;
@@ -80,6 +114,35 @@ void zwarn(const char *fmt, ...)
     vfprintf(stderr, fmt, a);
     fprintf(stderr, COLOR_RESET "\n");
     va_end(a);
+}
+
+void zwarn_at_diag(int diag_id, Token t, const char *fmt, ...)
+{
+    if (g_config.quiet)
+    {
+        return;
+    }
+    char msg[MAX_ERROR_MSG_LEN];
+    va_list a;
+    va_start(a, fmt);
+    vsnprintf(msg, sizeof(msg), fmt, a);
+    va_end(a);
+
+    if (g_config.json_output)
+    {
+        emit_json("warning", t, msg, NULL, diag_id);
+    }
+    else
+    {
+        // Header: 'warning: message'.
+        fprintf(stderr, COLOR_YELLOW "warning: " COLOR_RESET COLOR_BOLD);
+        fprintf(stderr, "%s", msg);
+        fprintf(stderr, COLOR_RESET "\n");
+
+        // Location.
+        fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
+                (t.file ? t.file : g_current_filename), t.line, t.col);
+    }
 }
 
 void zwarn_at(Token t, const char *fmt, ...)
@@ -95,7 +158,7 @@ void zwarn_at(Token t, const char *fmt, ...)
         va_start(a, fmt);
         vsnprintf(msg, sizeof(msg), fmt, a);
         va_end(a);
-        emit_json("warning", t, msg, NULL);
+        emit_json("warning", t, msg, NULL, DIAG_NONE);
         return;
     }
     // Header: 'warning: message'.
@@ -137,6 +200,20 @@ void zwarn_at(Token t, const char *fmt, ...)
     }
 }
 
+void zwarn_with_suggestion_diag(int diag_id, Token t, const char *msg, const char *suggestion)
+{
+    if (g_config.quiet)
+    {
+        return;
+    }
+    if (g_config.json_output)
+    {
+        emit_json("warning", t, msg, suggestion, diag_id);
+        return;
+    }
+    zwarn_with_suggestion(t, msg, suggestion);
+}
+
 void zwarn_with_suggestion(Token t, const char *msg, const char *suggestion)
 {
     if (g_config.quiet)
@@ -145,7 +222,7 @@ void zwarn_with_suggestion(Token t, const char *msg, const char *suggestion)
     }
     if (g_config.json_output)
     {
-        emit_json("warning", t, msg, suggestion);
+        emit_json("warning", t, msg, suggestion, DIAG_NONE);
         return;
     }
 
@@ -196,7 +273,7 @@ void zpanic_at(Token t, const char *fmt, ...)
         va_start(a, fmt);
         vsnprintf(msg, sizeof(msg), fmt, a);
         va_end(a);
-        emit_json("error", t, msg, NULL);
+        emit_json("error", t, msg, NULL, DIAG_NONE);
         if (g_parser_ctx && g_parser_ctx->is_fault_tolerant && g_parser_ctx->on_error)
         {
             g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, msg);
@@ -259,7 +336,7 @@ void zpanic_with_suggestion(Token t, const char *msg, const char *suggestion)
 {
     if (g_config.json_output)
     {
-        emit_json("error", t, msg, suggestion);
+        emit_json("error", t, msg, suggestion, DIAG_NONE);
         if (g_parser_ctx && g_parser_ctx->is_fault_tolerant && g_parser_ctx->on_error)
         {
             char full_msg[MAX_ERROR_MSG_LEN];
@@ -333,7 +410,7 @@ void zpanic_with_hints(Token t, const char *msg, const char *const *hints)
                 h++;
             }
         }
-        emit_json("error", t, msg, combined_hints[0] ? combined_hints : NULL);
+        emit_json("error", t, msg, combined_hints[0] ? combined_hints : NULL, DIAG_NONE);
 
         if (g_parser_ctx && g_parser_ctx->is_fault_tolerant && g_parser_ctx->on_error)
         {
@@ -420,7 +497,7 @@ void zerror_at(Token t, const char *fmt, ...)
         va_start(a, fmt);
         vsnprintf(msg, sizeof(msg), fmt, a);
         va_end(a);
-        emit_json("error", t, msg, NULL);
+        emit_json("error", t, msg, NULL, DIAG_NONE);
         if (g_parser_ctx && g_parser_ctx->on_error)
         {
             g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, msg);
@@ -481,7 +558,7 @@ void zerror_with_suggestion(Token t, const char *msg, const char *suggestion)
 {
     if (g_config.json_output)
     {
-        emit_json("error", t, msg, suggestion);
+        emit_json("error", t, msg, suggestion, DIAG_NONE);
         if (g_parser_ctx && g_parser_ctx->on_error)
         {
             char full_msg[MAX_ERROR_MSG_LEN];
@@ -554,7 +631,7 @@ void zerror_with_hints(Token t, const char *msg, const char *const *hints)
 
     if (g_config.json_output)
     {
-        emit_json("error", t, msg, combined_hints[0] ? combined_hints : NULL);
+        emit_json("error", t, msg, combined_hints[0] ? combined_hints : NULL, DIAG_NONE);
         if (g_parser_ctx && g_parser_ctx->on_error)
         {
             char full_msg[MAX_PATH_LEN * 2];
@@ -889,11 +966,11 @@ void zwarn_diag(DiagnosticID id, Token t, const char *msg, const char *hint)
             snprintf(final_hint, sizeof(final_hint),
                      "If this is a C function, it might need to be whitelisted in 'zenc.json'");
         }
-        zwarn_with_suggestion(t, msg, final_hint);
+        zwarn_with_suggestion_diag(id, t, msg, final_hint);
     }
     else
     {
-        zwarn_with_suggestion(t, msg, hint);
+        zwarn_with_suggestion_diag(id, t, msg, hint);
     }
 }
 

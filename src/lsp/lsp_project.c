@@ -251,6 +251,22 @@ DefinitionResult lsp_project_find_definition(const char *name)
                     {
                         found_name = r->node->strct.name;
                     }
+                    else if (r->node->type == NODE_ENUM)
+                    {
+                        found_name = r->node->enm.name;
+                    }
+                    else if (r->node->type == NODE_ENUM_VARIANT)
+                    {
+                        found_name = r->node->variant.name;
+                    }
+                    else if (r->node->type == NODE_TRAIT)
+                    {
+                        found_name = r->node->trait.name;
+                    }
+                    else if (r->node->type == NODE_TYPE_ALIAS)
+                    {
+                        found_name = r->node->type_alias.alias;
+                    }
 
                     if (found_name && strcmp(found_name, name) == 0)
                     {
@@ -308,6 +324,22 @@ ReferenceResult *lsp_project_find_references(const char *name)
                     else if (r->node->type == NODE_STRUCT)
                     {
                         scan_name = r->node->strct.name;
+                    }
+                    else if (r->node->type == NODE_ENUM)
+                    {
+                        scan_name = r->node->enm.name;
+                    }
+                    else if (r->node->type == NODE_ENUM_VARIANT)
+                    {
+                        scan_name = r->node->variant.name;
+                    }
+                    else if (r->node->type == NODE_TRAIT)
+                    {
+                        scan_name = r->node->trait.name;
+                    }
+                    else if (r->node->type == NODE_TYPE_ALIAS)
+                    {
+                        scan_name = r->node->type_alias.alias;
                     }
                     else if (r->node->type == NODE_EXPR_VAR)
                     {

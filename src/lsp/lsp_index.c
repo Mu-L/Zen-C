@@ -244,6 +244,19 @@ void lsp_walk_node(LSPIndex *idx, ASTNode *node)
         lsp_walk_node(idx, node->binary.left);
         lsp_walk_node(idx, node->binary.right);
         break;
+    case NODE_EXPR_UNARY:
+        lsp_walk_node(idx, node->unary.operand);
+        break;
+    case NODE_EXPR_CAST:
+        lsp_walk_node(idx, node->cast.expr);
+        break;
+    case NODE_EXPR_MEMBER:
+        lsp_walk_node(idx, node->member.target);
+        break;
+    case NODE_EXPR_INDEX:
+        lsp_walk_node(idx, node->index.array);
+        lsp_walk_node(idx, node->index.index);
+        break;
     case NODE_EXPR_CALL:
         lsp_walk_node(idx, node->call.callee);
         lsp_walk_node(idx, node->call.args);

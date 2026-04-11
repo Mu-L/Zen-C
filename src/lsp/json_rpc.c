@@ -15,6 +15,7 @@ void lsp_references(const char *uri, int line, int col, int id);
 // Prototype
 void lsp_signature_help(const char *uri, int line, int col, int id);
 void lsp_rename(const char *uri, int line, int col, const char *new_name, int id);
+void lsp_code_action(const char *uri, cJSON *diagnostics, int id);
 
 // Helper to extract textDocument params
 static void get_params(cJSON *root, char **uri, int *line, int *col)
@@ -115,7 +116,7 @@ void handle_request(const char *json_str)
             "\"capabilities\":{\"textDocumentSync\":{\"openClose\":true,\"change\":1},"
             "\"definitionProvider\":true,\"hoverProvider\":true,"
             "\"referencesProvider\":true,\"documentSymbolProvider\":true,"
-            "\"renameProvider\":true,"
+            "\"renameProvider\":true,\"codeActionProvider\":true,"
             "\"signatureHelpProvider\":{\"triggerCharacters\":[\"(\"]},"
             "\"completionProvider\":{"
             "\"triggerCharacters\":[\".\"]},"
@@ -232,6 +233,22 @@ void handle_request(const char *json_str)
         {
             lsp_signature_help(uri, line, col, id);
             free(uri);
+        }
+    }
+    else if (strcmp(method, "textDocument/codeAction") == 0)
+    {
+        cJSON *params = cJSON_GetObjectItem(json, "params");
+        if (params)
+        {
+            cJSON *uri_obj = cJSON_GetObjectItem(params, "textDocument");
+            cJSON *uri = cJSON_GetObjectItem(uri_obj, "uri");
+            cJSON *context = cJSON_GetObjectItem(params, "context");
+            cJSON *diagnostics = cJSON_GetObjectItem(context, "diagnostics");
+
+            if (uri && diagnostics)
+            {
+                lsp_code_action(uri->valuestring, diagnostics, id);
+            }
         }
     }
     else if (strcmp(method, "textDocument/semanticTokens/full") == 0)

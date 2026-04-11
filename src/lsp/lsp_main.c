@@ -14,6 +14,7 @@ int lsp_main(int argc, char **argv)
     (void)argv;
     fprintf(stderr, "zls: Zen Language Server starting...\n");
     g_config.mode_lsp = 1;
+    g_config.json_output = 1;
 
     while (1)
     {

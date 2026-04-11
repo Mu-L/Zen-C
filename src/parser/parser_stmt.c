@@ -2909,7 +2909,7 @@ ASTNode *parse_statement(ParserContext *ctx, Lexer *l)
 
         if (strncmp(tk.start, "var", 3) == 0 && tk.len == 3)
         {
-            zpanic_at(tk, "'var' is deprecated. Use 'let' instead.");
+            zwarn_at_diag(DIAG_STYLE_DEPRECATED_VAR, tk, "'var' is deprecated. Use 'let' instead.");
             return parse_var_decl(ctx, l);
         }
 
@@ -2929,8 +2929,10 @@ ASTNode *parse_statement(ParserContext *ctx, Lexer *l)
 
         if (strncmp(tk.start, "const", 5) == 0 && tk.len == 5)
         {
-            zpanic_at(tk, "'const' for declarations is deprecated. Use 'def' for constants or 'let "
+            zwarn_at_diag(DIAG_STYLE_DEPRECATED_CONST, tk,
+                          "'const' for declarations is deprecated. Use 'def' for constants or 'let "
                           "x: const T' for read-only variables.");
+            return parse_var_decl(ctx, l);
         }
         if (strncmp(tk.start, "return", 6) == 0 && tk.len == 6)
         {

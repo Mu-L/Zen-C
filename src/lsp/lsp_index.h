@@ -43,6 +43,8 @@ typedef struct LSPIndex
 LSPIndex *lsp_index_new();
 void lsp_index_free(LSPIndex *idx);
 void lsp_index_add_def(LSPIndex *idx, Token t, const char *hover, ASTNode *node);
+void lsp_index_add_def_range(LSPIndex *idx, Token start, Token end, const char *hover,
+                             ASTNode *node);
 void lsp_index_add_ref(LSPIndex *idx, Token t, Token def_t, ASTNode *node);
 LSPRange *lsp_find_at(LSPIndex *idx, int line, int col);
 

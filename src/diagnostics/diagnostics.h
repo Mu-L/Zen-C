@@ -23,6 +23,7 @@ void zfatal(const char *fmt, ...);
  * @brief Fatal error with token location (exits unless fault-tolerant).
  */
 void zpanic_at(Token t, const char *fmt, ...);
+void zpanic_at_diag(int diag_id, Token t, const char *fmt, ...);
 
 /**
  * @brief Fatal error with suggestion (exits unless fault-tolerant).
@@ -61,11 +62,13 @@ void zwarn(const char *fmt, ...);
  * @brief Non-fatal warning with token location.
  */
 void zwarn_at(Token t, const char *fmt, ...);
+void zwarn_at_diag(int diag_id, Token t, const char *fmt, ...);
 
 /**
  * @brief Non-fatal warning with suggestion.
  */
 void zwarn_with_suggestion(Token t, const char *msg, const char *suggestion);
+void zwarn_with_suggestion_diag(int diag_id, Token t, const char *msg, const char *suggestion);
 
 // ** Specific Error Types **
 
@@ -132,7 +135,9 @@ typedef enum
     DIAG_CONVERSION_IMPLICIT,  // W600
     DIAG_CONVERSION_NARROWING, // W601
     // Style
-    DIAG_STYLE_FORMAT, // W701
+    DIAG_STYLE_FORMAT,           // W701
+    DIAG_STYLE_DEPRECATED_VAR,   // W702
+    DIAG_STYLE_DEPRECATED_CONST, // W703
     // ...
     DIAG_MAX
 } DiagnosticID;
