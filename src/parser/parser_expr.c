@@ -1357,10 +1357,8 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
                 strncpy(txt, cur, seg_len);
                 txt[seg_len] = 0;
                 char *escaped = escape_c_string(txt);
-                char cat_fs_buf[128];
-                snprintf(cat_fs_buf, sizeof(cat_fs_buf), "strcat(_fs_buf_%d, \"%%s\");", fs_id);
-                cat->raw_stmt.content = xmalloc(strlen(escaped) + strlen(cat_fs_buf) + 1);
-                sprintf(cat->raw_stmt.content, cat_fs_buf, escaped);
+                cat->raw_stmt.content = xmalloc(strlen(escaped) + 64);
+                sprintf(cat->raw_stmt.content, "strcat(_fs_buf_%d, \"%s\");", fs_id, escaped);
 
                 tail->next = cat;
                 tail = cat;
@@ -1390,10 +1388,8 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
                 strncpy(txt, cur, seg_len);
                 txt[seg_len] = 0;
                 char *escaped = escape_c_string(txt);
-                char cat_fs_buf[128];
-                snprintf(cat_fs_buf, sizeof(cat_fs_buf), "strcat(_fs_buf_%d, \"%%s\");", fs_id);
-                cat->raw_stmt.content = xmalloc(strlen(escaped) + strlen(cat_fs_buf) + 1);
-                sprintf(cat->raw_stmt.content, cat_fs_buf, escaped);
+                cat->raw_stmt.content = xmalloc(strlen(escaped) + 64);
+                sprintf(cat->raw_stmt.content, "strcat(_fs_buf_%d, \"%s\");", fs_id, escaped);
 
                 tail->next = cat;
                 tail = cat;
@@ -1412,10 +1408,8 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
             strncpy(txt, cur, seg_len);
             txt[seg_len] = 0;
             char *escaped = escape_c_string(txt);
-            char cat_fs_mid[128];
-            snprintf(cat_fs_mid, sizeof(cat_fs_mid), "strcat(_fs_buf_%d, \"%%s\");", fs_id);
-            cat->raw_stmt.content = xmalloc(strlen(escaped) + strlen(cat_fs_mid) + 1);
-            sprintf(cat->raw_stmt.content, cat_fs_mid, escaped);
+            cat->raw_stmt.content = xmalloc(strlen(escaped) + 64);
+            sprintf(cat->raw_stmt.content, "strcat(_fs_buf_%d, \"%s\");", fs_id, escaped);
 
             tail->next = cat;
             tail = cat;
