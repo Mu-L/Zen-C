@@ -23,7 +23,7 @@ test "alias C header fstring" {
 }
 test "raw_string_no_interpolation" {
     // Raw string with interpolation characters (should not interpolate)
-    let x = 42;
+    // let x = 42;
     println r"Value of {x} is {x}"; // Should literally print {x}
 
     // Single-line raw
@@ -37,8 +37,11 @@ test "raw_string_no_interpolation" {
 Line 1: {x}
 Line 2: \\n
 """;
-    assert(s2[0] == '\n' || s2[1] == 'L', "Multi-line raw string should start with newline or L");
+    // Support CRLF (Windows) and LF (Unix)
+    let first = s2[0];
+    assert(first == '\n' || first == '\r' || s2[1] == 'L' || s2[2] == 'L', "Multi-line raw string should start with newline or L");
 }
+
 
 
 

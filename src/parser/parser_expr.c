@@ -1290,9 +1290,14 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
 
     ASTNode *head = NULL, *tail = NULL;
 
+    int fs_id = ctx->fstring_counter++;
     ASTNode *decl_b = ast_create(NODE_RAW_STMT);
     decl_b->token = parent_token;
-    decl_b->raw_stmt.content = xstrdup("static char _b[4096]; _b[0]=0;");
+    char b_decl[128];
+    snprintf(b_decl, sizeof(b_decl), "static char _fs_buf_%d[4096]; _fs_buf_%d[0]=0;", fs_id,
+             fs_id);
+    decl_b->raw_stmt.content = xstrdup(b_decl);
+
     if (!head)
     {
         head = decl_b;
@@ -1305,7 +1310,10 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
 
     ASTNode *decl_t = ast_create(NODE_RAW_STMT);
     decl_t->token = parent_token;
-    decl_t->raw_stmt.content = xstrdup("char _t[128];");
+    char t_decl[64];
+    snprintf(t_decl, sizeof(t_decl), "char _fs_t_%d[128];", fs_id);
+    decl_t->raw_stmt.content = xstrdup(t_decl);
+
     tail->next = decl_t;
     tail = decl_t;
 
@@ -1349,8 +1357,11 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
                 strncpy(txt, cur, seg_len);
                 txt[seg_len] = 0;
                 char *escaped = escape_c_string(txt);
-                cat->raw_stmt.content = xmalloc(strlen(escaped) + 32);
-                sprintf(cat->raw_stmt.content, "strcat(_b, \"%s\");", escaped);
+                char cat_fs_buf[128];
+                snprintf(cat_fs_buf, sizeof(cat_fs_buf), "strcat(_fs_buf_%d, \"%%s\");", fs_id);
+                cat->raw_stmt.content = xmalloc(strlen(escaped) + strlen(cat_fs_buf) + 1);
+                sprintf(cat->raw_stmt.content, cat_fs_buf, escaped);
+
                 tail->next = cat;
                 tail = cat;
                 free(escaped);
@@ -1358,7 +1369,10 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
             }
             ASTNode *cat = ast_create(NODE_RAW_STMT);
             cat->token = parent_token;
-            cat->raw_stmt.content = xstrdup("strcat(_b, \"}\");");
+            char cat_fs_brace[128];
+            snprintf(cat_fs_brace, sizeof(cat_fs_brace), "strcat(_fs_buf_%d, \"}\");", fs_id);
+            cat->raw_stmt.content = xstrdup(cat_fs_brace);
+
             tail->next = cat;
             tail = cat;
             cur = dbl_close + 2;
@@ -1376,8 +1390,11 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
                 strncpy(txt, cur, seg_len);
                 txt[seg_len] = 0;
                 char *escaped = escape_c_string(txt);
-                cat->raw_stmt.content = xmalloc(strlen(escaped) + 32);
-                sprintf(cat->raw_stmt.content, "strcat(_b, \"%s\");", escaped);
+                char cat_fs_buf[128];
+                snprintf(cat_fs_buf, sizeof(cat_fs_buf), "strcat(_fs_buf_%d, \"%%s\");", fs_id);
+                cat->raw_stmt.content = xmalloc(strlen(escaped) + strlen(cat_fs_buf) + 1);
+                sprintf(cat->raw_stmt.content, cat_fs_buf, escaped);
+
                 tail->next = cat;
                 tail = cat;
                 free(escaped);
@@ -1395,8 +1412,11 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
             strncpy(txt, cur, seg_len);
             txt[seg_len] = 0;
             char *escaped = escape_c_string(txt);
-            cat->raw_stmt.content = xmalloc(strlen(escaped) + 32);
-            sprintf(cat->raw_stmt.content, "strcat(_b, \"%s\");", escaped);
+            char cat_fs_mid[128];
+            snprintf(cat_fs_mid, sizeof(cat_fs_mid), "strcat(_fs_buf_%d, \"%%s\");", fs_id);
+            cat->raw_stmt.content = xmalloc(strlen(escaped) + strlen(cat_fs_mid) + 1);
+            sprintf(cat->raw_stmt.content, cat_fs_mid, escaped);
+
             tail->next = cat;
             tail = cat;
             free(escaped);
@@ -1407,7 +1427,10 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
         {
             ASTNode *cat = ast_create(NODE_RAW_STMT);
             cat->token = parent_token;
-            cat->raw_stmt.content = xstrdup("strcat(_b, \"{\");");
+            char cat_buf[128];
+            snprintf(cat_buf, sizeof(cat_buf), "strcat(_fs_buf_%d, \"{\");", fs_id);
+            cat->raw_stmt.content = xstrdup(cat_buf);
+
             tail->next = cat;
             tail = cat;
             cur = brace + 2;
@@ -1587,7 +1610,9 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
         call_sprintf->call.callee = callee;
 
         ASTNode *arg_t = ast_create(NODE_EXPR_VAR);
-        arg_t->var_ref.name = xstrdup("_t");
+        char t_name[64];
+        snprintf(t_name, sizeof(t_name), "_fs_t_%d", fs_id);
+        arg_t->var_ref.name = xstrdup(t_name);
 
         ASTNode *arg_fmt = NULL;
         if (fmt)
@@ -1626,10 +1651,13 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
         tail->next = call_sprintf;
         tail = call_sprintf;
 
-        // strcat(_b, _t)
+        // strcat(_fs_buf, _fs_t)
         ASTNode *cat_t = ast_create(NODE_RAW_STMT);
         cat_t->token = peek;
-        cat_t->raw_stmt.content = xstrdup("strcat(_b, _t);");
+        char cat_t_buf[128];
+        snprintf(cat_t_buf, sizeof(cat_t_buf), "strcat(_fs_buf_%d, _fs_t_%d);", fs_id, fs_id);
+        cat_t->raw_stmt.content = xstrdup(cat_t_buf);
+
         tail->next = cat_t;
         tail = cat_t;
 
@@ -1642,7 +1670,10 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
 
     ASTNode *ret_b = ast_create(NODE_RAW_STMT);
     ret_b->token = parent_token;
-    ret_b->raw_stmt.content = xstrdup("_b;");
+    char ret_buf[64];
+    snprintf(ret_buf, sizeof(ret_buf), "_fs_buf_%d;", fs_id);
+    ret_b->raw_stmt.content = xstrdup(ret_buf);
+
     tail->next = ret_b;
     tail = ret_b;
 
