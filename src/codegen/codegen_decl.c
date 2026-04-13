@@ -112,11 +112,6 @@ void emit_preamble(ParserContext *ctx, FILE *out)
               "#endif\n",
               out);
         fputs("#include <unistd.h>\n#include <fcntl.h>\n", out); // POSIX functions
-        fputs("#if defined(_WIN32) || defined(_WIN64)\n"
-              "#define strcasecmp _stricmp\n"
-              "#define strncasecmp _strnicmp\n"
-              "#endif\n",
-              out);
         fputs("#define ZC_SIMD(T, N) T __attribute__((vector_size(N * sizeof(T))))\n", out);
 
         // C++ compatibility

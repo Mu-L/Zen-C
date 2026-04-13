@@ -2,7 +2,28 @@ import "./core.zc"
 import "./vec.zc"
 import "./option.zc"
 
-extern fn strcasecmp(s1: const char*, s2: const char*) -> int;
+fn _z_internal_str_case_cmp(s1: char*, s2: char*) -> int {
+    let i = 0;
+    while (true) {
+        let c1 = (int)((byte)s1[i]);
+        let c2 = (int)((byte)s2[i]);
+        
+        // Convert to lowercase for comparison
+        let lc1 = if (c1 >= (int)'A' && c1 <= (int)'Z') { c1 + 32 } else { c1 };
+        let lc2 = if (c2 >= (int)'A' && c2 <= (int)'Z') { c2 + 32 } else { c2 };
+        
+        if (lc1 != lc2) {
+            return lc1 - lc2;
+        }
+        
+        if (c1 == 0) {
+            break;
+        }
+        i = i + 1;
+    }
+    return 0;
+}
+
 
 struct String {
     vec: Vec<char>;
@@ -205,7 +226,7 @@ impl String {
     }
 
     fn compare_ignore_case(self, other: String*) -> int {
-        return strcasecmp(self.c_str(), (*other).c_str());
+        return _z_internal_str_case_cmp(self.vec.data, (*other).vec.data);
     }
 
     fn eq_ignore_case(self, other: String*) -> bool {
