@@ -1320,6 +1320,8 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
     char *cur = content;
     char *end = content + len;
 
+    int interp_count = 0;
+
     while (cur < end)
     {
         char *brace = strchr(cur, '{');
@@ -1596,6 +1598,57 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
             }
         }
 
+        char interp_val_name[64];
+        snprintf(interp_val_name, 64, "_z_fs_interp_%d_%d", fs_id, interp_count++);
+
+        infer_type(ctx, expr_node);
+        char *mangled_to_string = NULL;
+        int to_string_is_ptr = 0;
+        if (expr_node && expr_node->type_info)
+        {
+            Type *t = expr_node->type_info;
+            char *struct_name = NULL;
+            int is_ptr = 0;
+
+            if (t->kind == TYPE_STRUCT)
+            {
+                struct_name = t->name;
+            }
+            else if (t->kind == TYPE_POINTER && t->inner && t->inner->kind == TYPE_STRUCT)
+            {
+                struct_name = t->inner->name;
+                is_ptr = 1;
+            }
+
+            if (struct_name)
+            {
+                char mangled[512];
+                snprintf(mangled, 512, "%s__to_string", struct_name);
+                if (find_func(ctx, mangled))
+                {
+                    mangled_to_string = xstrdup(mangled);
+                    to_string_is_ptr = is_ptr;
+                }
+            }
+        }
+
+        if (mangled_to_string && !to_string_is_ptr)
+        {
+            // Use a temporary variable to ensure we have an lvalue for taking the address
+            ASTNode *tmp_decl = ast_create(NODE_VAR_DECL);
+            tmp_decl->var_decl.name = xstrdup(interp_val_name);
+            tmp_decl->var_decl.init_expr = expr_node;
+            tmp_decl->var_decl.type_info = expr_node->type_info;
+            tmp_decl->var_decl.type_str = type_to_string(expr_node->type_info);
+
+            tail->next = tmp_decl;
+            tail = tmp_decl;
+
+            ASTNode *val_ref = ast_create(NODE_EXPR_VAR);
+            val_ref->var_ref.name = xstrdup(interp_val_name);
+            expr_node = val_ref;
+        }
+
         ASTNode *call_sprintf = ast_create(NODE_EXPR_CALL);
         call_sprintf->token = peek;
         ASTNode *callee = ast_create(NODE_EXPR_VAR);
@@ -1618,6 +1671,32 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
             arg_fmt->literal.type_kind = LITERAL_STRING;
             arg_fmt->literal.string_val = fmt_str;
             arg_fmt->type_info = type_new(TYPE_STRING);
+        }
+        else if (mangled_to_string)
+        {
+            // Set format to %s
+            arg_fmt = ast_create(NODE_EXPR_LITERAL);
+            arg_fmt->literal.type_kind = LITERAL_STRING;
+            arg_fmt->literal.string_val = xstrdup("%s");
+            arg_fmt->type_info = type_new(TYPE_STRING);
+
+            // Wrap expr_node in to_string() call
+            ASTNode *call_ts = ast_create(NODE_EXPR_CALL);
+            call_ts->token = expr_node->token;
+            ASTNode *ts_callee = ast_create(NODE_EXPR_VAR);
+            ts_callee->var_ref.name = mangled_to_string;
+            call_ts->call.callee = ts_callee;
+
+            ASTNode *arg = expr_node;
+            if (!to_string_is_ptr)
+            {
+                ASTNode *addr = ast_create(NODE_EXPR_UNARY);
+                addr->unary.op = xstrdup("&");
+                addr->unary.operand = expr_node;
+                arg = addr;
+            }
+            call_ts->call.args = arg;
+            expr_node = call_ts;
         }
         else
         {

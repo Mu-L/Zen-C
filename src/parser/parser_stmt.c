@@ -2416,7 +2416,7 @@ char *process_printf_sugar(ParserContext *ctx, Token srctoken, const char *conte
 
             if (!format_spec)
             {
-                if (isdigit(clean_expr[0]) || clean_expr[0] == '-')
+                if (isdigit(clean_expr[0]) || (clean_expr[0] == '-' && isdigit(clean_expr[1])))
                 {
                     if (strchr(clean_expr, '.') || strchr(clean_expr, 'e') ||
                         strchr(clean_expr, 'E'))

@@ -42,6 +42,63 @@ Line 2: \\n
     assert(first == '\n' || first == '\r' || s2[1] == 'L' || s2[2] == 'L', "Multi-line raw string should start with newline or L");
 }
 
+struct S {
+    f: f64;
+}
+
+impl S {
+    fn neg(self) -> S {
+        return S{f: -self.f};
+    }
+
+    fn to_string(self) -> string {
+        return f"{self.f:g}";
+    }
+}
+
+test "negated_struct_interpolation" {
+    let s = S{f: 42.0};
+    let res = f"{-s}";
+    assert(res == "-42", "Negated struct interpolation failed");
+}
 
 
 
+
+
+test "brace_escaping" {
+    // Test {{ escapes to {
+    let a = "Open {{ and close }}";
+    println "Got: {a}";
+    
+    // Test in interpolated string with JSON-style content  
+    let b = "JSON: {{\"key\": \"value\"}}";
+    println "Got: {b}";
+    
+    println "  Brace escaping: Success";
+}
+
+test "implicit_fstring_interpolation" {
+    let result = 123;
+    let s = "{result}";
+    // Should be "123"
+    assert(strcmp(s, "123") == 0, "Implicit f-string failed");
+}
+
+test "with_const_char_ptr" {
+    let a: const char* = "test";
+    let s = "Text: {a}";
+    assert(strcmp(s, "Text: test") == 0, "With const char* f-string failed");
+}
+
+test "implicit_fstring_complex" {
+    let a = 10;
+    let b = 20;
+    let s = "Sum: {a + b}";
+    assert(strcmp(s, "Sum: 30") == 0, "Complex implicit f-string failed");
+}
+
+test "no_interpolation" {
+    let s = "Hello World";
+    assert(strcmp(s, "Hello World") == 0, "Plain string failed");
+}
