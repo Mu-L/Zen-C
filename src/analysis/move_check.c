@@ -64,27 +64,28 @@ char *get_node_path(ASTNode *node, int depth)
     {
         return NULL;
     }
+    RECURSION_GUARD_TOKEN(g_parser_ctx, node->token, NULL);
+
+    char *path = NULL;
 
     if (node->type == NODE_EXPR_VAR)
     {
-        return xstrdup(node->var_ref.name);
+        path = xstrdup(node->var_ref.name);
     }
-
-    if (node->type == NODE_EXPR_MEMBER)
+    else if (node->type == NODE_EXPR_MEMBER)
     {
         char *target_path = get_node_path(node->member.target, depth + 1);
-        if (!target_path)
+        if (target_path)
         {
-            return NULL;
+            char buffer[MAX_ERROR_MSG_LEN];
+            snprintf(buffer, sizeof(buffer), "%s.%s", target_path, node->member.field);
+            free(target_path);
+            path = xstrdup(buffer);
         }
-
-        char buffer[MAX_ERROR_MSG_LEN];
-        snprintf(buffer, sizeof(buffer), "%s.%s", target_path, node->member.field);
-        free(target_path);
-        return xstrdup(buffer);
     }
 
-    return NULL;
+    RECURSION_EXIT(g_parser_ctx);
+    return path;
 }
 
 void mark_moved_in_state(MoveState *state, const char *path, Token t)
@@ -207,71 +208,78 @@ int is_type_copy(ParserContext *ctx, Type *t)
     {
         return 1; // Default to Copy for unknown types
     }
+    RECURSION_GUARD_TOKEN(ctx, (Token){0}, 1);
+
+    int result = 1;
     if (t->traits.has_drop)
     {
-        return 0;
+        result = 0;
     }
-    if (t->name && check_impl(ctx, "Drop", t->name))
+    else if (t->name && check_impl(ctx, "Drop", t->name))
     {
-        return 0;
+        result = 0;
     }
-
-    if (t->kind == TYPE_STRUCT)
+    else
     {
+        switch (t->kind)
+        {
+        case TYPE_INT:
+        case TYPE_I8:
+        case TYPE_I16:
+        case TYPE_I32:
+        case TYPE_I64:
+        case TYPE_U8:
+        case TYPE_U16:
+        case TYPE_U32:
+        case TYPE_U64:
+        case TYPE_F32:
+        case TYPE_F64:
+        case TYPE_BOOL:
+        case TYPE_CHAR:
+        case TYPE_VOID:
+        case TYPE_POINTER:
+        case TYPE_FUNCTION:
+            result = 1;
+            break;
+        case TYPE_ENUM:
+        case TYPE_BITINT:
+        case TYPE_UBITINT:
+            result = 1;
+            break;
+        case TYPE_STRUCT:
+            if (check_impl(ctx, "Copy", t->name))
+            {
+                result = 1;
+            }
+            else if (check_impl(ctx, "Drop", t->name))
+            {
+                result = 0;
+            }
+            else
+            {
+                result = 1;
+            }
+            break;
+        case TYPE_ARRAY:
+            result = is_type_copy(ctx, t->inner);
+            break;
+        case TYPE_ALIAS:
+            if (t->alias.is_opaque_alias)
+            {
+                result = 1;
+            }
+            else
+            {
+                result = is_type_copy(ctx, t->inner);
+            }
+            break;
+        default:
+            result = 1;
+            break;
+        }
     }
-
-    switch (t->kind)
-    {
-    case TYPE_INT:
-    case TYPE_I8:
-    case TYPE_I16:
-    case TYPE_I32:
-    case TYPE_I64:
-    case TYPE_U8:
-    case TYPE_U16:
-    case TYPE_U32:
-    case TYPE_U64:
-    case TYPE_F32:
-    case TYPE_F64:
-    case TYPE_BOOL:
-    case TYPE_CHAR:
-    case TYPE_VOID:
-    case TYPE_POINTER:
-    case TYPE_FUNCTION:
-        if (t->traits.has_drop && !t->is_raw)
-        {
-            return 0;
-        }
-        return 1;
-    case TYPE_ENUM:
-    case TYPE_BITINT:
-    case TYPE_UBITINT:
-        return 1;
-
-    case TYPE_STRUCT:
-        if (check_impl(ctx, "Copy", t->name))
-        {
-            return 1;
-        }
-        if (check_impl(ctx, "Drop", t->name))
-        {
-            return 0;
-        }
-        return 1;
-
-    case TYPE_ARRAY:
-        return is_type_copy(ctx, t->inner);
-
-    case TYPE_ALIAS:
-        if (t->alias.is_opaque_alias)
-        {
-            return 1;
-        }
-        return is_type_copy(ctx, t->inner);
-
-    default:
-        return 1;
-    }
+    RECURSION_EXIT(ctx);
+    return result;
 }
 
 void check_path_validity(TypeChecker *tc, const char *path, Token t)

@@ -555,8 +555,6 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
         return;
     }
 
-    RECURSION_GUARD_TOKEN(ctx, node->token, );
-
     switch (node->type)
     {
     case NODE_AST_COMMENT:
@@ -2347,7 +2345,6 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
         }
         emit_pending_closure_frees(out);
     }
-    RECURSION_EXIT(ctx);
 }
 
 // Walks AST nodes and generates code.

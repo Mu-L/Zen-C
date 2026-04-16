@@ -5112,6 +5112,17 @@ char *parse_and_convert_args(ParserContext *ctx, Lexer *l, char ***defaults_out,
                     strcat(buf, ", ");
                 }
 
+                // Ensure buf has enough space before appending
+                size_t needed = strlen(buf) + strlen(type_str) + strlen(name) + 32;
+                if (needed > buf_size)
+                {
+                    while (needed > buf_size)
+                    {
+                        buf_size *= 2;
+                    }
+                    buf = xrealloc(buf, buf_size);
+                }
+
                 char *fn_ptr = strstr(type_str, "(*)");
                 if (get_inner_type(arg_type)->kind == TYPE_FUNCTION)
                 {

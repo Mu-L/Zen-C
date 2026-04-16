@@ -1003,8 +1003,6 @@ void codegen_expression_with_move(ParserContext *ctx, ASTNode *node, FILE *out)
         return;
     }
 
-    RECURSION_GUARD_TOKEN(ctx, node->token, );
-
     if (node && (node->type == NODE_EXPR_VAR || node->type == NODE_EXPR_MEMBER))
     {
         // Re-use infer logic to see if we need invalidation
@@ -1065,12 +1063,10 @@ void codegen_expression_with_move(ParserContext *ctx, ASTNode *node, FILE *out)
                 emit_move_invalidation(ctx, node, out);
                 fprintf(out, "; _mv; })");
             }
-            RECURSION_EXIT(ctx);
             return;
         }
     }
     codegen_expression(ctx, node, out);
-    RECURSION_EXIT(ctx);
 }
 
 int is_struct_return_type(const char *ret_type)

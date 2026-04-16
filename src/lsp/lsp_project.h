@@ -22,12 +22,7 @@ typedef struct ProjectFile
  */
 typedef struct
 {
-    /**
-     * @brief Global shared parser context.
-     * Contains global registries (structs, functions) reused across files.
-     */
     ParserContext *ctx;
-
     ProjectFile *files; ///< List of tracked open files.
     char *root_path;    ///< Project root directory.
 } LSPProject;

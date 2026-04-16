@@ -1321,18 +1321,23 @@ static void check_expr_literal(TypeChecker *tc, ASTNode *node)
         node->type_info = type_new(TYPE_F64); // Default to f64
         break;
     case LITERAL_STRING:
+    case LITERAL_RAW_STRING:
         node->type_info = type_new(TYPE_STRING);
         break;
     case LITERAL_CHAR:
         node->type_info = type_new(TYPE_CHAR);
-        break;
-    default:
         break;
     }
 }
 
 static void check_struct_init(TypeChecker *tc, ASTNode *node, int depth)
 {
+    if (!node)
+    {
+        return;
+    }
+    RECURSION_GUARD_TOKEN(tc->pctx, node->token, );
+
     // Find struct definition
     ASTNode *def = find_struct_def(tc->pctx, node->struct_init.struct_name);
     if (!def)
@@ -1340,6 +1345,7 @@ static void check_struct_init(TypeChecker *tc, ASTNode *node, int depth)
         char msg[MAX_SHORT_MSG_LEN];
         snprintf(msg, sizeof(msg), "Unknown struct '%s'", node->struct_init.struct_name);
         tc_error(tc, node->token, msg);
+        RECURSION_EXIT(tc->pctx);
         return;
     }
 
@@ -1421,10 +1427,23 @@ static void check_struct_init(TypeChecker *tc, ASTNode *node, int depth)
     }
 
     node->type_info = def->type_info;
+    RECURSION_EXIT(tc->pctx);
 }
 
 static void check_loop_passes(TypeChecker *tc, ASTNode *node, int depth)
 {
+    if (!node)
+    {
+        return;
+    }
+    RECURSION_GUARD_TOKEN(tc->pctx, node->token, );
+    if (depth > 1024)
+    {
+        tc_error(tc, node->token, "Expression too deep");
+        RECURSION_EXIT(tc->pctx);
+        return;
+    }
+
     MoveState *prev_break = tc->loop_break_state;
     MoveState *prev_cont = tc->loop_continue_state;
     tc->loop_break_state = NULL;
@@ -1671,6 +1690,7 @@ static void check_loop_passes(TypeChecker *tc, ASTNode *node, int depth)
     tc->loop_continue_state = prev_cont;
     tc->loop_start_state = outer_start_state;
     tc->in_loop_pass2 = outer_in_pass2;
+    RECURSION_EXIT(tc->pctx);
 }
 
 static void check_node(TypeChecker *tc, ASTNode *node, int depth)
@@ -1679,9 +1699,11 @@ static void check_node(TypeChecker *tc, ASTNode *node, int depth)
     {
         return;
     }
+    RECURSION_GUARD_TOKEN(tc->pctx, node->token, );
     if (depth > 1024)
     {
         tc_error(tc, node->token, "Expression too deep");
+        RECURSION_EXIT(tc->pctx);
         return;
     }
 
@@ -2314,6 +2336,7 @@ static void check_node(TypeChecker *tc, ASTNode *node, int depth)
         }
         break;
     }
+    RECURSION_EXIT(tc->pctx);
 }
 
 static void check_expr_lambda(TypeChecker *tc, ASTNode *node, int depth)
@@ -2432,9 +2455,11 @@ static void check_program_prepass(TypeChecker *tc, ASTNode *root, int depth)
     {
         return;
     }
+    RECURSION_GUARD_TOKEN(tc->pctx, root->token, );
 
     if (depth > 64)
     {
+        RECURSION_EXIT(tc->pctx);
         return;
     }
 
@@ -2463,6 +2488,7 @@ static void check_program_prepass(TypeChecker *tc, ASTNode *root, int depth)
         }
         n = n->next;
     }
+    RECURSION_EXIT(tc->pctx);
 }
 
 // ** Entry Point **

@@ -360,7 +360,7 @@ struct ParserContext
 };
 
 // Recursion Safety
-#define MAX_RECURSION_DEPTH 256
+#define MAX_RECURSION_DEPTH 1024
 
 #define RECURSION_GUARD(ctx, l, ret)                                                               \
     if (++((ctx)->recursion_depth) > MAX_RECURSION_DEPTH)                                          \
