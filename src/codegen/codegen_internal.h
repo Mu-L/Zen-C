@@ -61,6 +61,9 @@ void handle_expr_call(ParserContext *ctx, ASTNode *node);
 void handle_block(ParserContext *ctx, ASTNode *node);
 void handle_reflection(ParserContext *ctx, ASTNode *node);
 
+// From codegen_stmt_match.c
+bool is_int_type(TypeKind k);
+
 // From codegen.c
 extern int g_emitting_callee;
 

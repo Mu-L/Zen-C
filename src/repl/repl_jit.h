@@ -11,7 +11,7 @@
 #ifndef REPL_JIT_H
 #define REPL_JIT_H
 
-#if ZC_HAS_JIT
+#if defined(ZC_HAS_JIT) && ZC_HAS_JIT
 #include <libtcc.h>
 #endif
 

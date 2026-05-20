@@ -45,7 +45,7 @@ typedef struct LSPIndex
 } LSPIndex;
 
 // API.
-LSPIndex *lsp_index_new();
+LSPIndex *lsp_index_new(void);
 void lsp_index_free(LSPIndex *idx);
 void lsp_index_add_def(LSPIndex *idx, Token t, const char *hover, ASTNode *node);
 void lsp_index_add_def_range(LSPIndex *idx, Token start, Token end, const char *hover,

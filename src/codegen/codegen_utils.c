@@ -64,7 +64,7 @@ int is_enum_type_name(ParserContext *ctx, const char *name)
 }
 
 // Helper to emit C declaration (handle arrays, function pointers correctly)
-void emit_c_decl(ParserContext *ctx, const char *type_str, const char *name)
+static void emit_c_decl(ParserContext *ctx, const char *type_str, const char *name)
 {
     char *bracket = strchr(type_str, '[');
     char *generic = strchr(type_str, '<');

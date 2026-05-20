@@ -16,7 +16,7 @@ const char *REPL_KEYWORDS[] = {
 const char *REPL_TYPES[] = {"void",  "int",      "char",   "float", "double", "long",
                             "short", "unsigned", "signed", "bool",  NULL};
 
-int find_matching_brace(const char *buf, int pos)
+static int find_matching_brace(const char *buf, int pos)
 {
     if (pos < 0 || pos >= (int)strlen(buf))
     {

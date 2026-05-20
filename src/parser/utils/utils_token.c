@@ -11,6 +11,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Local parser context — avoids token_parser_ctx dependency.
+// Set via token_set_parser_ctx() during compilation setup.
+static ParserContext *token_parser_ctx = NULL;
+
+void token_set_parser_ctx(ParserContext *ctx)
+{
+    token_parser_ctx = ctx;
+}
+
 Token z_parse_expect(Lexer *l, ZenTokenType type, const char *msg)
 {
     Token t = lexer_next(l);
@@ -280,21 +289,21 @@ void skip_comments(Lexer *l)
     while (lexer_peek(l).type == TOK_COMMENT)
     {
         Token tk = lexer_next(l);
-        if (g_parser_ctx->config->keep_comments)
+        if (token_parser_ctx->config->keep_comments)
         {
-            if (g_parser_ctx->last_doc_comment)
+            if (token_parser_ctx->last_doc_comment)
             {
-                size_t old_len = strlen(g_parser_ctx->last_doc_comment);
+                size_t old_len = strlen(token_parser_ctx->last_doc_comment);
                 char *new_c = xmalloc(old_len + tk.len + 2);
-                sprintf(new_c, "%s\n%.*s", g_parser_ctx->last_doc_comment, tk.len, tk.start);
-                zfree(g_parser_ctx->last_doc_comment);
-                g_parser_ctx->last_doc_comment = new_c;
+                sprintf(new_c, "%s\n%.*s", token_parser_ctx->last_doc_comment, tk.len, tk.start);
+                zfree(token_parser_ctx->last_doc_comment);
+                token_parser_ctx->last_doc_comment = new_c;
             }
             else
             {
-                g_parser_ctx->last_doc_comment = xmalloc(tk.len + 1);
-                strncpy(g_parser_ctx->last_doc_comment, tk.start, tk.len);
-                g_parser_ctx->last_doc_comment[tk.len] = 0;
+                token_parser_ctx->last_doc_comment = xmalloc(tk.len + 1);
+                strncpy(token_parser_ctx->last_doc_comment, tk.start, tk.len);
+                token_parser_ctx->last_doc_comment[tk.len] = 0;
             }
         }
     }

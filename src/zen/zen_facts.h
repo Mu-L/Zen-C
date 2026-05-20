@@ -8,6 +8,9 @@
 #define ZEN_FACTS_H
 
 #include "../zprep.h"
+#include "../parser/parser.h"
+#include "../compiler_config.h"
+struct Token;
 
 typedef struct CompilerConfig CompilerConfig;
 
@@ -40,6 +43,7 @@ int zen_trigger_at(ZenTrigger t, Token location, CompilerConfig *cfg);
 
 void zen_trigger_global(CompilerConfig *cfg);
 
+void zzen_at(Token t, const char *msg, const char *url);
 const char *zen_get_fact(ZenTrigger t);
 
 #endif

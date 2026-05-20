@@ -407,7 +407,7 @@ ASTNode *parse_int_literal(Token t)
             zpanic_at(t, "%s", err);
         }
 
-        if (g_parser_ctx->config->misra_mode && strchr(endptr, 'l'))
+        if (g_compiler.config.misra_mode && strchr(endptr, 'l'))
         {
             zerror_at(t, "MISRA Rule 7.3");
         }
@@ -476,7 +476,7 @@ ASTNode *parse_int_literal(Token t)
 
         // Rule 7.2: If it's hex/bin/octal and semantically unsigned (high bit set), it needs 'u'
         // This part is for when we ALREADY have a suffix (like 'L'), but it lacks 'U'.
-        if (g_parser_ctx->config->misra_mode && !(strchr(endptr, 'u') || strchr(endptr, 'U')))
+        if (g_compiler.config.misra_mode && !(strchr(endptr, 'u') || strchr(endptr, 'U')))
         {
             int is_non_decimal = (t.len > 2 && s[0] == '0' &&
                                   (s[1] == 'x' || s[1] == 'X' || s[1] == 'b' || s[1] == 'B' ||
@@ -495,7 +495,7 @@ ASTNode *parse_int_literal(Token t)
             node->type_info->kind = TYPE_I64;
         }
 
-        if (g_parser_ctx->config->misra_mode)
+        if (g_compiler.config.misra_mode)
         {
             int is_non_decimal = (t.len > 2 && s[0] == '0' &&
                                   (s[1] == 'x' || s[1] == 'X' || s[1] == 'b' || s[1] == 'B' ||
@@ -589,7 +589,7 @@ ASTNode *parse_string_literal(ParserContext *ctx, Token t)
         node->resolved_type = xstrdup("string");
 
         // Rule 4.1 check also for interpolated strings (though rarer)
-        if (g_parser_ctx->config->misra_mode)
+        if (g_compiler.config.misra_mode)
         {
             for (int i = 0; i < str_len; i++)
             {
@@ -615,7 +615,7 @@ ASTNode *parse_string_literal(ParserContext *ctx, Token t)
         return node;
     }
 
-    if (g_parser_ctx->config->misra_mode)
+    if (g_compiler.config.misra_mode)
     {
         for (int i = 0; i < str_len; i++)
         {

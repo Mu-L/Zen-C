@@ -8,6 +8,7 @@
 #define CODEGEN_H
 
 #include "../ast/ast.h"
+#include <stdbool.h>
 #include "../token.h"
 #include "codegen_backend.h"
 #include <stdio.h>
@@ -117,3 +118,5 @@ void emit_source_mapping_duplicate(ParserContext *ctx, ASTNode *node);
 void emit_pending_closure_frees(ParserContext *ctx);
 
 #endif
+bool is_int_type(TypeKind k);
+int should_emit_source_mapping(ASTNode *node);

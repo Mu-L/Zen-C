@@ -11,13 +11,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-int is_comparison_op(const char *op)
+static int is_comparison_op(const char *op)
 {
     return (strcmp(op, "==") == 0 || strcmp(op, "!=") == 0 || strcmp(op, "<") == 0 ||
             strcmp(op, ">") == 0 || strcmp(op, "<=") == 0 || strcmp(op, ">=") == 0);
 }
 
-Type *get_field_type(ParserContext *ctx, Type *struct_type, const char *field_name)
+static Type *get_field_type(ParserContext *ctx, Type *struct_type, const char *field_name)
 {
     if (!struct_type)
     {
@@ -84,7 +84,7 @@ Type *get_field_type(ParserContext *ctx, Type *struct_type, const char *field_na
     return NULL;
 }
 
-const char *get_operator_method(const char *op)
+static const char *get_operator_method(const char *op)
 {
     // Arithmetic
     if (strcmp(op, "+") == 0)
@@ -3061,7 +3061,7 @@ static ASTNode *parse_expr_prec_impl(ParserContext *ctx, Lexer *l, Precedence mi
                     char suggestion[MAX_SHORT_MSG_LEN];
                     sprintf(suggestion, "Both operands must have compatible types for comparison");
 
-                    if (g_parser_ctx->config->mode_lsp)
+                    if (ctx->config->mode_lsp)
                     {
                         zwarn_at(op, "LSP: %s", msg);
                         // Assume result is int (bool) to continue

@@ -29,7 +29,7 @@ void print_search_paths(CompilerConfig *cfg)
     }
 }
 
-void print_version()
+void print_version(void)
 {
     printf(COLOR_BOLD "zc" COLOR_RESET " %s\n", ZEN_VERSION);
 }
@@ -81,7 +81,7 @@ static void print_help_item(const char *option, const char *description)
     printf("%s\n", description);
 }
 
-void print_usage()
+void print_usage(void)
 {
     printf(
         "usage: zc [-v | -h | -q | -V] [-I | -L | -l | -D <path/macro>] [--cc <c>] [-O<l>] [-g]\n");

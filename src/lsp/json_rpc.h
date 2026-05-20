@@ -18,3 +18,4 @@
 void handle_request(const char *json_str);
 
 #endif
+int lsp_main(int argc, char **argv);

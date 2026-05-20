@@ -322,7 +322,7 @@ void register_tuple_with_types(ParserContext *ctx, const char *sig, const char *
     register_struct_def(ctx, struct_name, s_def);
 }
 
-void register_tuple(ParserContext *ctx, const char *sig)
+static void __attribute__((unused)) register_tuple(ParserContext *ctx, const char *sig)
 {
     char *s = xstrdup(sig);
     char *parts[256];
@@ -620,7 +620,8 @@ Module *find_module(ParserContext *ctx, const char *alias)
     return mod_ptr ? *mod_ptr : NULL;
 }
 
-void register_module(ParserContext *ctx, const char *alias, const char *path, int is_re_export)
+static void __attribute__((unused)) register_module(ParserContext *ctx, const char *alias,
+                                                    const char *path, int is_re_export)
 {
     if (zmap_get(&ctx->imports.modules, alias))
     {

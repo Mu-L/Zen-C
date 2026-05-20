@@ -9,7 +9,8 @@ set ZEN_VERSION=0.1.0
 for /f "delims=" %%i in ('git describe --tags --always --dirty 2^>nul') do set ZEN_VERSION=%%i
 
 rem Compilation flags
-set CFLAGS=-std=gnu11 -Wall -Wextra -Wshadow -g ^
+set CFLAGS=-std=gnu11 -Wall -Wextra -Wshadow -Wformat=2 -Wmissing-prototypes ^
+ -Wstrict-prototypes -Wnull-dereference -Wundef -Wduplicated-cond -Wlogical-op -g ^
  -I./src -I./src/ast -I./src/parser -I./src/codegen -I./plugins -I./src/zen ^
  -I./src/utils -I./src/lexer -I./src/analysis -I./src/lsp -I./src/diagnostics ^
  -I./std/third-party/tre/include

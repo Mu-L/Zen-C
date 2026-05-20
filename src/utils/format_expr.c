@@ -3,6 +3,7 @@
 #include "../codegen/codegen.h"
 #include "../utils/emitter.h"
 #include "../ast/ast.h"
+#include "../utils/format_expr.h"
 
 char *format_expression_as_c(struct ParserContext *ctx, struct ASTNode *node)
 {

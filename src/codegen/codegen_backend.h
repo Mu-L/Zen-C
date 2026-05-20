@@ -62,3 +62,11 @@ const char *backend_opt(zvec_Str *opts, const char *key);
 const char *codegen_alias_lookup(const char *flag);
 
 #endif // CODEGEN_BACKEND_H
+void codegen_register_c_backend(void);
+void codegen_register_cpp_backend(void);
+void codegen_register_cuda_backend(void);
+void codegen_register_objc_backend(void);
+void codegen_register_json_backend(void);
+void codegen_register_lisp_backend(void);
+void codegen_register_dot_backend(void);
+void codegen_register_astdump_backend(void);

@@ -344,7 +344,8 @@ static int repl_process_line(ReplState *state, char *line_buf, int *brace_depth,
         ASTNode *node = parse_statement(&pctx, &l);
         zfree(check_buf);
 
-        if (node && (node->type >= NODE_EXPR_BINARY && node->type <= NODE_MATCH))
+        if (node && ((node->type >= NODE_EXPR_BINARY && node->type <= NODE_EXPR_SLICE) ||
+                     node->type == NODE_TERNARY || node->type == NODE_LAMBDA))
         {
             strcat(full_code, "println \"{");
             strcat(full_code, raw_input);

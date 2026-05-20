@@ -13,7 +13,7 @@
 
 static int is_unmangle_primitive(const char *base);
 
-ASTNode *copy_fields(ASTNode *fields)
+static ASTNode __attribute__((unused)) * copy_fields(ASTNode *fields)
 {
     if (!fields)
     {
@@ -26,7 +26,7 @@ ASTNode *copy_fields(ASTNode *fields)
     return n;
 }
 
-char *replace_in_string(const char *src, const char *old_w, const char *new_w)
+static char *replace_in_string(const char *src, const char *old_w, const char *new_w)
 {
     if (!src || !old_w || !new_w)
     {
@@ -169,7 +169,7 @@ char *replace_in_string(const char *src, const char *old_w, const char *new_w)
 Type *replace_type_formal(Type *t, const char *p, const char *c, const char *os, const char *ns);
 // Helper to replace generic params in mangled names (e.g. Option_V_None ->
 // Option_int_None)
-char *replace_mangled_part(const char *src, const char *param, const char *concrete)
+static char *replace_mangled_part(const char *src, const char *param, const char *concrete)
 {
     if (!src || !param || !concrete)
     {
@@ -1583,7 +1583,7 @@ char *sanitize_mangled_name(const char *s)
 }
 
 // Helper to unmangle Ptr suffix back to pointer type ("intPtr" -> "int*")
-char *unmangle_ptr_suffix(const char *s)
+static char *unmangle_ptr_suffix(const char *s)
 {
     if (!s)
     {
@@ -2166,7 +2166,8 @@ char *instantiate_function_template(ParserContext *ctx, const char *name, const 
     return mangled;
 }
 
-char *process_fstring(ParserContext *ctx, const char *content, char ***used_syms, int *count)
+static char __attribute__((unused)) *
+    process_fstring(ParserContext *ctx, const char *content, char ***used_syms, int *count)
 {
     (void)used_syms;
     (void)count;
@@ -2317,8 +2318,9 @@ void register_template(ParserContext *ctx, const char *name, ASTNode *node)
     ctx->templates = t;
 }
 
-ASTNode *copy_fields_replacing(ParserContext *ctx, ASTNode *fields, const char *param,
-                               const char *concrete)
+static ASTNode __attribute__((unused)) * copy_fields_replacing(ParserContext *ctx, ASTNode *fields,
+                                                               const char *param,
+                                                               const char *concrete)
 {
     if (!fields)
     {

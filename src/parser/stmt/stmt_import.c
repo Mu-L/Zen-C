@@ -15,7 +15,7 @@
 #include "zprep_plugin.h"
 #include "analysis/move_check.h"
 
-void try_parse_c_function_decl(ParserContext *ctx, const char *line)
+static void try_parse_c_function_decl(ParserContext *ctx, const char *line)
 {
     const char *p = line;
     while (*p && isspace(*p))
@@ -108,7 +108,7 @@ void try_parse_c_function_decl(ParserContext *ctx, const char *line)
     zfree(name);
 }
 
-void try_parse_c_struct_decl(ParserContext *ctx, const char *line)
+static void try_parse_c_struct_decl(ParserContext *ctx, const char *line)
 {
     const char *p = line;
     while (*p && isspace(*p))
@@ -218,7 +218,7 @@ void try_parse_c_struct_decl(ParserContext *ctx, const char *line)
     zfree(tag_name);
 }
 
-void scan_c_header_contents(ParserContext *ctx, const char *path, int depth)
+static void scan_c_header_contents(ParserContext *ctx, const char *path, int depth)
 {
     if (depth > 16)
     {

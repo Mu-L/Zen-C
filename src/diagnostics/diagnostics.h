@@ -149,4 +149,9 @@ int is_diag_enabled(DiagnosticID id);
 void zwarn_diag(DiagnosticID id, Token t, const char *msg, const char *hint);
 int set_diag_by_name(const char *name, int enabled);
 
+// Diagnostic context — replaces g_parser_ctx dependency.
+// Set at the start of each compilation unit so diagnostic functions can access
+// config, callbacks, and current filename without relying on the global.
+void diag_set_parser_ctx(struct ParserContext *ctx);
+
 #endif

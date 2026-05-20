@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-LSPIndex *lsp_index_new()
+LSPIndex *lsp_index_new(void)
 {
     return calloc(1, sizeof(LSPIndex));
 }
@@ -31,7 +31,7 @@ void lsp_index_free(LSPIndex *idx)
     zfree(idx);
 }
 
-void lsp_index_add(LSPIndex *idx, LSPRange *r)
+static void lsp_index_add(LSPIndex *idx, LSPRange *r)
 {
     if (!idx->head)
     {
@@ -65,7 +65,7 @@ void lsp_index_add_def(LSPIndex *idx, Token t, const char *hover, ASTNode *node)
 
     lsp_index_add(idx, r);
 }
-void lsp_index_add_plugin(LSPIndex *idx, ASTNode *node)
+static void lsp_index_add_plugin(LSPIndex *idx, ASTNode *node)
 {
     if (!node || node->type != NODE_PLUGIN)
     {

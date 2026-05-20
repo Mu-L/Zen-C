@@ -223,6 +223,7 @@ void check_node(TypeChecker *tc, ASTNode *node, int depth)
             ASTNode *mcase = node->match_stmt.cases;
             int has_default = 0;
             int clause_count = 0;
+            (void)clause_count;
 
             while (mcase)
             {
@@ -964,7 +965,7 @@ void check_node(TypeChecker *tc, ASTNode *node, int depth)
     RECURSION_EXIT(tc->pctx);
 }
 
-void infer_node_lifetime(TypeChecker *tc, ASTNode *node)
+static void infer_node_lifetime(TypeChecker *tc, ASTNode *node)
 {
     if (!node || node->type != NODE_FUNCTION)
     {
@@ -1038,7 +1039,7 @@ void infer_node_lifetime(TypeChecker *tc, ASTNode *node)
     }
 }
 
-void check_program_prepass(TypeChecker *tc, ASTNode *root, int depth)
+static void check_program_prepass(TypeChecker *tc, ASTNode *root, int depth)
 {
     if (!root || root->type != NODE_ROOT)
     {

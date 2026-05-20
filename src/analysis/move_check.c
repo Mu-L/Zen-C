@@ -91,7 +91,7 @@ char *get_node_path(ASTNode *node, int depth)
     return path;
 }
 
-void mark_moved_in_state(MoveState *state, const char *path, Token t)
+static void mark_moved_in_state(MoveState *state, const char *path, Token t)
 {
     if (!state || !path)
     {
@@ -397,7 +397,7 @@ void mark_symbol_moved(ParserContext *ctx, ZenSymbol *sym, ASTNode *context_node
     }
 }
 
-void mark_valid_in_state(MoveState *state, const char *path, Token t)
+static void mark_valid_in_state(MoveState *state, const char *path, Token t)
 {
     if (!state || !path)
     {

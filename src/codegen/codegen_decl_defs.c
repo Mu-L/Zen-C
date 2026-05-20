@@ -1322,6 +1322,7 @@ static void emit_protos_internal(ParserContext *ctx, ASTNode *node, VisitedModul
                 char *args_copy = xstrdup(f->func.args);
                 char *tok = strtok(args_copy, ",");
                 int fi = 0;
+                (void)fi;
                 while (tok)
                 {
                     while (*tok == ' ')
@@ -1392,17 +1393,17 @@ static void emit_protos_internal(ParserContext *ctx, ASTNode *node, VisitedModul
             }
 
             // Resolve opaque alias (e.g. StringView -> Slice__char)
-            TypeAlias *ta = find_type_alias_node(g_parser_ctx, sname);
+            TypeAlias *ta = find_type_alias_node(ctx, sname);
             const char *resolved = (ta && !ta->is_opaque) ? ta->original_type : NULL;
             const char *effective_name = resolved ? resolved : sname;
 
             char *mangled = replace_string_type(sname);
-            ASTNode *def = find_struct_def(g_parser_ctx, mangled);
+            ASTNode *def = find_struct_def(ctx, mangled);
             if (!def && resolved)
             {
                 zfree(mangled);
                 mangled = replace_string_type(resolved);
-                def = find_struct_def(g_parser_ctx, mangled);
+                def = find_struct_def(ctx, mangled);
             }
             int skip = 0;
             if (def)
@@ -1421,7 +1422,7 @@ static void emit_protos_internal(ParserContext *ctx, ASTNode *node, VisitedModul
                 char *buf = strip_template_suffix(sname);
                 if (buf)
                 {
-                    def = find_struct_def(g_parser_ctx, buf);
+                    def = find_struct_def(ctx, buf);
                     if (def && def->strct.is_template)
                     {
                         skip = 1;
@@ -1500,7 +1501,7 @@ static void emit_protos_internal(ParserContext *ctx, ASTNode *node, VisitedModul
             }
 
             char *mangled = replace_string_type(sname);
-            ASTNode *def = find_struct_def(g_parser_ctx, mangled);
+            ASTNode *def = find_struct_def(ctx, mangled);
             int skip = 0;
             if (def)
             {
@@ -1514,7 +1515,7 @@ static void emit_protos_internal(ParserContext *ctx, ASTNode *node, VisitedModul
                 char *buf = strip_template_suffix(sname);
                 if (buf)
                 {
-                    def = find_struct_def(g_parser_ctx, buf);
+                    def = find_struct_def(ctx, buf);
                     if (def && def->strct.is_template)
                     {
                         skip = 1;

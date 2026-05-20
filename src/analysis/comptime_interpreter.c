@@ -413,11 +413,13 @@ static CValue eval_binary(CInterp *ci, ASTNode *node)
     }
     else if (strcmp(op, "&&") == 0)
     {
-        r.type = VAL_BOOL, r.as.b = (a && b);
+        r.type = VAL_BOOL;
+        r.as.b = (a && b);
     }
     else if (strcmp(op, "||") == 0)
     {
-        r.type = VAL_BOOL, r.as.b = (a || b);
+        r.type = VAL_BOOL;
+        r.as.b = (a || b);
     }
     else
     {

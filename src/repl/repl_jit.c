@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if ZC_HAS_JIT
+#if defined(ZC_HAS_JIT) && ZC_HAS_JIT
 /* TCC Error Handler */
 static void tcc_error_handler(void *opaque, const char *msg)
 {

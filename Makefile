@@ -31,7 +31,25 @@ else
     DEPFLAGS = -MMD -MP
     TCC_EXTRA =
 endif
-CFLAGS = -std=gnu11 -g -Wall -Wextra -Wshadow $(DEPFLAGS) $(TCC_EXTRA) $(if $(filter 1,$(WERROR)),-Werror,) -I./src -I./src/ast -I./src/parser -I./src/codegen -I./plugins -I./src/zen -I./src/utils -I./src/lexer -I./src/analysis -I./src/lsp -I./src/diagnostics -I./std/third-party/tre/include $(DEFINES)
+# Base flags shared by all compilers
+CFLAGS = -std=gnu11 -g -Wall -Wextra -Wshadow -Wformat=2 -Wmissing-prototypes -Wstrict-prototypes -Wnull-dereference -Wundef -Wfloat-equal $(DEPFLAGS) $(TCC_EXTRA) $(if $(filter 1,$(WERROR)),-Werror,) -I./src -I./src/ast -I./src/parser -I./src/codegen -I./plugins -I./src/zen -I./src/utils -I./src/lexer -I./src/analysis -I./src/lsp -I./src/diagnostics -I./std/third-party/tre/include $(DEFINES)
+
+# Suppress WERROR for vendored code warnings (TRE, cJSON) that we can't fix
+ifneq ($(filter 1,$(WERROR)),)
+CFLAGS += -Wno-error=undef -Wno-error=float-equal
+endif
+
+# GCC-specific warnings
+ifneq ($(findstring clang,$(CC)),clang)
+CFLAGS += -Wduplicated-cond -Wlogical-op
+endif
+
+# Clang-specific warnings
+ifeq ($(findstring clang,$(CC)),clang)
+# -Wformat=2 includes -Wformat-nonliteral which is noisy with emitter code
+CFLAGS += -Wformat -Wno-format-nonliteral
+CFLAGS += -Wassign-enum -Wcomma -Wsometimes-uninitialized -Wloop-analysis -Wsizeof-array-div
+endif
 
 # Toggle plugins
 ifeq ($(NO_PLUGINS), 1)

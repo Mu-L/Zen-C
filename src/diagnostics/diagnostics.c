@@ -6,21 +6,37 @@
 #include "lsp/cJSON.h"
 #include <stdio.h>
 
+// Local diagnostic context — replaces g_parser_ctx dependency.
+// Set via diag_set_parser_ctx() at the start of each compilation.
+static struct
+{
+    ParserContext *parser_ctx;
+} d_ctx = {NULL};
+
+void diag_set_parser_ctx(ParserContext *ctx)
+{
+    d_ctx.parser_ctx = ctx;
+}
+
 static CompilerConfig *diag_cfg(void)
 {
-    return g_parser_ctx ? g_parser_ctx->config : &g_compiler.config;
+    return d_ctx.parser_ctx ? d_ctx.parser_ctx->config : &g_compiler.config;
+}
+
+static const char *diag_filename(Token t)
+{
+    if (t.file)
+    {
+        return t.file;
+    }
+    return d_ctx.parser_ctx ? d_ctx.parser_ctx->current_filename : "unknown";
 }
 
 static void emit_json(const char *level, Token t, const char *msg, const char *suggestion,
                       int diag_id)
 {
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "file",
-                            t.file
-                                ? t.file
-                                : ((g_parser_ctx ? g_parser_ctx->current_filename : "unknown")
-                                       ? (g_parser_ctx ? g_parser_ctx->current_filename : "unknown")
-                                       : "unknown"));
+    cJSON_AddStringToObject(root, "file", diag_filename(t));
     cJSON_AddNumberToObject(root, "line", t.line);
     cJSON_AddNumberToObject(root, "col", t.col);
     cJSON_AddStringToObject(root, "level", level);
@@ -43,7 +59,7 @@ static void emit_json(const char *level, Token t, const char *msg, const char *s
     cJSON_Delete(root);
 
     // Call LSP diagnostics hook
-    if (g_parser_ctx && g_parser_ctx->is_fault_tolerant && g_parser_ctx->on_diagnostic)
+    if (d_ctx.parser_ctx && d_ctx.parser_ctx->is_fault_tolerant && d_ctx.parser_ctx->on_diagnostic)
     {
         int severity = 1; // Error
         if (strcmp(level, "warning") == 0)
@@ -64,8 +80,8 @@ static void emit_json(const char *level, Token t, const char *msg, const char *s
         {
             snprintf(full_msg, sizeof(full_msg), "%s", msg);
         }
-        g_parser_ctx->on_diagnostic(g_parser_ctx->error_callback_data, t, severity, full_msg,
-                                    diag_id);
+        d_ctx.parser_ctx->on_diagnostic(d_ctx.parser_ctx->error_callback_data, t, severity,
+                                        full_msg, diag_id);
     }
 }
 
@@ -165,9 +181,10 @@ void zwarn_at_diag(int diag_id, Token t, const char *fmt, ...)
         fprintf(stderr, COLOR_RESET "\n");
 
         // Location.
-        fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
-                (t.file ? t.file : (g_parser_ctx ? g_parser_ctx->current_filename : "unknown")),
-                t.line, t.col);
+        fprintf(
+            stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
+            (t.file ? t.file : (d_ctx.parser_ctx ? d_ctx.parser_ctx->current_filename : "unknown")),
+            t.line, t.col);
     }
 }
 
@@ -198,8 +215,8 @@ void zwarn_at(Token t, const char *fmt, ...)
 
     // Location.
     fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
-            (t.file ? t.file : (g_parser_ctx ? g_parser_ctx->current_filename : "unknown")), t.line,
-            t.col);
+            (t.file ? t.file : (d_ctx.parser_ctx ? d_ctx.parser_ctx->current_filename : "unknown")),
+            t.line, t.col);
 
     // Context. Only if token has valid data.
     if (t.start)
@@ -259,8 +276,8 @@ void zwarn_with_suggestion(Token t, const char *msg, const char *suggestion)
 
     // Location.
     fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
-            (t.file ? t.file : (g_parser_ctx ? g_parser_ctx->current_filename : "unknown")), t.line,
-            t.col);
+            (t.file ? t.file : (d_ctx.parser_ctx ? d_ctx.parser_ctx->current_filename : "unknown")),
+            t.line, t.col);
 
     // Context.
     if (t.start)
@@ -302,10 +319,10 @@ void zpanic_at(Token t, const char *fmt, ...)
         vsnprintf(msg, sizeof(msg), fmt, a);
         va_end(a);
         emit_json("error", t, msg, NULL, DIAG_NONE);
-        if (g_parser_ctx && g_parser_ctx->is_fault_tolerant && g_parser_ctx->on_error)
+        if (d_ctx.parser_ctx && d_ctx.parser_ctx->is_fault_tolerant && d_ctx.parser_ctx->on_error)
         {
-            g_parser_ctx->had_error = 1;
-            g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, msg);
+            d_ctx.parser_ctx->had_error = 1;
+            d_ctx.parser_ctx->on_error(d_ctx.parser_ctx->error_callback_data, t, msg);
             return;
         }
         if (diag_cfg()->mode_lsp)
@@ -324,8 +341,8 @@ void zpanic_at(Token t, const char *fmt, ...)
 
     // Location: '--> file:line:col'.
     fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
-            (t.file ? t.file : (g_parser_ctx ? g_parser_ctx->current_filename : "unknown")), t.line,
-            t.col);
+            (t.file ? t.file : (d_ctx.parser_ctx ? d_ctx.parser_ctx->current_filename : "unknown")),
+            t.line, t.col);
 
     // Context line.
     const char *line_start = t.start - (t.col - 1);
@@ -350,7 +367,7 @@ void zpanic_at(Token t, const char *fmt, ...)
     fprintf(stderr, COLOR_BLUE "   |\n" COLOR_RESET);
 
     g_error_count++;
-    if (g_parser_ctx && g_parser_ctx->is_fault_tolerant && g_parser_ctx->on_error)
+    if (d_ctx.parser_ctx && d_ctx.parser_ctx->is_fault_tolerant && d_ctx.parser_ctx->on_error)
     {
         // Construct error message buffer
         char msg[MAX_ERROR_MSG_LEN];
@@ -359,8 +376,8 @@ void zpanic_at(Token t, const char *fmt, ...)
         vsnprintf(msg, sizeof(msg), fmt, args2);
         va_end(args2);
 
-        g_parser_ctx->had_error = 1;
-        g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, msg);
+        d_ctx.parser_ctx->had_error = 1;
+        d_ctx.parser_ctx->on_error(d_ctx.parser_ctx->error_callback_data, t, msg);
         return; // Recover!
     }
 
@@ -377,13 +394,13 @@ void zpanic_with_suggestion(Token t, const char *msg, const char *suggestion)
     if (diag_cfg()->json_output)
     {
         emit_json("error", t, msg, suggestion, DIAG_NONE);
-        if (g_parser_ctx && g_parser_ctx->is_fault_tolerant && g_parser_ctx->on_error)
+        if (d_ctx.parser_ctx && d_ctx.parser_ctx->is_fault_tolerant && d_ctx.parser_ctx->on_error)
         {
             char full_msg[MAX_ERROR_MSG_LEN];
             snprintf(full_msg, sizeof(full_msg), "%s (Suggestion: %s)", msg,
                      suggestion ? suggestion : "");
-            g_parser_ctx->had_error = 1;
-            g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, full_msg);
+            d_ctx.parser_ctx->had_error = 1;
+            d_ctx.parser_ctx->on_error(d_ctx.parser_ctx->error_callback_data, t, full_msg);
             g_error_count++;
             return;
         }
@@ -398,8 +415,8 @@ void zpanic_with_suggestion(Token t, const char *msg, const char *suggestion)
 
     // Location.
     fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
-            (t.file ? t.file : (g_parser_ctx ? g_parser_ctx->current_filename : "unknown")), t.line,
-            t.col);
+            (t.file ? t.file : (d_ctx.parser_ctx ? d_ctx.parser_ctx->current_filename : "unknown")),
+            t.line, t.col);
 
     // Context.
     const char *line_start = t.start - (t.col - 1);
@@ -427,14 +444,14 @@ void zpanic_with_suggestion(Token t, const char *msg, const char *suggestion)
         fprintf(stderr, COLOR_CYAN "   = help: " COLOR_RESET "%s\n", suggestion);
     }
 
-    if (g_parser_ctx && g_parser_ctx->is_fault_tolerant && g_parser_ctx->on_error)
+    if (d_ctx.parser_ctx && d_ctx.parser_ctx->is_fault_tolerant && d_ctx.parser_ctx->on_error)
     {
         // Construct error message buffer
         char full_msg[MAX_ERROR_MSG_LEN];
         snprintf(full_msg, sizeof(full_msg), "%s (Suggestion: %s)", msg,
                  suggestion ? suggestion : "");
-        g_parser_ctx->had_error = 1;
-        g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, full_msg);
+        d_ctx.parser_ctx->had_error = 1;
+        d_ctx.parser_ctx->on_error(d_ctx.parser_ctx->error_callback_data, t, full_msg);
         return; // Recover!
     }
 
@@ -465,12 +482,12 @@ void zpanic_with_hints(Token t, const char *msg, const char *const *hints)
         }
         emit_json("error", t, msg, combined_hints[0] ? combined_hints : NULL, DIAG_NONE);
 
-        if (g_parser_ctx && g_parser_ctx->is_fault_tolerant && g_parser_ctx->on_error)
+        if (d_ctx.parser_ctx && d_ctx.parser_ctx->is_fault_tolerant && d_ctx.parser_ctx->on_error)
         {
             char full_msg[MAX_PATH_LEN * 2];
             snprintf(full_msg, sizeof(full_msg), "%s\n%s", msg, combined_hints);
-            g_parser_ctx->had_error = 1;
-            g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, full_msg);
+            d_ctx.parser_ctx->had_error = 1;
+            d_ctx.parser_ctx->on_error(d_ctx.parser_ctx->error_callback_data, t, full_msg);
             return;
         }
         if (diag_cfg()->mode_lsp)
@@ -485,8 +502,8 @@ void zpanic_with_hints(Token t, const char *msg, const char *const *hints)
 
     // Location.
     fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
-            (t.file ? t.file : (g_parser_ctx ? g_parser_ctx->current_filename : "unknown")), t.line,
-            t.col);
+            (t.file ? t.file : (d_ctx.parser_ctx ? d_ctx.parser_ctx->current_filename : "unknown")),
+            t.line, t.col);
 
     // Context.
     const char *line_start = t.start - (t.col - 1);
@@ -518,7 +535,7 @@ void zpanic_with_hints(Token t, const char *msg, const char *const *hints)
         }
     }
 
-    if (g_parser_ctx && g_parser_ctx->is_fault_tolerant && g_parser_ctx->on_error)
+    if (d_ctx.parser_ctx && d_ctx.parser_ctx->is_fault_tolerant && d_ctx.parser_ctx->on_error)
     {
         // Construct error message buffer
         char full_msg[MAX_PATH_LEN * 2];
@@ -540,8 +557,8 @@ void zpanic_with_hints(Token t, const char *msg, const char *const *hints)
         {
             strncat(full_msg, combined_hints, sizeof(full_msg) - strlen(full_msg) - 1);
         }
-        g_parser_ctx->had_error = 1;
-        g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, full_msg);
+        d_ctx.parser_ctx->had_error = 1;
+        d_ctx.parser_ctx->on_error(d_ctx.parser_ctx->error_callback_data, t, full_msg);
         return; // Recover!
     }
 
@@ -563,9 +580,9 @@ void zerror_at(Token t, const char *fmt, ...)
         va_end(a);
         emit_json("error", t, msg, NULL, DIAG_NONE);
         g_error_count++;
-        if (g_parser_ctx && g_parser_ctx->on_error)
+        if (d_ctx.parser_ctx && d_ctx.parser_ctx->on_error)
         {
-            g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, msg);
+            d_ctx.parser_ctx->on_error(d_ctx.parser_ctx->error_callback_data, t, msg);
         }
         return;
     }
@@ -579,8 +596,8 @@ void zerror_at(Token t, const char *fmt, ...)
 
     // Location: '--> file:line:col'.
     fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
-            (t.file ? t.file : (g_parser_ctx ? g_parser_ctx->current_filename : "unknown")), t.line,
-            t.col);
+            (t.file ? t.file : (d_ctx.parser_ctx ? d_ctx.parser_ctx->current_filename : "unknown")),
+            t.line, t.col);
 
     // Context line.
     if (t.start)
@@ -607,7 +624,7 @@ void zerror_at(Token t, const char *fmt, ...)
         fprintf(stderr, COLOR_BLUE "   |\n" COLOR_RESET);
     }
 
-    if (g_parser_ctx && g_parser_ctx->on_error)
+    if (d_ctx.parser_ctx && d_ctx.parser_ctx->on_error)
     {
         // Construct error message buffer
         char msg[MAX_ERROR_MSG_LEN];
@@ -616,7 +633,7 @@ void zerror_at(Token t, const char *fmt, ...)
         vsnprintf(msg, sizeof(msg), fmt, args2);
         va_end(args2);
 
-        g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, msg);
+        d_ctx.parser_ctx->on_error(d_ctx.parser_ctx->error_callback_data, t, msg);
     }
     g_error_count++;
 }
@@ -627,12 +644,12 @@ void zerror_with_suggestion(Token t, const char *msg, const char *suggestion)
     {
         g_error_count++;
         emit_json("error", t, msg, suggestion, DIAG_NONE);
-        if (g_parser_ctx && g_parser_ctx->on_error)
+        if (d_ctx.parser_ctx && d_ctx.parser_ctx->on_error)
         {
             char full_msg[MAX_ERROR_MSG_LEN];
             snprintf(full_msg, sizeof(full_msg), "%s (Suggestion: %s)", msg,
                      suggestion ? suggestion : "");
-            g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, full_msg);
+            d_ctx.parser_ctx->on_error(d_ctx.parser_ctx->error_callback_data, t, full_msg);
         }
         return;
     }
@@ -641,8 +658,8 @@ void zerror_with_suggestion(Token t, const char *msg, const char *suggestion)
 
     // Location.
     fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
-            (t.file ? t.file : (g_parser_ctx ? g_parser_ctx->current_filename : "unknown")), t.line,
-            t.col);
+            (t.file ? t.file : (d_ctx.parser_ctx ? d_ctx.parser_ctx->current_filename : "unknown")),
+            t.line, t.col);
 
     // Context.
     if (t.start)
@@ -677,7 +694,7 @@ void zerror_with_suggestion(Token t, const char *msg, const char *suggestion)
         char full_msg[MAX_ERROR_MSG_LEN];
         snprintf(full_msg, sizeof(full_msg), "%s (Suggestion: %s)", msg,
                  suggestion ? suggestion : "");
-        g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, full_msg);
+        d_ctx.parser_ctx->on_error(d_ctx.parser_ctx->error_callback_data, t, full_msg);
     }
     g_error_count++;
 }
@@ -702,7 +719,7 @@ void zerror_with_hints(Token t, const char *msg, const char *const *hints)
     if (diag_cfg()->json_output)
     {
         emit_json("error", t, msg, combined_hints[0] ? combined_hints : NULL, DIAG_NONE);
-        if (g_parser_ctx && g_parser_ctx->on_error)
+        if (d_ctx.parser_ctx && d_ctx.parser_ctx->on_error)
         {
             char full_msg[MAX_PATH_LEN * 2];
             int header_len = snprintf(full_msg, sizeof(full_msg), "%s\n", msg);
@@ -710,7 +727,7 @@ void zerror_with_hints(Token t, const char *msg, const char *const *hints)
             {
                 strncat(full_msg, combined_hints, sizeof(full_msg) - strlen(full_msg) - 1);
             }
-            g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, full_msg);
+            d_ctx.parser_ctx->on_error(d_ctx.parser_ctx->error_callback_data, t, full_msg);
         }
         g_error_count++;
         return;
@@ -721,8 +738,8 @@ void zerror_with_hints(Token t, const char *msg, const char *const *hints)
 
     // Location.
     fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
-            (t.file ? t.file : (g_parser_ctx ? g_parser_ctx->current_filename : "unknown")), t.line,
-            t.col);
+            (t.file ? t.file : (d_ctx.parser_ctx ? d_ctx.parser_ctx->current_filename : "unknown")),
+            t.line, t.col);
 
     // Context.
     if (t.start)
@@ -757,7 +774,7 @@ void zerror_with_hints(Token t, const char *msg, const char *const *hints)
         }
     }
 
-    if (g_parser_ctx && g_parser_ctx->on_error)
+    if (d_ctx.parser_ctx && d_ctx.parser_ctx->on_error)
     {
         // Construct error message buffer
         char full_msg[MAX_PATH_LEN * 2];
@@ -767,7 +784,7 @@ void zerror_with_hints(Token t, const char *msg, const char *const *hints)
             strncat(full_msg, "\n", sizeof(full_msg) - strlen(full_msg) - 1);
             strncat(full_msg, combined_hints, sizeof(full_msg) - strlen(full_msg) - 1);
         }
-        g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, full_msg);
+        d_ctx.parser_ctx->on_error(d_ctx.parser_ctx->error_callback_data, t, full_msg);
     }
     g_error_count++;
 }

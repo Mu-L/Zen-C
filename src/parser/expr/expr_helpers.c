@@ -333,7 +333,7 @@ ASTNode *transform_to_trait_object(ParserContext *ctx, const char *target_trait,
             // If target_trait had a *, we might need to wrap in &addr?
             if (strchr(target_trait, '*'))
             {
-                if (g_parser_ctx->config->use_cpp)
+                if (ctx->config->use_cpp)
                 {
                     // C++ does not allow taking the address of a compound literal.
                     // Use a statement expression with a local variable instead.
@@ -416,7 +416,7 @@ char *resolve_struct_name_from_type(ParserContext *ctx, Type *t, int *is_ptr_out
                                     char **allocated_out);
 
 // Helper to check if a type is a struct type
-int is_struct_type(ParserContext *ctx, const char *type_name)
+static int __attribute__((unused)) is_struct_type(ParserContext *ctx, const char *type_name)
 {
     if (!type_name)
     {

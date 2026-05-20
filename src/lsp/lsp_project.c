@@ -12,12 +12,13 @@ LSPProject *g_project = NULL;
 int g_is_indexing = 0;
 
 static void scan_dir(const char *dir_path);
+void lsp_default_on_error(void *data, Token t, const char *msg);
 
 // Initialize the project with a root directory
 void lsp_project_init(const char *root_path);
 
 // Perform full project indexing
-void lsp_project_index_workspace();
+void lsp_project_index_workspace(void);
 
 void lsp_project_init(const char *root_path)
 {
@@ -73,7 +74,7 @@ void lsp_project_init(const char *root_path)
     }
 }
 
-void lsp_project_index_workspace()
+void lsp_project_index_workspace(void)
 {
     if (!g_project || !g_project->root_path)
     {

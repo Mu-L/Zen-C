@@ -108,7 +108,7 @@ ZenSymbol *find_symbol_in_all(ParserContext *ctx, const char *n)
     return NULL;
 }
 
-void init_builtins()
+void init_builtins(void)
 {
     static int init = 0;
     if (init)
@@ -214,7 +214,8 @@ void register_deprecated_func(ParserContext *ctx, const char *name, const char *
     ctx->deprecated_funcs = d;
 }
 
-DeprecatedFunc *find_deprecated_func(ParserContext *ctx, const char *name)
+static DeprecatedFunc __attribute__((unused)) *
+    find_deprecated_func(ParserContext *ctx, const char *name)
 {
     DeprecatedFunc *d = ctx->deprecated_funcs;
     while (d)

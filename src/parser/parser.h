@@ -585,6 +585,7 @@ Token z_parse_expect(Lexer *l, ZenTokenType type, const char *msg);
  * @brief Skips comments in the lexer.
  */
 void skip_comments(Lexer *l);
+void token_set_parser_ctx(ParserContext *ctx);
 
 /**
  * @brief Consumes tokens until a semicolon is found.
@@ -816,6 +817,7 @@ char *parse_and_convert_args(ParserContext *ctx, Lexer *l, char ***defaults,
                              ASTNode ***default_values, int *count, Type ***arg_types,
                              char ***param_names, int *is_varargs, char ***ctype_overrides);
 Type *parse_type_formal(ParserContext *ctx, Lexer *l);
+Type *type_from_string_helper(const char *c);
 FuncSig *find_func(ParserContext *ctx, const char *name);
 EnumVariantReg *find_enum_variant(ParserContext *ctx, const char *name);
 TypeAlias *find_type_alias_node(ParserContext *ctx, const char *name);

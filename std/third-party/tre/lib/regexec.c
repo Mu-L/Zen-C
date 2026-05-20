@@ -8,6 +8,9 @@
 
 #include <config.h>
 
+#ifndef TRE_USE_ALLOCA
+#define TRE_USE_ALLOCA 0
+#endif
 #ifdef TRE_USE_ALLOCA
 /* AIX requires this to be the first thing in the file.	 */
 #ifndef __GNUC__

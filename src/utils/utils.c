@@ -12,7 +12,7 @@ ParserContext *g_parser_ctx = NULL;
 // ** Arena Implementation **
 #define ARENA_BLOCK_SIZE (1024 * 1024)
 
-void arena_init(zarena *a)
+static void __attribute__((unused)) arena_init(zarena *a)
 {
     zarena_init(a);
 }
@@ -22,7 +22,7 @@ void arena_reset(zarena *a)
     zarena_reset(a);
 }
 
-void *arena_alloc(zarena *a, size_t size)
+static void *arena_alloc(zarena *a, size_t size)
 {
     // We add a size_t header to support xrealloc's size lookup.
     // To maintain alignment, we ensure the total header size is 16 bytes.
@@ -38,7 +38,7 @@ void *arena_alloc(zarena *a, size_t size)
 }
 
 // Backward compatibility using global g_compiler.arena
-void *arena_alloc_raw(size_t size)
+static void *arena_alloc_raw(size_t size)
 {
     return arena_alloc(&g_compiler.arena, size);
 }
@@ -151,7 +151,7 @@ char *sanitize_path_for_c_string(const char *path)
     return sanitized;
 }
 
-char *z_realpath_arena(const char *path)
+static char *z_realpath_arena(const char *path)
 {
     char *real = realpath(path, NULL);
     if (real)

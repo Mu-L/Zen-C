@@ -66,12 +66,12 @@ void print_search_paths(CompilerConfig *cfg);
 /**
  * @brief Print compiler version
  */
-void print_version();
+void print_version(void);
 
 /**
  * @brief Print compiler usage string
  */
-void print_usage();
+void print_usage(void);
 void print_command_help(const char *command);
 
 /**

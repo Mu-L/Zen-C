@@ -8,6 +8,7 @@
 
 #include "parser.h"
 #include "lsp_index.h"
+struct cJSON;
 
 /**
  * @brief Represents a tracked file in the LSP project.
@@ -40,7 +41,7 @@ extern int g_is_indexing;
 void lsp_project_init(const char *root_path);
 
 // Perform full project indexing
-void lsp_project_index_workspace();
+void lsp_project_index_workspace(void);
 
 // Find a file in the project
 ProjectFile *lsp_project_get_file(const char *uri);
@@ -68,5 +69,18 @@ ReferenceResult *lsp_project_find_references(const char *name);
 
 // Semantic Tokens
 char *lsp_semantic_tokens_full(const char *uri);
+
+// LSP analysis functions (declared here for cross-file visibility)
+void lsp_on_error(void *data, Token t, const char *msg);
+void lsp_on_diagnostic(void *data, Token t, int severity, const char *msg, int diag_id);
+void lsp_check_file(const char *uri, const char *src, int id);
+void lsp_goto_definition(const char *uri, int line, int col, int id);
+void lsp_hover(const char *uri, int line, int col, int id);
+void lsp_completion(const char *uri, int line, int col, int id);
+void lsp_document_symbol(const char *uri, int id);
+void lsp_references(const char *uri, int line, int col, int id);
+void lsp_signature_help(const char *uri, int line, int col, int id);
+void lsp_rename(const char *uri, int line, int col, const char *new_name, int id);
+void lsp_code_action(const char *uri, struct cJSON *diagnostics, int id);
 
 #endif
