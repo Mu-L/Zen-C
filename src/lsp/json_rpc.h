@@ -17,5 +17,9 @@
  */
 void handle_request(const char *json_str);
 
+/// Set to 0 before calling handlers that modify persistent project state (didOpen, didChange).
+/// When 1 (default), the caller (lsp_main.c) may restore the arena after the request.
+extern int g_lsp_request_is_readonly;
+
 #endif
 int lsp_main(int argc, char **argv);

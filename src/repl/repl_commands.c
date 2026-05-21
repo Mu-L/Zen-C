@@ -397,7 +397,7 @@ static int cmd_watch(ReplState *state, const char *args)
     {
         if (state->watches_len < REPL_MAX_WATCHES)
         {
-            state->watches[state->watches_len++] = strdup(expr);
+            state->watches[state->watches_len++] = xstrdup(expr);
             printf("Watching: %s\n", expr);
         }
         else

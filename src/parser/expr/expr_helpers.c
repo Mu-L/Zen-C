@@ -411,12 +411,8 @@ void validate_named_arguments(Token call_token, const char *func_name, char **ar
     }
 }
 
-// Forward declaration
-char *resolve_struct_name_from_type(ParserContext *ctx, Type *t, int *is_ptr_out,
-                                    char **allocated_out);
-
 // Helper to check if a type is a struct type
-static int __attribute__((unused)) is_struct_type(ParserContext *ctx, const char *type_name)
+ZEN_MAYBE_UNUSED static int is_struct_type(ParserContext *ctx, const char *type_name)
 {
     if (!type_name)
     {
@@ -424,8 +420,6 @@ static int __attribute__((unused)) is_struct_type(ParserContext *ctx, const char
     }
     return find_struct_def(ctx, type_name) != NULL;
 }
-
-Type *get_field_type(ParserContext *ctx, Type *struct_type, const char *field_name);
 
 void check_move_usage(ParserContext *ctx, ASTNode *node, Token t)
 {
@@ -513,7 +507,7 @@ char *infer_printf_format(ParserContext *ctx, ASTNode **args, int ac)
     return fmt;
 }
 
-void __attribute__((unused)) check_format_string(ASTNode *call, Token t)
+ZEN_MAYBE_UNUSED void check_format_string(ASTNode *call, Token t)
 {
     if (call->type != NODE_EXPR_CALL)
     {

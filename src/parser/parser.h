@@ -87,8 +87,8 @@ DeclarationAttributes parse_attributes(ParserContext *ctx, Lexer *l);
  */
 ASTNode *parse_program(ParserContext *ctx, Lexer *l);
 
-extern ParserContext *g_parser_ctx;
 extern char *curr_func_ret;
+extern ParserContext *token_parser_ctx;
 
 #include "ast/symbols.h"
 
@@ -213,7 +213,10 @@ typedef struct StructDef
 } StructDef;
 
 // Hash table entry for fast struct/enum lookup (used by find_struct_def).
-#define STRUCT_HASH_SIZE 2048
+enum
+{
+    STRUCT_HASH_SIZE = 2048
+};
 typedef struct
 {
     char name[256]; // empty string = empty slot (avoids dangling stack pointer issues with ASAN)
@@ -508,7 +511,10 @@ struct ParserContext
          cursor = tmp, tmp = cursor ? cursor->next_field : NULL)
 
 // Recursion Safety
-#define MAX_RECURSION_DEPTH 1024
+enum
+{
+    MAX_RECURSION_DEPTH = 1024
+};
 
 #define RECURSION_GUARD(ctx, l, ret)                                                               \
     if (++((ctx)->recursion_depth) > MAX_RECURSION_DEPTH)                                          \

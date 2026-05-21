@@ -22,9 +22,12 @@ ZVEC_GENERATE_IMPL(char *, Str)
 #define ZEN_VERSION "0.1.0"
 #endif
 
-#define MAX_FLAGS_SIZE 1024
-#define MAX_PATH_SIZE 1024
-#define MAX_PATTERN_SIZE 1024
+enum
+{
+    MAX_FLAGS_SIZE = 1024,
+    MAX_PATH_SIZE = 1024,
+    MAX_PATTERN_SIZE = 1024
+};
 
 typedef struct CompilerConfig
 {

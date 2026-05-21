@@ -11,9 +11,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Local parser context — avoids token_parser_ctx dependency.
+// Local parser context — avoids g_parser_ctx dependency.
 // Set via token_set_parser_ctx() during compilation setup.
-static ParserContext *token_parser_ctx = NULL;
+ParserContext *token_parser_ctx = NULL;
 
 void token_set_parser_ctx(ParserContext *ctx)
 {

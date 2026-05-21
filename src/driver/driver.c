@@ -86,8 +86,8 @@ int driver_compile(ZenCompiler *compiler)
     ctx.config = &compiler->config;
     ctx.current_filename = compiler->config.input_file;
     module_state_init(&ctx.imports);
-    g_parser_ctx = &ctx;
     diag_set_parser_ctx(&ctx);
+    token_set_parser_ctx(&ctx);
     token_set_parser_ctx(&ctx);
 
     // Set runtime hooks based on configuration

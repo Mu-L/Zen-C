@@ -412,7 +412,7 @@ static char *quote_arg(const char *arg)
 {
     if (!strpbrk(arg, " \t\n\v\""))
     {
-        return strdup(arg); // use strdup since we free it later directly, or xstrdup
+        return xstrdup(arg); // use xstrdup since we free it later directly, or xxstrdup
     }
 
     size_t len = strlen(arg);

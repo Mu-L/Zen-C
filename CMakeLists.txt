@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 project(zc C)
 include(GNUInstallDirs)
 
-# Set C standard (gnu11 for typeof, statement expressions, etc.)
-set(CMAKE_C_STANDARD 11)
+# Set C standard. Override with: cmake -DCMAKE_C_STANDARD=11
+set(CMAKE_C_STANDARD 23 CACHE STRING "C standard to use")
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 

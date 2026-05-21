@@ -59,7 +59,7 @@ void lsp_index_add_def(LSPIndex *idx, Token t, const char *hover, ASTNode *node)
     r->end_col = t.col - 1 + t.len;
     if (hover)
     {
-        r->hover_text = strdup(hover);
+        r->hover_text = xstrdup(hover);
     }
     r->node = node;
 
@@ -80,7 +80,7 @@ static void lsp_index_add_plugin(LSPIndex *idx, ASTNode *node)
     r->node = node;
 
     // Default hover text for the plugin itself (fallback)
-    r->hover_text = strdup(node->plugin_stmt.plugin_name);
+    r->hover_text = xstrdup(node->plugin_stmt.plugin_name);
 
     lsp_index_add(idx, r);
 }

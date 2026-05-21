@@ -239,11 +239,11 @@ void repl_load_docs(ReplState *state)
             cJSON *doc = cJSON_GetObjectItem(item, "doc");
             if (cJSON_IsString(name))
             {
-                state->docs[i].name = strdup(name->valuestring);
+                state->docs[i].name = xstrdup(name->valuestring);
             }
             if (cJSON_IsString(doc))
             {
-                state->docs[i].doc = strdup(doc->valuestring);
+                state->docs[i].doc = xstrdup(doc->valuestring);
             }
             i++;
         }
@@ -286,7 +286,7 @@ static void repl_add_symbol(ReplState *state, const char *name)
         state->symbol_cap = state->symbol_cap ? state->symbol_cap * 2 : 64;
         state->symbols = realloc(state->symbols, state->symbol_cap * sizeof(char *));
     }
-    state->symbols[state->symbol_count++] = strdup(name);
+    state->symbols[state->symbol_count++] = xstrdup(name);
 }
 
 void repl_update_symbols(ReplState *state)

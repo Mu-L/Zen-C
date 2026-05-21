@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../zprep.h"
 #include <ctype.h>
 
 char *lsp_format_source(const char *src)

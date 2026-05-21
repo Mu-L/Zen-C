@@ -4,6 +4,16 @@
 
 // Cross-file declarations for codegen/*.c
 
+// VisitedModules for tracking module cycles during emit
+struct VisitedModules
+{
+    const char *path;
+    struct VisitedModules *next;
+};
+int is_module_visited(struct VisitedModules *visited, const char *path);
+void mark_module_visited(struct VisitedModules **visited, const char *path);
+void free_visited_modules(struct VisitedModules *visited);
+
 // Typedefs for dispatch tables
 typedef void (*CodegenHandler)(ParserContext *ctx, ASTNode *node);
 typedef void (*ExprHandler)(ParserContext *ctx, ASTNode *node);

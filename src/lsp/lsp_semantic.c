@@ -309,7 +309,7 @@ char *lsp_semantic_tokens_full(const char *uri)
     ProjectFile *pf = lsp_project_get_file(uri);
     if (!pf || !pf->ast)
     {
-        return strdup("{\"data\":[]}");
+        return xstrdup("{\"data\":[]}");
     }
 
     TokenBuilder b;

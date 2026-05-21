@@ -6,9 +6,12 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#define EMITTER_INDENT_SIZE 4
-#define EMITTER_SAVED_STACK_MAX 8
-#define EMITTER_INITIAL_BUF_CAP 256
+enum
+{
+    EMITTER_INDENT_SIZE = 4,
+    EMITTER_SAVED_STACK_MAX = 8,
+    EMITTER_INITIAL_BUF_CAP = 256
+};
 
 typedef enum
 {

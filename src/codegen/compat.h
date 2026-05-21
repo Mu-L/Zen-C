@@ -10,14 +10,14 @@
 #include "platform/compiler.h"
 
 /* File extensions for mixed source compilation */
-#define ZC_EXT_C ".c"
-#define ZC_EXT_CPP ".cpp"
-#define ZC_EXT_M ".m"
-#define ZC_EXT_MM ".mm"
-#define ZC_EXT_O ".o"
-#define ZC_EXT_A ".a"
-#define ZC_EXT_DYLIB ".dylib"
-#define ZC_EXT_SO ".so"
+static const char ZC_EXT_C[] = ".c";
+static const char ZC_EXT_CPP[] = ".cpp";
+static const char ZC_EXT_M[] = ".m";
+static const char ZC_EXT_MM[] = ".mm";
+static const char ZC_EXT_O[] = ".o";
+static const char ZC_EXT_A[] = ".a";
+static const char ZC_EXT_DYLIB[] = ".dylib";
+static const char ZC_EXT_SO[] = ".so";
 
 #define ZC_IS_BACKEND_EXT(ext)                                                                     \
     (strcmp(ext, ZC_EXT_C) == 0 || strcmp(ext, ZC_EXT_CPP) == 0 || strcmp(ext, ZC_EXT_M) == 0 ||   \

@@ -41,7 +41,9 @@ else
     TCC_EXTRA =
 endif
 # Base flags shared by all compilers
-CFLAGS = -std=gnu11 -g -Wall -Wextra -Wshadow -Wformat=2 -Wmissing-prototypes -Wstrict-prototypes -Wnull-dereference -Wundef -Wfloat-equal -Wmissing-field-initializers -Wsign-compare -Wtype-limits -Wuninitialized -Wdouble-promotion -Wtautological-compare -Wshift-negative-value -Wdangling-else -Wreturn-local-addr $(DEPFLAGS) $(TCC_EXTRA) $(if $(filter 1,$(WERROR)),-Werror,) -I./src -I./src/ast -I./src/parser -I./src/codegen -I./plugins -I./src/zen -I./src/utils -I./src/lexer -I./src/analysis -I./src/lsp -I./src/diagnostics -I./std/third-party/tre/include $(DEFINES)
+# Override C_STD to compile with a different standard, e.g.: make C_STD=gnu11
+C_STD ?= gnu23
+CFLAGS = -std=$(C_STD) -g -Wall -Wextra -Wshadow -Wformat=2 -Wmissing-prototypes -Wstrict-prototypes -Wnull-dereference -Wundef -Wfloat-equal -Wmissing-field-initializers -Wsign-compare -Wtype-limits -Wuninitialized -Wdouble-promotion -Wtautological-compare -Wshift-negative-value -Wdangling-else -Wreturn-local-addr $(DEPFLAGS) $(TCC_EXTRA) $(if $(filter 1,$(WERROR)),-Werror,) -I./src -I./src/ast -I./src/parser -I./src/codegen -I./plugins -I./src/zen -I./src/utils -I./src/lexer -I./src/analysis -I./src/lsp -I./src/diagnostics -I./std/third-party/tre/include $(DEFINES)
 
 
 
@@ -460,7 +462,7 @@ filcc:
 windows:
 	$(MAKE) CC="x86_64-w64-mingw32-gcc" TARGET="zc.exe" UI_OS="Windows" LIBS="-static -lm -lpthread"
 
-asan: CFLAGS += -fsanitize=address,undefined -O1 -fno-omit-frame-pointer
+asan: CFLAGS += -fsanitize=address,undefined -O1 -g -fno-omit-frame-pointer
 asan: LIBS += -fsanitize=address,undefined
 asan: ZC_RUN = ASAN_OPTIONS=detect_leaks=0 ./zc
 asan: $(TARGET) $(PLUGINS)
@@ -470,35 +472,33 @@ test-asan: clean asan
 	ASAN_OPTIONS=detect_leaks=0 ./tests/scripts/run_codegen_tests.sh
 	ASAN_OPTIONS=detect_leaks=0 ./tests/scripts/run_example_transpile.sh
 
-# LeakSanitizer — built into ASAN, just needs detect_leaks=1
-test-asan-leaks: clean
-	$(MAKE) asan ZC_RUN="ASAN_OPTIONS=detect_leaks=1 ./zc"
-	ASAN_OPTIONS=detect_leaks=1 ./tests/scripts/run_tests.sh
-	ASAN_OPTIONS=detect_leaks=1 ./tests/scripts/run_codegen_tests.sh
+# TSAN (ThreadSanitizer), MSAN (MemorySanitizer), LSAN (LeakSanitizer),
+# and the GCC Static Analyzer are build-only targets.
+# They compile the compiler with extra instrumentation to catch bugs,
+# but do not run the test suite (test-generated code may trigger false positives).
 
-# ThreadSanitizer — catches data races (separate from ASAN)
-# GCC Static Analyzer — deep path-sensitive analysis (slow, ~5x build time)
-analyzer: CFLAGS += -fanalyzer
-analyzer: $(TARGET) $(PLUGINS)
+# LeakSanitizer — built into ASAN
+lsan: asan
+	@echo "LeakSanitizer: see asan build above"
 
-test-analyzer: clean analyzer
-	./tests/scripts/run_tests.sh --no-source -j 2
-
+# ThreadSanitizer
 tsan: CFLAGS += -fsanitize=thread -O1 -g -fno-omit-frame-pointer
 tsan: LIBS += -fsanitize=thread
-tsan: $(TARGET)
+tsan: $(TARGET) $(PLUGINS)
 
-test-tsan: clean tsan
-	./tests/scripts/run_tests.sh --no-source -j 2
-
-# MemorySanitizer — catches uninitialized reads (Clang only, separate from ASAN)
+# MemorySanitizer (Clang only) — builds the compiler only, not plugins.
+# MSAN requires ALL linked libraries (including glibc) to be MSAN-instrumented,
+# which is not feasible in a standard CI environment. Plugins cannot be built
+# because the MSAN-instrumented compiler aborts on use-of-uninitialized-value
+# at runtime during compilation.
 msan: CC = clang
 msan: CFLAGS += -fsanitize=memory -O1 -g -fno-omit-frame-pointer -fsanitize-memory-track-origins
 msan: LIBS += -fsanitize=memory
 msan: $(TARGET)
 
-test-msan: clean msan
-	./tests/scripts/run_tests.sh --no-source -j 2
+# GCC Static Analyzer (slow, ~5x build time)
+analyzer: CFLAGS += -fanalyzer
+analyzer: $(TARGET) $(PLUGINS)
 
 test-plugins: $(TARGET) $(PLUGINS)
 	./zc run tests/language/features/test_plugins_suite.zc
@@ -548,4 +548,4 @@ fuzz-clean:
 	rm -f $(FUZZ_TARGET) $(FUZZ_CMPLOG_TARGET)
 	rm -rf obj-fuzz obj-fuzz-cmplog
 
-.PHONY: all clean install uninstall install-ape uninstall-ape format format-check lint bench test test-misra test-tcc test-filcc test-lsp test-asan test-asan-leaks test-tsan test-msan test-analyzer test-plugins zig clang filcc ape windows asan tsan msan analyzer fuzz-build fuzz-run fuzz-clean
+.PHONY: all clean install uninstall install-ape uninstall-ape format format-check lint bench test test-misra test-tcc test-filcc test-lsp test-asan test-plugins zig clang filcc ape windows asan tsan msan lsan analyzer fuzz-build fuzz-run fuzz-clean

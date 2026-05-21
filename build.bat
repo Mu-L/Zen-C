@@ -14,7 +14,8 @@ if "!ZEN_VERSION!"=="unknown" (
 )
 
 rem Compilation flags
-set CFLAGS=-std=gnu11 -Wall -Wextra -Wshadow -Wformat=2 -Wmissing-prototypes ^
+if "%C_STD%"=="" set C_STD=gnu23
+set CFLAGS=-std=%C_STD% -Wall -Wextra -Wshadow -Wformat=2 -Wmissing-prototypes ^
  -Wstrict-prototypes -Wnull-dereference -Wundef -Wfloat-equal ^
  -Wmissing-field-initializers -Wsign-compare -Wtype-limits -Wuninitialized ^
  -Wdouble-promotion -Wtautological-compare -Wshift-negative-value ^

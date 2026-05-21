@@ -33,7 +33,8 @@ src/parser/utils/utils_scope.c
 src/parser/utils/utils_symbol.c
 src/parser/utils/utils_builtins.c
 src/parser/utils/utils_registry.c
-src/parser/utils/utils_template.c
+src/parser/utils/utils_template_replace.c
+src/parser/utils/utils_template_inst.c
 src/parser/utils/utils_rewrite.c
 src/parser/utils/utils_validation.c
 src/parser/utils/utils_audit.c
@@ -42,6 +43,7 @@ src/parser/expr/expr_helpers.c
 src/parser/expr/expr_entry.c
 src/parser/expr/expr_literal.c
 src/parser/expr/expr_primary.c
+src/parser/expr/expr_field.c
 src/parser/expr/expr_prec.c
 src/parser/expr/expr_lambda.c
 src/ast/ast.c
@@ -49,12 +51,18 @@ src/ast/primitives.c
 src/ast/symbols.c
 src/codegen/codegen.c
 src/codegen/codegen_expr_core.c
+src/codegen/codegen_expr_simple.c
+src/codegen/codegen_expr_member.c
+src/codegen/codegen_expr_control.c
+src/codegen/codegen_expr_misc.c
 src/codegen/codegen_expr_handlers.c
 src/codegen/codegen_stmt.c
 src/codegen/codegen_stmt_match.c
 src/codegen/codegen_stmt_handlers.c
 src/codegen/codegen_decl.c
 src/codegen/codegen_decl_preamble.c
+src/codegen/codegen_decl_struct.c
+src/codegen/codegen_decl_emit.c
 src/codegen/codegen_decl_defs.c
 src/codegen/codegen_main.c
 src/codegen/codegen_utils.c

@@ -284,8 +284,8 @@ void codegen_match_internal(ParserContext *ctx, ASTNode *node, int use_result)
     }
 
     char *expr_type = infer_type(ctx, node->match_stmt.expr);
-    int is_option = IS_OPTION_TYPE(expr_type);
-    int is_result = IS_RESULT_TYPE(expr_type);
+    int is_option = str_is_option_type(expr_type);
+    int is_result = str_is_result_type(expr_type);
 
     char *enum_name = NULL;
     ASTNode *chk = node->match_stmt.cases;

@@ -1,0 +1,78 @@
+// SPDX-License-Identifier: MIT
+#ifndef C23_COMPAT_H
+#define C23_COMPAT_H
+
+// C23 compatibility layer.
+// Provides C23-standard names with fallbacks for C11/C17 compilers.
+// Include this via zprep.h so all source files get it.
+
+// C23 detection
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
+#define ZEN_C23 1
+#else
+#define ZEN_C23 0
+#endif
+
+// bool / true / false — keywords in C23, macros in <stdbool.h> for C11
+#if !ZEN_C23
+#include <stdbool.h>
+#endif
+
+// constexpr — C23 keyword
+#if ZEN_C23
+#define ZEN_CONSTEXPR constexpr
+#else
+#define ZEN_CONSTEXPR
+#endif
+
+// nullptr — C23 keyword
+#if ZEN_C23
+#define ZEN_NULL nullptr
+#else
+#define ZEN_NULL NULL
+#endif
+
+// Standard attributes via __has_c_attribute (GCC 14+, Clang 16+)
+// Fallback to GNU __attribute__ or nothing.
+
+#if __has_c_attribute(maybe_unused)
+#define ZEN_MAYBE_UNUSED [[maybe_unused]]
+#elif defined(__GNUC__) || defined(__clang__)
+#define ZEN_MAYBE_UNUSED __attribute__((unused))
+#else
+#define ZEN_MAYBE_UNUSED
+#endif
+
+#if __has_c_attribute(nodiscard)
+#define ZEN_NODISCARD [[nodiscard]]
+#elif defined(__GNUC__) || defined(__clang__)
+#define ZEN_NODISCARD __attribute__((warn_unused_result))
+#else
+#define ZEN_NODISCARD
+#endif
+
+#if __has_c_attribute(fallthrough)
+#define ZEN_FALLTHROUGH [[fallthrough]]
+#else
+#define ZEN_FALLTHROUGH ((void)0)
+#endif
+
+// returns_nonnull — not yet a C23 standard attribute, use GNU extension
+#if defined(__GNUC__) || defined(__clang__)
+#define ZEN_RETURNS_NONNULL __attribute__((returns_nonnull))
+#else
+#define ZEN_RETURNS_NONNULL
+#endif
+
+// unreachable() — C23 standard macro
+#if ZEN_C23
+// Use the standard macro (defined in <stddef.h> in C23)
+#elif !defined(unreachable) && (defined(__GNUC__) || defined(__clang__))
+#define unreachable() __builtin_unreachable()
+#elif !defined(unreachable) && defined(_MSC_VER)
+#define unreachable() __assume(0)
+#elif !defined(unreachable)
+#define unreachable() ((void)0)
+#endif
+
+#endif // C23_COMPAT_H

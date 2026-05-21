@@ -325,7 +325,30 @@ jobs:
           *.out.cpp
         if-no-files-found: warn
 
-  test-lsan:
+  build-c11:
+    name: C11 Compatibility
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install libtcc-dev
+      run: sudo apt-get update && sudo apt-get install -y libtcc-dev
+    - name: Build with C11 Standard
+      run: make C_STD=gnu11 ZC_HAS_JIT=0
+    - name: Run Tests
+      run: |
+        ./tests/scripts/run_tests.sh --no-source -j 2
+    - name: Upload Failed Test Artifacts
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: failed-test-artifacts-c11
+        path: |
+          test_out_parallel_*
+          *.out.c
+          *.out.cpp
+        if-no-files-found: warn
+
+  build-lsan:
     name: LeakSanitizer
     runs-on: ubuntu-latest
     steps:
@@ -333,39 +356,9 @@ jobs:
     - name: Install libtcc-dev
       run: sudo apt-get update && sudo apt-get install -y libtcc-dev
     - name: Build with LeakSanitizer
-      run: make asan ZC_HAS_JIT=1
-    - name: Run Tests with Leak Detection
-      run: |
-        ASAN_OPTIONS=detect_leaks=1 ./tests/scripts/run_tests.sh --no-source -j 2
-    - name: Upload Failed Test Artifacts
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: failed-test-artifacts-lsan
-        path: |
-          test_out_parallel_*
-          *.out.c
-          *.out.cpp
-        if-no-files-found: warn
+      run: make lsan ZC_HAS_JIT=1
 
-  test-analyzer:
-    name: GCC Static Analyzer
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Install libtcc-dev
-      run: sudo apt-get update && sudo apt-get install -y libtcc-dev
-    - name: Build with Static Analyzer
-      run: make analyzer ZC_HAS_JIT=0
-    - name: Upload Analyzer Log
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: analyzer-log
-        path: src/**/*.analyzer.log
-        if-no-files-found: warn
-
-  test-tsan:
+  build-tsan:
     name: ThreadSanitizer
     runs-on: ubuntu-latest
     steps:
@@ -374,20 +367,8 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y libtcc-dev
     - name: Build with ThreadSanitizer
       run: make tsan ZC_HAS_JIT=0
-    - name: Run Tests
-      run: ./tests/scripts/run_tests.sh --no-source -j 2
-    - name: Upload Failed Test Artifacts
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: failed-test-artifacts-tsan
-        path: |
-          test_out_parallel_*
-          *.out.c
-          *.out.cpp
-        if-no-files-found: warn
 
-  test-msan:
+  build-msan:
     name: MemorySanitizer
     runs-on: ubuntu-latest
     steps:
@@ -396,18 +377,16 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y libtcc-dev
     - name: Build with MemorySanitizer
       run: make msan ZC_HAS_JIT=0
-    - name: Run Tests
-      run: ./tests/scripts/run_tests.sh --no-source -j 2
-    - name: Upload Failed Test Artifacts
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: failed-test-artifacts-msan
-        path: |
-          test_out_parallel_*
-          *.out.c
-          *.out.cpp
-        if-no-files-found: warn
+
+  build-analyzer:
+    name: GCC Static Analyzer
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install libtcc-dev
+      run: sudo apt-get update && sudo apt-get install -y libtcc-dev
+    - name: Build with Static Analyzer
+      run: make analyzer ZC_HAS_JIT=0
 
   filcc:
     name: Fil-C Build

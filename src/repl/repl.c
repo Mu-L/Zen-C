@@ -71,7 +71,7 @@ void repl_history_add(ReplState *state, const char *line)
         state->history_cap *= 2;
         state->history = realloc(state->history, state->history_cap * sizeof(char *));
     }
-    state->history[state->history_len++] = strdup(line);
+    state->history[state->history_len++] = xstrdup(line);
 }
 
 static void repl_load_history(ReplState *state)
@@ -308,7 +308,7 @@ static int repl_process_line(ReplState *state, char *line_buf, int *brace_depth,
     }
 
     repl_history_add(state, *input_buffer);
-    char *raw_input = strdup(*input_buffer);
+    char *raw_input = xstrdup(*input_buffer);
     if (!raw_input)
     {
         zfree(*input_buffer);

@@ -200,6 +200,50 @@ ZALLOC_API void zarena_reset(zarena *a)
     a->total_alloc = 0;
 }
 
+typedef struct
+{
+    zarena_block *block;
+    size_t used;
+} ZarenaMark;
+
+/// Save current arena position. Use with zarena_restore() to rewind
+/// all allocations made after this point.
+static inline ZarenaMark zarena_save(zarena *a)
+{
+    ZarenaMark m = {a->head, a->head ? a->head->used : 0};
+    return m;
+}
+
+/// Rewind arena to a saved position. Blocks after the saved block are
+/// reset; the saved block's used counter is restored. Subsequent
+/// allocations overwrite the rewound region.
+static inline void zarena_restore(zarena *a, ZarenaMark mark)
+{
+    if (!mark.block)
+    {
+        return;
+    }
+    zarena_block *curr = mark.block->next;
+    while (curr)
+    {
+        curr->used = 0;
+        curr = curr->next;
+    }
+    mark.block->used = mark.used;
+    a->head = mark.block;
+    a->total_alloc = 0;
+    curr = a->first;
+    while (curr)
+    {
+        a->total_alloc += curr->used;
+        if (curr == mark.block)
+        {
+            break;
+        }
+        curr = curr->next;
+    }
+}
+
 ZALLOC_API void *zarena_alloc_align(zarena *a, size_t size, size_t align)
 {
     if (size == 0)

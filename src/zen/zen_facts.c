@@ -117,7 +117,7 @@ static void load_facts(void)
         return;
     }
 
-    char *data = malloc(len + 1);
+    char *data = xmalloc(len + 1);
     if (data)
     {
         size_t read_bytes = fread(data, 1, len, f);
@@ -167,11 +167,11 @@ static void load_facts(void)
                 }
                 if (cJSON_IsString(msg))
                 {
-                    facts[i].message = strdup(msg->valuestring);
+                    facts[i].message = xstrdup(msg->valuestring);
                 }
                 if (cJSON_IsString(url))
                 {
-                    facts[i].url = strdup(url->valuestring);
+                    facts[i].url = xstrdup(url->valuestring);
                 }
             }
 
@@ -194,7 +194,7 @@ void zzen_at(Token t, const char *msg, const char *url)
 
     if (t.line > 0)
     {
-        const char *zf = g_parser_ctx ? g_parser_ctx->current_filename : "unknown";
+        const char *zf = token_parser_ctx ? token_parser_ctx->current_filename : "unknown";
         fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n", zf, t.line, t.col);
     }
 

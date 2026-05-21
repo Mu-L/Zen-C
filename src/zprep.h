@@ -14,6 +14,7 @@
 //   compiler.h    — CompilerConfig, ZenCompiler, globals
 //   utils/utils.h — Utility function declarations
 
+#include "compat/c23_compat.h"
 #include "token.h"
 #include "compiler.h"
 #include "utils/utils.h"

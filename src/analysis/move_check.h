@@ -82,7 +82,7 @@ MoveStatus get_move_status(MoveState *state, const char *path);
 /**
  * @brief Returns a heap-allocated path string for a node (e.g. "var.field"), or NULL.
  */
-char *get_node_path(ASTNode *node, int depth);
+char *get_node_path(ASTNode *node, int depth, ParserContext *ctx);
 
 /**
  * @brief Determines if a type is safe to copy (implements Copy or is a primitive).

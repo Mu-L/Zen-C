@@ -69,7 +69,7 @@ void lsp_on_diagnostic(void *data, Token t, int severity, const char *msg, int d
     d->len = t.len;
     d->severity = severity;
     d->id = diag_id;
-    d->message = msg ? strdup(msg) : strdup("Unknown error");
+    d->message = msg ? xstrdup(msg) : xstrdup("Unknown error");
     d->next = NULL;
 
     if (!list->head)
@@ -900,7 +900,7 @@ void lsp_completion(const char *uri, int line, int col, int id)
                         }
                     }
 
-                    char *copy = strdup(expr_chain);
+                    char *copy = xstrdup(expr_chain);
                     char *t = strtok(copy, ".");
                     while (t && part_count < 32)
                     {
@@ -941,7 +941,7 @@ void lsp_completion(const char *uri, int line, int col, int id)
                             ASTNode *decl = find_local_in_func(target_func, base_name);
                             if (decl && decl->type == NODE_VAR_DECL && decl->var_decl.type_str)
                             {
-                                type_name = strdup(decl->var_decl.type_str);
+                                type_name = xstrdup(decl->var_decl.type_str);
                             }
                             else
                             {
@@ -954,7 +954,7 @@ void lsp_completion(const char *uri, int line, int col, int id)
                                     }
                                     else if (sym->type_name)
                                     {
-                                        type_name = strdup(sym->type_name);
+                                        type_name = xstrdup(sym->type_name);
                                     }
                                 }
                             }
@@ -987,7 +987,7 @@ void lsp_completion(const char *uri, int line, int col, int id)
                                     {
                                         zfree(type_name);
                                         type_name =
-                                            field->field.type ? strdup(field->field.type) : NULL;
+                                            field->field.type ? xstrdup(field->field.type) : NULL;
                                         found_field = 1;
                                         break;
                                     }

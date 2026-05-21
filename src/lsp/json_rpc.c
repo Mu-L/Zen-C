@@ -79,6 +79,7 @@ void handle_request(const char *json_str)
 
     if (strcmp(method, "initialize") == 0)
     {
+        g_lsp_request_is_readonly = 0;
         cJSON *params = cJSON_GetObjectItem(json, "params");
         char *root = NULL;
         if (params)
@@ -148,11 +149,13 @@ void handle_request(const char *json_str)
     }
     else if (strcmp(method, "initialized") == 0)
     {
+        g_lsp_request_is_readonly = 0;
         lsp_project_index_workspace();
     }
     else if (strcmp(method, "textDocument/didOpen") == 0 ||
              strcmp(method, "textDocument/didChange") == 0)
     {
+        g_lsp_request_is_readonly = 0;
         cJSON *params = cJSON_GetObjectItem(json, "params");
         if (params)
         {

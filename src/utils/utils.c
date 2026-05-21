@@ -7,12 +7,10 @@
 #include "platform/os.h"
 #include <sys/stat.h>
 
-ParserContext *g_parser_ctx = NULL;
-
 // ** Arena Implementation **
 #define ARENA_BLOCK_SIZE (1024 * 1024)
 
-static void __attribute__((unused)) arena_init(zarena *a)
+ZEN_MAYBE_UNUSED static void arena_init(zarena *a)
 {
     zarena_init(a);
 }
@@ -37,6 +35,9 @@ static void *arena_alloc(zarena *a, size_t size)
     return (char *)ptr + 16;
 }
 
+// Header stored 16 bytes before the returned pointer, used by xrealloc.
+#define XMALLOC_HDR_SIZE 16
+
 // Backward compatibility using global g_compiler.arena
 static void *arena_alloc_raw(size_t size)
 {
@@ -49,18 +50,28 @@ static void *arena_alloc_raw(size_t size)
 
 void *xmalloc(size_t size)
 {
-    return arena_alloc_raw(size);
+    void *ptr = arena_alloc_raw(size + XMALLOC_HDR_SIZE);
+    if (!ptr)
+    {
+        zfatal("xmalloc: out of memory");
+    }
+    ((size_t *)ptr)[0] = size;
+    ((size_t *)ptr)[1] = 0;
+    return (char *)ptr + XMALLOC_HDR_SIZE;
 }
 
 void *xcalloc(size_t n, size_t size)
 {
     size_t total = n * size;
-    void *p = arena_alloc_raw(total);
-    if (p)
+    void *ptr = arena_alloc_raw(total + XMALLOC_HDR_SIZE);
+    if (!ptr)
     {
-        memset(p, 0, total);
+        zfatal("xcalloc: out of memory");
     }
-    return p;
+    memset(ptr, 0, total + XMALLOC_HDR_SIZE);
+    ((size_t *)ptr)[0] = total;
+    ((size_t *)ptr)[1] = 0;
+    return (char *)ptr + XMALLOC_HDR_SIZE;
 }
 
 void *xrealloc(void *ptr, size_t new_size)
@@ -70,9 +81,9 @@ void *xrealloc(void *ptr, size_t new_size)
         return xmalloc(new_size);
     }
 
-    // Header is 16 bytes before the returned pointer
-    size_t *header = (size_t *)((char *)ptr - 16);
-    size_t old_size = *header;
+    // Header is XMALLOC_HDR_SIZE bytes before the returned pointer
+    size_t *header = (size_t *)((char *)ptr - XMALLOC_HDR_SIZE);
+    size_t old_size = header[0];
 
     if (new_size <= old_size)
     {
@@ -80,10 +91,7 @@ void *xrealloc(void *ptr, size_t new_size)
     }
 
     void *new_ptr = xmalloc(new_size);
-    if (new_ptr)
-    {
-        memcpy(new_ptr, ptr, old_size);
-    }
+    memcpy(new_ptr, ptr, old_size);
     return new_ptr;
 }
 
@@ -95,10 +103,6 @@ char *xstrdup(const char *s)
     }
     size_t len = strlen(s);
     char *d = xmalloc(len + 1);
-    if (!d)
-    {
-        return NULL;
-    }
     memcpy(d, s, len);
     d[len] = 0;
     return d;

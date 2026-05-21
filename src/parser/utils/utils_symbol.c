@@ -214,8 +214,7 @@ void register_deprecated_func(ParserContext *ctx, const char *name, const char *
     ctx->deprecated_funcs = d;
 }
 
-static DeprecatedFunc __attribute__((unused)) *
-    find_deprecated_func(ParserContext *ctx, const char *name)
+ZEN_MAYBE_UNUSED static DeprecatedFunc *find_deprecated_func(ParserContext *ctx, const char *name)
 {
     DeprecatedFunc *d = ctx->deprecated_funcs;
     while (d)

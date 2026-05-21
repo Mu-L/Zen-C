@@ -37,6 +37,11 @@ ASTNode *find_function_definition(ParserContext *ctx, const char *name);
 int type_is_unsigned(Type *t);
 char *infer_printf_format(ParserContext *ctx, ASTNode **args, int ac);
 
+// From expr_field.c
+int is_comparison_op(const char *op);
+Type *get_field_type(ParserContext *ctx, Type *struct_type, const char *field_name);
+const char *get_operator_method(const char *op);
+
 // From expr_prec.c references
 Precedence get_token_precedence(Token t);
 void validate_named_arguments(Token call_token, const char *func_name, char **arg_names,

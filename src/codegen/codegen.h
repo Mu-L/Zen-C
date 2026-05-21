@@ -113,7 +113,10 @@ void emit_source_mapping(ParserContext *ctx, ASTNode *node);
 void emit_source_mapping_duplicate(ParserContext *ctx, ASTNode *node);
 
 // Defer stack size limit
-#define MAX_DEFER 1024
+enum
+{
+    MAX_DEFER = 1024
+};
 
 void emit_pending_closure_frees(ParserContext *ctx);
 

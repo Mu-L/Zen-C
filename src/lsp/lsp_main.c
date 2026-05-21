@@ -7,6 +7,8 @@
 #include <string.h>
 #include <unistd.h>
 
+int g_lsp_request_is_readonly = 1;
+
 // Simple Main Loop for LSP.
 int lsp_main(int argc, char **argv)
 {
@@ -82,8 +84,20 @@ int lsp_main(int argc, char **argv)
         }
         body[content_len] = 0;
 
+        // Save arena mark before processing. For read-only requests (hover,
+        // goto-def, etc.) we restore the mark after, preventing the arena from
+        // growing unboundedly. Write requests (didOpen, didChange, etc.)
+        // modify persistent project data and keep the arena growth.
+        ZarenaMark arena_mark = zarena_save(&g_compiler.arena);
+        g_lsp_request_is_readonly = 1;
+
         // Process JSON-RPC.
         handle_request(body);
+
+        if (g_lsp_request_is_readonly)
+        {
+            zarena_restore(&g_compiler.arena, arena_mark);
+        }
 
         libc_free(body);
     }

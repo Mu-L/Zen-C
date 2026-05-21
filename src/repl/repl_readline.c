@@ -77,7 +77,7 @@ char *repl_complete(ReplState *state, const char *buf, int pos)
 
     if (match_count == 1)
     {
-        return strdup(match + len);
+        return xstrdup(match + len);
     }
 
     return NULL;
@@ -214,13 +214,13 @@ char *repl_readline(ReplState *state, const char *prompt, int indent_level)
                             {
                                 zfree(saved_current_line);
                             }
-                            saved_current_line = strdup(buf);
+                            saved_current_line = xstrdup(buf);
                         }
                         history_idx--;
                         if (history_idx >= 0 && history_idx < state->history_len)
                         {
                             zfree(buf);
-                            buf = strdup(state->history[history_idx]);
+                            buf = xstrdup(state->history[history_idx]);
                             buf_size = strlen(buf) + 1;
                             len = strlen(buf);
                             pos = len;
@@ -237,16 +237,16 @@ char *repl_readline(ReplState *state, const char *prompt, int indent_level)
                         {
                             if (saved_current_line)
                             {
-                                buf = strdup(saved_current_line);
+                                buf = xstrdup(saved_current_line);
                             }
                             else
                             {
-                                buf = strdup("");
+                                buf = xstrdup("");
                             }
                         }
                         else
                         {
-                            buf = strdup(state->history[history_idx]);
+                            buf = xstrdup(state->history[history_idx]);
                         }
                         buf_size = strlen(buf) + 1;
                         len = strlen(buf);
@@ -315,7 +315,7 @@ char *repl_readline(ReplState *state, const char *prompt, int indent_level)
                 zfree(saved_current_line);
             }
             repl_disable_raw_mode();
-            return strdup("");
+            return xstrdup("");
         }
         else if (c == 4)
         {
@@ -376,7 +376,7 @@ char *repl_readline(ReplState *state, const char *prompt, int indent_level)
             {
                 search_match_idx = found;
                 zfree(buf);
-                buf = strdup(state->history[found]);
+                buf = xstrdup(state->history[found]);
                 buf_size = strlen(buf) + 1;
                 len = strlen(buf);
                 pos = len;
@@ -405,7 +405,7 @@ char *repl_readline(ReplState *state, const char *prompt, int indent_level)
                     {
                         search_match_idx = found;
                         zfree(buf);
-                        buf = strdup(state->history[found]);
+                        buf = xstrdup(state->history[found]);
                         buf_size = strlen(buf) + 1;
                         len = strlen(buf);
                         pos = len;
@@ -421,7 +421,7 @@ char *repl_readline(ReplState *state, const char *prompt, int indent_level)
                 {
                     // Abort
                     zfree(buf);
-                    buf = strdup("");
+                    buf = xstrdup("");
                     len = 0;
                     pos = 0;
                     printf("^C\r\n");
@@ -458,7 +458,7 @@ char *repl_readline(ReplState *state, const char *prompt, int indent_level)
                     {
                         search_match_idx = found;
                         zfree(buf);
-                        buf = strdup(state->history[found]);
+                        buf = xstrdup(state->history[found]);
                         buf_size = strlen(buf) + 1;
                         len = strlen(buf);
                         pos = len;
@@ -502,7 +502,7 @@ char *repl_readline(ReplState *state, const char *prompt, int indent_level)
                 zfree(saved_current_line);
             }
             repl_disable_raw_mode();
-            return strdup(":reset");
+            return xstrdup(":reset");
         }
         else if (!iscntrl(c))
         {

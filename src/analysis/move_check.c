@@ -8,8 +8,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-extern ParserContext *g_parser_ctx;
-
 #include "zprep.h"
 
 MoveState *move_state_create(MoveState *parent)
@@ -61,13 +59,13 @@ void move_state_free(MoveState *state)
     zfree(state);
 }
 
-char *get_node_path(ASTNode *node, int depth)
+char *get_node_path(ASTNode *node, int depth, ParserContext *ctx)
 {
     if (!node || depth > 32)
     {
         return NULL;
     }
-    RECURSION_GUARD_TOKEN(g_parser_ctx, node->token, NULL);
+    RECURSION_GUARD_TOKEN(ctx, node->token, NULL);
 
     char *path = NULL;
 
@@ -77,7 +75,7 @@ char *get_node_path(ASTNode *node, int depth)
     }
     else if (node->type == NODE_EXPR_MEMBER)
     {
-        char *target_path = get_node_path(node->member.target, depth + 1);
+        char *target_path = get_node_path(node->member.target, depth + 1, ctx);
         if (target_path)
         {
             char buffer[MAX_ERROR_MSG_LEN];
@@ -87,7 +85,7 @@ char *get_node_path(ASTNode *node, int depth)
         }
     }
 
-    RECURSION_EXIT(g_parser_ctx);
+    RECURSION_EXIT(ctx);
     return path;
 }
 
@@ -305,7 +303,7 @@ void check_path_validity(TypeChecker *tc, const char *path, Token t)
     }
 
     // Check Flow-Sensitive State
-    ParserContext *ctx = tc ? tc->pctx : (g_parser_ctx);
+    ParserContext *ctx = tc->pctx;
     MoveStatus status = MOVE_STATE_VALID;
 
     if (ctx && ctx->move_state)
@@ -348,7 +346,7 @@ void check_use_validity(TypeChecker *tc, ASTNode *use_node)
         return;
     }
 
-    char *path = get_node_path(use_node, 0);
+    char *path = get_node_path(use_node, 0, tc->pctx);
     if (!path && use_node->type == NODE_EXPR_VAR)
     {
         path = xstrdup(use_node->var_ref.name);
@@ -382,7 +380,7 @@ void mark_symbol_moved(ParserContext *ctx, ZenSymbol *sym, ASTNode *context_node
 
         if (ctx->move_state)
         {
-            char *path = get_node_path(context_node, 0);
+            char *path = get_node_path(context_node, 0, ctx);
             if (!path && sym)
             {
                 path = xstrdup(sym->name);
@@ -433,7 +431,7 @@ void mark_symbol_valid(ParserContext *ctx, ZenSymbol *sym, ASTNode *context_node
 
     if (ctx && ctx->move_state)
     {
-        char *path = get_node_path(context_node, 0);
+        char *path = get_node_path(context_node, 0, ctx);
         if (!path && sym)
         {
             path = xstrdup(sym->name);
