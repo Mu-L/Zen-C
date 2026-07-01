@@ -1257,6 +1257,27 @@ skip_callee_gen:
             }
             else
             {
+                if (arg->type == NODE_RAW_STMT)
+                {
+                    int is_fmt_arg = 0;
+                    if (sig && sig->is_varargs && arg_idx == sig->total_args - 1)
+                    {
+                        is_fmt_arg = 1;
+                    }
+                    else if (node->call.callee->type == NODE_EXPR_VAR)
+                    {
+                        const char *callee_name = node->call.callee->var_ref.name;
+                        is_fmt_arg = (strcmp(callee_name, "printf") == 0 && arg_idx == 0) ||
+                                     (strcmp(callee_name, "fprintf") == 0 && arg_idx == 1) ||
+                                     (strcmp(callee_name, "sprintf") == 0 && arg_idx == 1) ||
+                                     (strcmp(callee_name, "snprintf") == 0 && arg_idx == 2) ||
+                                     (strcmp(callee_name, "dprintf") == 0 && arg_idx == 1);
+                    }
+                    if (is_fmt_arg)
+                    {
+                        EMIT(ctx, "\"%%s\", ");
+                    }
+                }
                 if (ctx->config->use_cpp && sig && arg_idx < sig->total_args)
                 {
                     Type *param_t = sig->arg_types[arg_idx];
