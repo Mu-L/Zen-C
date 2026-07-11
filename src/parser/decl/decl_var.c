@@ -358,7 +358,37 @@ ASTNode *parse_var_decl(ParserContext *ctx, Lexer *l, int is_export)
         }
         else
         {
+            if (type_obj && type_obj->name)
+            {
+                if (type_obj->arg_count > 0 && type_obj->args)
+                {
+                    size_t len = strlen(type_obj->name) + 1;
+                    char **clean_args = xmalloc(sizeof(char *) * (size_t)type_obj->arg_count);
+                    for (int ai = 0; ai < type_obj->arg_count; ai++)
+                    {
+                        const char *an = type_obj->args[ai] ? type_obj->args[ai]->name : "int";
+                        clean_args[ai] = sanitize_mangled_name(an);
+                        len += 2 + strlen(clean_args[ai]);
+                    }
+                    char *mangled = xmalloc(len);
+                    strcpy(mangled, type_obj->name);
+                    for (int ai = 0; ai < type_obj->arg_count; ai++)
+                    {
+                        strcat(mangled, "__");
+                        strcat(mangled, clean_args[ai]);
+                        zfree(clean_args[ai]);
+                    }
+                    zfree(clean_args);
+                    ctx->cg.expected_init_type = mangled;
+                }
+                else
+                {
+                    ctx->cg.expected_init_type = xstrdup(type_obj->name);
+                }
+            }
             init = parse_expression(ctx, l);
+            zfree(ctx->cg.expected_init_type);
+            ctx->cg.expected_init_type = NULL;
         }
 
         // Multi-let check: if this is the first of let a = 0, b = 1, handle it now
