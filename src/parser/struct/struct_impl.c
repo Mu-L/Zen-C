@@ -425,6 +425,8 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                     f->func.unused = attrs.is_unused;
                     f->link_name = attrs.link_name;
 
+                    register_func_template(ctx, f->func.name, gen_param, f);
+
                     // Manual Type construction for self: Foo<T>*
                     if (f->func.arg_count > 0 && f->func.param_names &&
                         strcmp(f->func.param_names[0], "self") == 0)
@@ -476,6 +478,8 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                         f->func.pure = attrs.is_pure;
                         f->func.unused = attrs.is_unused;
                         f->link_name = attrs.link_name;
+
+                        register_func_template(ctx, f->func.name, gen_param, f);
 
                         if (f->func.arg_count > 0 && f->func.param_names &&
                             strcmp(f->func.param_names[0], "self") == 0)
