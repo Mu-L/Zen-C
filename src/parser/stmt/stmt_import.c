@@ -740,6 +740,18 @@ ASTNode *parse_import(ParserContext *ctx, Lexer *l, int is_re_export)
     {
         temp_module_prefix = NULL;
         ctx->imports.current_module_prefix = NULL;
+
+        char *mod_base = extract_module_name(fn);
+        if (!zmap_get(&ctx->imports.modules, mod_base))
+        {
+            Module *m = xmalloc(sizeof(Module));
+            m->alias = mod_base;
+            m->path = xstrdup(fn);
+            m->base_name = mod_base;
+            m->is_c_header = 0;
+            m->is_re_export = is_re_export;
+            zmap_put(&ctx->imports.modules, m->alias, m);
+        }
     }
 
     if (is_re_export && alias && prev_module_prefix)

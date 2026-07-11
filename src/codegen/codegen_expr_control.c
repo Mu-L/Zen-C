@@ -110,13 +110,15 @@ void handle_if_expr(ParserContext *ctx, ASTNode *node)
 void handle_try_expr(ParserContext *ctx, ASTNode *node)
 {
     char *type_name = "Result";
-    if (ctx->cg.current_func_ret_type)
+    Type *expr_type = node->try_stmt.expr->type_info;
+
+    if (expr_type && expr_type->name)
+    {
+        type_name = expr_type->name;
+    }
+    else if (ctx->cg.current_func_ret_type)
     {
         type_name = ctx->cg.current_func_ret_type;
-    }
-    else if (node->try_stmt.expr->type_info && node->try_stmt.expr->type_info->name)
-    {
-        type_name = node->try_stmt.expr->type_info->name;
     }
 
     if (strcmp(type_name, "__auto_type") == 0 || strcmp(type_name, "unknown") == 0)
@@ -155,12 +157,29 @@ void handle_try_expr(ParserContext *ctx, ASTNode *node)
         }
     }
 
+    int is_option = str_is_option_type(search_name);
+
     EMIT(ctx, "({ ");
     emit_auto_type(ctx, node->try_stmt.expr, node->token);
     EMIT(ctx, " _try = ");
     codegen_expression(ctx, node->try_stmt.expr);
 
-    if (is_enum)
+    if (is_option)
+    {
+        if (is_enum)
+        {
+            EMIT(ctx,
+                 "; if (_try.tag == %s__None_Tag) return (%s__None()); _try.data.Some; })",
+                 search_name, search_name);
+        }
+        else
+        {
+            EMIT(ctx,
+                 "; if (!_try.is_some) return %s__None(); _try.val; })",
+                 search_name);
+        }
+    }
+    else if (is_enum)
     {
         EMIT(ctx,
              "; if (_try.tag == %s__Err_Tag) return (%s__Err(_try.data.Err)); _try.data.Ok; })",
