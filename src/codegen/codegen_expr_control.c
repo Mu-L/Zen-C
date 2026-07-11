@@ -168,15 +168,12 @@ void handle_try_expr(ParserContext *ctx, ASTNode *node)
     {
         if (is_enum)
         {
-            EMIT(ctx,
-                 "; if (_try.tag == %s__None_Tag) return (%s__None()); _try.data.Some; })",
+            EMIT(ctx, "; if (_try.tag == %s__None_Tag) return (%s__None()); _try.data.Some; })",
                  search_name, search_name);
         }
         else
         {
-            EMIT(ctx,
-                 "; if (!_try.is_some) return %s__None(); _try.val; })",
-                 search_name);
+            EMIT(ctx, "; if (!_try.is_some) return %s__None(); _try.val; })", search_name);
         }
     }
     else if (is_enum)

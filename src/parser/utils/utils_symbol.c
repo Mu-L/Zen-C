@@ -472,17 +472,28 @@ char *find_method_owner_type(ParserContext *ctx, const char *method_name)
 {
     Scope *scopes[2];
     int scope_count = 0;
-    if (ctx->global_scope) scopes[scope_count++] = ctx->global_scope;
+    if (ctx->global_scope)
+    {
+        scopes[scope_count++] = ctx->global_scope;
+    }
     if (ctx->current_scope && ctx->current_scope != ctx->global_scope)
+    {
         scopes[scope_count++] = ctx->current_scope;
+    }
 
     for (int si = 0; si < scope_count; si++)
     {
         for (ZenSymbol *sym = scopes[si]->symbols; sym; sym = sym->next)
         {
-            if (!sym->name) continue;
+            if (!sym->name)
+            {
+                continue;
+            }
             char *last_sep = find_last_sep(sym->name);
-            if (!last_sep) continue;
+            if (!last_sep)
+            {
+                continue;
+            }
             if (strcmp(last_sep + 2, method_name) == 0)
             {
                 size_t prefix_len = (size_t)(last_sep - sym->name);
@@ -496,9 +507,15 @@ char *find_method_owner_type(ParserContext *ctx, const char *method_name)
 
     for (FuncSig *f = ctx->func_registry; f; f = f->next)
     {
-        if (!f->name) continue;
+        if (!f->name)
+        {
+            continue;
+        }
         char *last_sep = find_last_sep(f->name);
-        if (!last_sep) continue;
+        if (!last_sep)
+        {
+            continue;
+        }
         if (strcmp(last_sep + 2, method_name) == 0)
         {
             size_t prefix_len = (size_t)(last_sep - f->name);
@@ -519,15 +536,30 @@ char *find_method_owner_type_scoped(ParserContext *ctx, const char *struct_name,
 
     for (FuncSig *f = ctx->func_registry; f; f = f->next)
     {
-        if (!f->name) continue;
+        if (!f->name)
+        {
+            continue;
+        }
 
         const char *p = f->name;
-        if (*p == '_') p++;
-        if (strncasecmp(p, struct_name, prefix_len) != 0) continue;
+        if (*p == '_')
+        {
+            p++;
+        }
+        if (strncasecmp(p, struct_name, prefix_len) != 0)
+        {
+            continue;
+        }
 
         char *last_sep = find_last_sep(f->name);
-        if (!last_sep) continue;
-        if (strcmp(last_sep + 2, method_name) != 0) continue;
+        if (!last_sep)
+        {
+            continue;
+        }
+        if (strcmp(last_sep + 2, method_name) != 0)
+        {
+            continue;
+        }
 
         size_t concrete_len = (size_t)(last_sep - f->name);
         char *concrete_type = xmalloc(concrete_len + 1);
