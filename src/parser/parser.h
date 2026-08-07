@@ -420,6 +420,7 @@ struct ParserContext
 
     // LSP / Fault Tolerance
     int is_fault_tolerant; ///< 1 if parser should recover from errors (LSP mode).
+    int suppress_errors;   ///< 1 to swallow parser errors silently (probe parses).
     int had_error; ///< Set by zpanic_at when fault-tolerant; checked by parser loops to bail out.
     void *error_callback_data;                              ///< User data for error callback.
     void (*on_error)(void *data, Token t, const char *msg); ///< Callback for reporting errors.

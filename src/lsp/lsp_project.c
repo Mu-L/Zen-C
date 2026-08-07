@@ -37,6 +37,7 @@ void lsp_project_init(const char *root_path)
     // Create a persistent global context
     g_project->ctx = xcalloc(1, sizeof(ParserContext));
     g_project->ctx->compiler = &g_compiler;
+    g_project->ctx->config = &g_compiler.config;
     g_project->ctx->is_fault_tolerant = 1;
     module_state_init(&g_project->ctx->imports);
     g_project->ctx->cg.hoist_out = tmpfile(); // Support hoisting in LSP
@@ -45,6 +46,13 @@ void lsp_project_init(const char *root_path)
         fprintf(stderr, "zls: Warning: Failed to create hoist_out temporary file. Hoisting will be "
                         "disabled.\n");
     }
+
+    // Register this persistent context as the parser/token/diagnostic context.
+    // Without config the lexer/parser deref ctx->config (e.g. misra_mode) and
+    // segfault on the first didOpen, and without the diagnostic context a parse
+    // error would fall through to exit(1) and kill the whole server.
+    token_set_parser_ctx(g_project->ctx);
+    diag_set_parser_ctx(g_project->ctx);
 
     // Set a default error handler that just logs to stderr (or ignores)
     // to prevent exit(1) during initial scan.

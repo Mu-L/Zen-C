@@ -328,8 +328,8 @@ zc repl
 *   **JIT Execution**: Code is compiled in-memory and executed directly within the REPL process for lightning-fast feedback.
 
 *   **Interactive Coding**: Type expressions or statements for immediate evaluation.
-*   **Persistent History**: Commands are saved to `~/.zprep_history`.
-*   **Startup Script**: Auto-loads commands from `~/.zprep_init.zc`.
+*   **Persistent History**: Commands are saved to `~/.zenc_history`.
+*   **Startup Script**: Auto-loads commands from `~/.zencrc`.
 
 #### Commands
 

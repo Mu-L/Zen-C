@@ -89,6 +89,7 @@ char *repl_readline(ReplState *state, const char *prompt, int indent_level);
 char *repl_complete(ReplState *state, const char *buf, int pos);
 
 int is_header_line(const char *line);
+void repl_parser_ctx_init(ParserContext *ctx);
 int is_definition_of(const char *code, const char *name);
 int is_command(const char *buf, const char *cmd);
 void repl_get_code(char **history, int len, char **out_global, char **out_main);

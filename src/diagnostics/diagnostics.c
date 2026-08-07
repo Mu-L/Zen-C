@@ -282,6 +282,14 @@ void zwarn_with_suggestion(Token t, const char *msg, const char *suggestion)
 
 void zpanic_at(Token t, const char *fmt, ...)
 {
+    if (d_ctx.parser_ctx && d_ctx.parser_ctx->suppress_errors)
+    {
+        if (d_ctx.parser_ctx->is_fault_tolerant)
+        {
+            d_ctx.parser_ctx->had_error = 1;
+        }
+        return;
+    }
     if (diag_cfg()->json_output)
     {
         char msg[MAX_ERROR_MSG_LEN];
@@ -346,6 +354,14 @@ void zpanic_at(Token t, const char *fmt, ...)
 // Enhanced error with suggestion.
 void zpanic_with_suggestion(Token t, const char *msg, const char *suggestion)
 {
+    if (d_ctx.parser_ctx && d_ctx.parser_ctx->suppress_errors)
+    {
+        if (d_ctx.parser_ctx->is_fault_tolerant)
+        {
+            d_ctx.parser_ctx->had_error = 1;
+        }
+        return;
+    }
     if (diag_cfg()->json_output)
     {
         emit_json("error", t, msg, suggestion, DIAG_NONE);
@@ -405,6 +421,14 @@ void zpanic_with_suggestion(Token t, const char *msg, const char *suggestion)
 
 void zpanic_with_hints(Token t, const char *msg, const char *const *hints)
 {
+    if (d_ctx.parser_ctx && d_ctx.parser_ctx->suppress_errors)
+    {
+        if (d_ctx.parser_ctx->is_fault_tolerant)
+        {
+            d_ctx.parser_ctx->had_error = 1;
+        }
+        return;
+    }
     if (diag_cfg()->json_output)
     {
         char combined_hints[MAX_PATH_LEN] = {0};

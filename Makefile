@@ -478,6 +478,8 @@ test: $(TARGET) $(PLUGINS)
 	./tests/scripts/run_tests.sh -- $(filter %.zc,$(only))
 	./tests/scripts/run_codegen_tests.sh $(filter %.zc,$(only))
 	./tests/scripts/run_example_transpile.sh $(filter %.zc,$(only))
+	./tests/scripts/run_repl_tests.sh
+	./tests/scripts/run_cli_tests.sh
 	$(MAKE) test-misra
 
 test-misra: $(TARGET)
