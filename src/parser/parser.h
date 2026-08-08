@@ -924,6 +924,8 @@ void replace_it_with_var(ASTNode *node, char *var_name);
 void auto_import_std_mem(ParserContext *ctx);
 void mangle_method_name(char *out, size_t out_sz, const char *struct_name, const char *trait_name,
                         const char *method_name);
+char *mangle_method_symbol(const char *struct_name, const char *trait_name,
+                           const char *method_name);
 void patch_and_fix_self(ParserContext *ctx, ASTNode *f, const char *full_struct_name);
 Type *parse_type_obj(ParserContext *ctx, Lexer *l);
 

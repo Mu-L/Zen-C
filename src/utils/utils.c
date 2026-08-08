@@ -119,12 +119,16 @@ char *merge_underscores(const char *name)
 
     while (*in)
     {
-        if (in[0] == '_' && in[1] == '_' && in[2] == '_')
+        if (in[0] == '_' && in[1] == '_' && in[2] == '_' && in[3] == '_')
         {
-            // Triple or more underscores -> collapse to double
+            // Quadruple or more underscores -> collapse to double.
+            // A run of exactly three underscores is kept: it encodes the "__"
+            // separator plus an identifier that begins with "_" (e.g.
+            // `Struct::_method` vs `Struct::method`), so collapsing it would
+            // make distinct symbols collide.
             *out++ = '_';
             *out++ = '_';
-            in += 3;
+            in += 4;
             while (*in == '_')
             {
                 in++;
