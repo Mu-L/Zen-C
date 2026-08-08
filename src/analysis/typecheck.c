@@ -438,7 +438,19 @@ void check_node(TypeChecker *tc, ASTNode *node, int depth)
         }
         break;
     case NODE_EXPR_MEMBER:
-        check_node(tc, node->member.target, depth + 1);
+        if (node->member.field && strcmp(node->member.field, "forget") == 0)
+        {
+            // .forget() is a consuming operation: it is valid on a value that
+            // was already moved into a container (e.g. `vec.push(x); x.forget();`),
+            // so the use-after-move report is suppressed for the receiver.
+            tc->is_forget_receiver = 1;
+            check_node(tc, node->member.target, depth + 1);
+            tc->is_forget_receiver = 0;
+        }
+        else
+        {
+            check_node(tc, node->member.target, depth + 1);
+        }
         if (node->member.target && node->member.target->type_info)
         {
             Type *target_type = get_inner_type(node->member.target->type_info);
