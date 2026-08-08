@@ -35,7 +35,8 @@ jobs:
 
       - name: Build Zen C compiler
         working-directory: zen-c
-        run: make -j$(nproc)
+        # JIT (libtcc) is not needed for transpile/build validation.
+        run: make -j$(nproc) ZC_HAS_JIT=0
 
       - name: Setup Awesome-Zen-C repository
         run: |
