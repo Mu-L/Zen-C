@@ -360,7 +360,12 @@ void check_node(TypeChecker *tc, ASTNode *node, int depth)
                 is_ptr = 1;
             }
 
-            if (t->kind == TYPE_STRUCT && t->name)
+            // Pointers must use direct array indexing (base[i]), not the
+            // __index/__get operator overload: taking the address of the
+            // overload's return value is not an lvalue. This matches the
+            // parser/codegen policy ("Pointers should use array indexing by
+            // default, not operator overload").
+            if (t->kind == TYPE_STRUCT && t->name && !is_ptr)
             {
                 size_t tname_len = strlen(t->name);
                 char *mangled_idx = xmalloc(tname_len + sizeof("__index"));
