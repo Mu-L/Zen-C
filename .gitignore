@@ -63,6 +63,10 @@ benchmarks_result.json
 *.swp
 *.swo
 
+# Python (rosetta scraper)
+__pycache__/
+*.py[cod]
+
 # OS
 .DS_Store
 Thumbs.db

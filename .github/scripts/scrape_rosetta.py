@@ -110,25 +110,7 @@ def module_name(code):
     return m.group(1) if m else None
 
 
-def inline_modules(program, modules):
-    """Replace `import "NAME.zc"` in program with the body of module NAME."""
-    by_name = {}
-    for mod in modules:
-        name = module_name(mod)
-        if name and name not in by_name:
-            by_name[name] = mod
-
-    def repl(match):
-        name = match.group(1)
-        body = by_name.get(name)
-        if body is None:
-            return match.group(0)  # not a module we have; leave the import alone
-        return body.strip()
-
-    return IMPORT_RE.sub(repl, program)
-
-
-def structural_check(code):
+def structural_check(code, known_modules=()):
     """Cheap check used when zc is unavailable. Returns (ok, reason)."""
     if not code.strip():
         return False, "empty code block"
@@ -137,20 +119,22 @@ def structural_check(code):
         return False, "expected exactly one top-level fn main (got %d)" % len(mains)
     for m in IMPORT_RE.finditer(code):
         name = m.group(1)
-        if name.endswith(".zc") and "/" not in name:
+        if name.endswith(".zc") and "/" not in name and name not in known_modules:
             return False, "dangling module import: %s" % name
     return True, ""
 
 
-def validate_code(code):
+def validate_code(code, module_files=None):
     """Validate a candidate program. Returns (ok, reason).
 
-    When zc is available we run `zc transpile` and `zc build`; otherwise we
-    fall back to a structural check so the scraper still works without the
+    `module_files` maps module filename -> source; those are staged next to the
+    program so `import "NAME.zc"` resolves exactly as it will in the committed
+    layout. When zc is available we run `zc transpile` and `zc build`; otherwise
+    we fall back to a structural check so the scraper still works without the
     compiler binary.
     """
     if not os.path.exists(ZC_BINARY):
-        return structural_check(code)
+        return structural_check(code, known_modules=tuple((module_files or {}).keys()))
 
     with tempfile.TemporaryDirectory(prefix="zc_rosetta_") as td:
         src = os.path.join(td, "prog.zc")
@@ -158,6 +142,10 @@ def validate_code(code):
         out_bin = os.path.join(td, "prog")
         with open(src, "w", encoding="utf-8") as f:
             f.write(code)
+
+        for name, mcode in (module_files or {}).items():
+            with open(os.path.join(td, name), "w", encoding="utf-8") as f:
+                f.write(mcode)
 
         env = dict(os.environ)
         if ZC_ROOT:
@@ -213,9 +201,12 @@ def main():
     os.makedirs("examples/examples/rosetta", exist_ok=True)
     os.makedirs("website_out", exist_ok=True)
 
-    scraped = 0
-    kept = 0
-    skipped = 0
+    # Pass 1: fetch and split every task, and collect the module files tasks
+    # define (via a `/* NAME.zc */` header, e.g. Arithmetic/Rational's rat.zc).
+    # Modules are emitted once as shared sibling files so `import "NAME.zc"`
+    # resolves both within and across tasks.
+    tasks = []
+    module_files = {}  # filename -> source (first definition wins)
 
     for page in pages:
         title = page["title"]
@@ -234,37 +225,68 @@ def main():
             print("-> Could not find Zen C header in: %s" % title)
             continue
 
-        zen_c_section = parts[1].split("=={{header|")[0].strip()
+        # Stop at the next section header, case-insensitively: Rosetta uses
+        # both `{{header|...}}` and `{{Header|...}}`. A case-sensitive split
+        # would leak a following section (e.g. `{{Header|Zig}}`) into the Zen C
+        # section.
+        zen_c_section = re.split(r"(?i)==\{\{header\|", parts[1], maxsplit=1)[0].strip()
         blocks = split_blocks(zen_c_section)
 
         if not blocks:
             print("-> Found header, but NO code block in: %s" % title)
             continue
 
-        scraped += 1
-        safe_title = title.replace("/", "_").replace(" ", "_")
-        page_url = "https://rosettacode.org/wiki/" + title.replace(" ", "_")
-        history_url = page_url + "?action=history"
-
         programs = [code for _, code in blocks if is_program(code)]
-        modules = [code for _, code in blocks if not is_program(code)]
-
         if not programs:
             print("-> No complete program in Zen C section of: %s" % title)
             continue
 
+        safe_title = title.replace("/", "_").replace(" ", "_")
+        page_url = "https://rosettacode.org/wiki/" + title.replace(" ", "_")
+        tasks.append(
+            {
+                "title": title,
+                "safe_title": safe_title,
+                "page_url": page_url,
+                "history_url": page_url + "?action=history",
+                "zen_c_section": zen_c_section,
+                "blocks": blocks,
+                "programs": programs,
+            }
+        )
+
+        for _, code in blocks:
+            if not is_program(code):
+                name = module_name(code)
+                if name and name not in module_files:
+                    module_files[name] = code
+
+    # Emit shared module files once.
+    for name, code in module_files.items():
+        with open("examples/examples/rosetta/%s" % name, "w", encoding="utf-8") as f:
+            f.write(code + "\n")
+        print("-> Module: %s" % name)
+
+    scraped = len(tasks)
+    kept = 0
+    skipped = 0
+
+    # Pass 2: validate and emit each program (with the shared modules staged),
+    # then write the documentation for the task.
+    for task in tasks:
+        title = task["title"]
+        blocks = task["blocks"]
         written = 0
-        for idx, program in enumerate(programs):
-            candidate = inline_modules(program, modules)
-            ok, reason = validate_code(candidate)
+        for idx, program in enumerate(task["programs"]):
+            ok, reason = validate_code(program, module_files)
             if not ok:
                 print("  ! %s: block %d rejected (%s)" % (title, idx + 1, reason))
                 continue
 
             suffix = "" if written == 0 else "_%d" % (written + 1)
-            zc_filename = "examples/examples/rosetta/%s%s.zc" % (safe_title, suffix)
+            zc_filename = "examples/examples/rosetta/%s%s.zc" % (task["safe_title"], suffix)
             with open(zc_filename, "w", encoding="utf-8") as f:
-                f.write(candidate + "\n")
+                f.write(program + "\n")
             written += 1
             kept += 1
 
@@ -274,8 +296,8 @@ def main():
             continue
 
         # Documentation (markdown) mirrors the whole Zen C section.
-        md_filename = "website_out/%s.md" % safe_title
-        content_md = wiki_to_markdown(zen_c_section, page_url)
+        md_filename = "website_out/%s.md" % task["safe_title"]
+        content_md = wiki_to_markdown(task["zen_c_section"], task["page_url"])
         with open(md_filename, "w", encoding="utf-8") as f:
             f.write("+++\n")
             f.write('title = "%s"\n' % title)
@@ -285,20 +307,21 @@ def main():
             f.write("---\n")
             f.write(
                 "**Attribution:** This is a community solution for the Rosetta Code task "
-                "[**%s**](%s) in Zen C.\n\n" % (title, page_url)
+                "[**%s**](%s) in Zen C.\n\n" % (title, task["page_url"])
             )
             f.write(
                 "*This article uses material from the Rosetta Code article **%s**, which is "
                 "released under the [GNU Free Documentation License "
                 "1.3](https://www.gnu.org/licenses/fdl-1.3.html). A list of the original "
                 "authors can be found in the [page history](%s).*\n"
-                % (title, history_url)
+                % (title, task["history_url"])
             )
 
         print("-> Scraped: %s (%d blocks, %d valid program(s))" % (title, len(blocks), written))
 
     print("--------------------------------------------------")
     print("Tasks with a Zen C section : %d" % scraped)
+    print("Modules emitted            : %d" % len(module_files))
     print("Programs kept              : %d" % kept)
     print("Tasks with no valid program: %d" % skipped)
 

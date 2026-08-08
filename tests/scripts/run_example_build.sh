@@ -42,6 +42,16 @@ trap 'rm -rf "$WORKDIR"' EXIT
 
 while IFS= read -r file; do
     [ -e "$file" ] || continue
+
+    # Module files (e.g. rat.zc) have no `fn main` and cannot be built
+    # standalone; they are validated transitively when an importing program
+    # is built. Skip them here.
+    if ! grep -qE '^[[:space:]]*fn[[:space:]]+main[[:space:]]*\(' "$file"; then
+        echo "Skipping $file (module, no main)"
+        SKIP_COUNT=$((SKIP_COUNT + 1))
+        continue
+    fi
+
     echo -n "Building $file... "
 
     if ! "$ZC" build "$file" -o "$WORKDIR/out" -w >/dev/null 2>&1; then
