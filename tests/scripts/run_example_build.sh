@@ -41,8 +41,6 @@ ext_dep_reason() {
             echo "requires GNU MP (gmp.h + -lgmp)" ;;
         "rosetta/Simple_windowed_application.zc")
             echo "requires GTK3" ;;
-        "rosetta/Repeat_2.zc")
-            echo "auto-synced solution references undefined helper 'times'" ;;
         *)
             return 1 ;;
     esac
