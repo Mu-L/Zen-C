@@ -182,6 +182,11 @@ def validate_code(code, module_files=None):
     layout. When zc is available we run `zc transpile` and `zc build`; otherwise
     we fall back to a structural check so the scraper still works without the
     compiler binary.
+
+    gcc only promotes `implicit declaration of function` to an error in newer
+    C23 compilers; on older ones it is a warning, so a program relying on an
+    undeclared function would build here but not elsewhere. We treat any such
+    diagnostic as a failure so validation is independent of the gcc version.
     """
     if not os.path.exists(ZC_BINARY):
         return structural_check(code, known_modules=tuple((module_files or {}).keys()))
@@ -192,6 +197,8 @@ def validate_code(code, module_files=None):
     rc, err = _zc_run(code, module_files, ["build"], "prog")
     if rc != 0:
         return False, _first_error(err)
+    if IMPLICIT_DECL_RE.search(err or ""):
+        return False, "references undeclared function(s)"
     return True, ""
 
 
@@ -201,8 +208,9 @@ def merge_dependencies(program, siblings, module_files=None):
 
     Rosetta solutions sometimes reuse a helper defined in a sibling block of the
     same task (e.g. a second variant that says "reusing the procedure defined
-    above"). Such a block is not standalone: `zc build` fails with an implicit
-    declaration error. When we detect that, we prepend the sibling block that
+    above"). Such a block is not standalone: `zc build` reports an undeclared
+    function (an error on newer gcc, a warning on older ones -- see
+    validate_code). When we detect that, we prepend the sibling block that
     defines the missing function (with its `fn main` renamed so it cannot clash
     with the program's own main) and re-validate, repeating until the program
     builds on its own. Returns the merged code if it builds, else None.
@@ -214,8 +222,9 @@ def merge_dependencies(program, siblings, module_files=None):
     merged_siblings = []
     for _ in range(len(siblings) + 1):
         rc, stderr = _zc_run(current, module_files, ["build"], "prog")
-        if rc == 0:
-            return current
+        missing = set(IMPLICIT_DECL_RE.findall(stderr or ""))
+        if not missing:
+            return current if rc == 0 else None
         missing = set(IMPLICIT_DECL_RE.findall(stderr or ""))
         if not missing:
             return None
