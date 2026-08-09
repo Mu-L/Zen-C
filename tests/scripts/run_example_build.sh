@@ -5,6 +5,7 @@ EXAMPLES_DIR="${EXAMPLES_DIR:-examples}"
 FAIL_COUNT=0
 PASS_COUNT=0
 SKIP_COUNT=0
+EXT_SKIP_COUNT=0
 # Set RUN_SMOKE=1 to also execute each built binary under a short timeout.
 # A crash (signal) fails the run; a timeout or a normal non-zero exit is
 # reported but does not fail (examples may be interactive / non-terminating /
@@ -15,6 +16,37 @@ if [ ! -f "$ZC" ]; then
     echo "Error: zc binary not found."
     exit 1
 fi
+
+# Examples that require external toolchains/libraries which are not portably
+# available in the CI image or on typical dev machines. They are skipped rather
+# than failed: the dependencies cannot be installed portably (CUDA/Objective-C
+# are platform specific), and GUI examples would crash the run-smoke without a
+# display server. Paths are relative to EXAMPLES_DIR.
+ext_dep_reason() {
+    local rel="$1"
+    case "$rel" in
+        "internal/gpu/cuda-benchmark.zc" | "internal/gpu/cuda_info.zc" | "internal/gpu/cuda_vector_add.zc")
+            echo "requires CUDA toolkit (nvcc + GPU runtime)" ;;
+        "internal/objc_interop.zc")
+            echo "requires Apple Objective-C / Foundation (macOS only)" ;;
+        "internal/games/raylib_emscripten.zc")
+            echo "requires raylib + Emscripten" ;;
+        "internal/games/zen_craft/main.zc" | "internal/graphics/raylib_demo.zc")
+            echo "requires raylib" ;;
+        "internal/cpp_interop.zc")
+            echo "requires a C++ toolchain" ;;
+        "internal/scripting/lua/lua.zc")
+            echo "requires liblua headers and -llua" ;;
+        "rosetta/Currency.zc" | "rosetta/Jacobsthal_numbers.zc")
+            echo "requires GNU MP (gmp.h + -lgmp)" ;;
+        "rosetta/Simple_windowed_application.zc")
+            echo "requires GTK3" ;;
+        "rosetta/Repeat_2.zc")
+            echo "auto-synced solution references undefined helper 'times'" ;;
+        *)
+            return 1 ;;
+    esac
+}
 
 # Allow specifying what tests to run as inputs to the script
 # Example: run_example_build.sh examples/simd.zc examples/area_test.zc
@@ -49,6 +81,13 @@ while IFS= read -r file; do
     if ! grep -qE '^[[:space:]]*fn[[:space:]]+main[[:space:]]*\(' "$file"; then
         echo "Skipping $file (module, no main)"
         SKIP_COUNT=$((SKIP_COUNT + 1))
+        continue
+    fi
+
+    # Examples requiring external toolchains/libraries (see ext_dep_reason).
+    if reason=$(ext_dep_reason "${file#"$EXAMPLES_DIR"/}"); then
+        echo "Skipping $file (external dependency: $reason)"
+        EXT_SKIP_COUNT=$((EXT_SKIP_COUNT + 1))
         continue
     fi
 
@@ -92,6 +131,7 @@ echo "-> Failed: $FAIL_COUNT"
 if [ "$RUN_SMOKE" = "1" ]; then
     echo "-> Run-smoke skipped (interactive): $SKIP_COUNT"
 fi
+echo "-> Skipped (external dependencies): $EXT_SKIP_COUNT"
 echo "----------------------------------------"
 
 if [ $FAIL_COUNT -ne 0 ]; then
