@@ -61,7 +61,7 @@ impl Complex {
     }
 
     // String Interpolation Support
-    fn to_string(self) -> String {
+    fn to_string(self) -> char* {
         let sign = "+";
         let im = self.imag;
         if (im < 0.0) {
@@ -74,6 +74,8 @@ impl Complex {
         s.append_c(sign);
         s.append_c(" {im}i");
         
-        return s;
+        let out = s.c_str();
+        s.forget();
+        return out;
     }
 }

@@ -509,10 +509,12 @@ impl Drop for JsonValue {
 }
 
 impl JsonValue {
-    fn to_string(self) -> String {
+    fn to_string(self) -> char* {
         let s = String::new("");
         self.stringify(&s);
-        return s;
+        let out = s.c_str();
+        s.forget();
+        return out;
     }
 
     fn stringify(self, buf: String*) {
