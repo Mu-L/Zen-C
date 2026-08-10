@@ -38,8 +38,13 @@ impl BigFloat {
         };
     }
 
+    fn free(self) {
+        self.magnitude.free();
+    }
+
+    // Deprecated alias; use `free`.
     fn free_mem(self) {
-        self.magnitude.free_mem();
+        self.free();
     }
 
     fn align_scale(self, target_scale: int) {

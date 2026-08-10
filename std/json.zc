@@ -459,7 +459,7 @@ impl JsonValue {
         return Option<JsonValue*>::Some(self.array_val.get(index));
     }
 
-    fn len(self) -> usize {
+    fn length(self) -> usize {
         if self.kind.tag == JsonType::JSON_ARRAY().tag {
             return self.array_val.length();
         }
@@ -467,6 +467,11 @@ impl JsonValue {
             return self.object_val.length();
         }
         return 0;
+    }
+
+    // Deprecated alias; use `length`.
+    fn len(self) -> usize {
+        return self.length();
     }
 
     fn free(self) {

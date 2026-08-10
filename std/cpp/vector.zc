@@ -46,8 +46,13 @@ impl CppVectorInt {
     fn get(self, index: int) -> int {
         return _z_cpp_vector_int_get(self.ptr, index);
     }
-    fn len(self) -> int {
+    fn length(self) -> int {
         return _z_cpp_vector_int_size(self.ptr);
+    }
+
+    // Deprecated alias; use `length`.
+    fn len(self) -> int {
+        return self.length();
     }
 }
 

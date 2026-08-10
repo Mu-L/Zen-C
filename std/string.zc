@@ -113,7 +113,7 @@ impl String {
     }
 
     fn destroy(self) {
-        self.vec.free();
+        self.free();
     }
 
     fn forget(self) {
@@ -733,7 +733,7 @@ impl String {
             v.push(0);
             let ch_s = String::new(v.data);
             result.append(&ch_s);
-            ch_s.destroy();
+            ch_s.free();
             i = i + 1;
         }
         return result;
@@ -794,7 +794,7 @@ impl String {
             v.push(0);
             let ch_s = String::new(v.data);
             out.append(&ch_s);
-            ch_s.destroy();
+            ch_s.free();
         }
         return out;
     }

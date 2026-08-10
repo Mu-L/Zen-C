@@ -44,8 +44,13 @@ impl CppString {
         return _z_cpp_string_c_str(self.ptr);
     }
 
-    fn len(self) -> int {
+    fn length(self) -> int {
         return _z_cpp_string_len(self.ptr);
+    }
+
+    // Deprecated alias; use `length`.
+    fn len(self) -> int {
+        return self.length();
     }
 
     fn append(self, s: string) {

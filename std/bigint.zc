@@ -31,8 +31,13 @@ impl BigInt {
         return BigInt { digits: self.digits.clone() };
     }
     
-    fn free_mem(self) {
+    fn free(self) {
         self.digits.free();
+    }
+
+    // Deprecated alias; use `free`.
+    fn free_mem(self) {
+        self.free();
     }
     
     fn add_in_place(self, other: BigInt*) {
@@ -189,7 +194,7 @@ impl BigInt {
         for (let i: usize = 0; i < len; i = i + 1) {
             let c = s[i];
             if (c < '0' || c > '9') {
-                b.free_mem();
+                b.free();
                 return Result<BigInt>::Err("BigInt::from_string: invalid digit");
             }
             b._mul_small_in_place(10);
@@ -306,7 +311,7 @@ impl BigInt {
 
 impl Drop for BigInt {
     fn drop(self) {
-        self.free_mem();
+        self.free();
     }
 }
 
