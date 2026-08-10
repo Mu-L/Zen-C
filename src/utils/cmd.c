@@ -312,7 +312,8 @@ void build_compile_arg_list(ArgList *list, const char *outfile, const char *temp
         // also try the std root resolved from an actual std import.
         if (!tre_found && !cfg->is_freestanding && cfg->std_root[0])
         {
-            snprintf(tre_path, sizeof(tre_path), "%s/std/third-party/tre/include", cfg->std_root);
+            snprintf(tre_path, sizeof(tre_path), "%s/std/third-party/tre/include",
+                     cfg->std_root);
             if (access(tre_path, F_OK) == 0)
             {
                 arg_list_add_fmt(list, "-I%s", tre_path);
