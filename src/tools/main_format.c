@@ -3,6 +3,7 @@
 // prints the formatted source to stdout.
 #include "tool_common.h"
 #include "../lsp/lsp_formatter.h"
+#include "../arena.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,6 +31,8 @@ int main(int argc, char **argv)
         }
     }
 
+    // Source buffer is arena-owned (never freed); the formatter's output is
+    // libc-owned and released with libc_free.
     char *src = NULL;
     if (input)
     {
@@ -39,18 +42,26 @@ int main(int argc, char **argv)
             fprintf(stderr, "error: could not open '%s'\n", input);
             return 1;
         }
-        fseek(f, 0, SEEK_END);
-        long size = ftell(f);
-        fseek(f, 0, SEEK_SET);
-        src = (char *)malloc((size_t)size + 1);
-        if (!src)
+        if (fseek(f, 0, SEEK_END) != 0)
         {
             fclose(f);
             return 1;
         }
+        long size = ftell(f);
+        if (size < 0)
+        {
+            fprintf(stderr, "error: could not size '%s'\n", input);
+            fclose(f);
+            return 1;
+        }
+        if (fseek(f, 0, SEEK_SET) != 0)
+        {
+            fclose(f);
+            return 1;
+        }
+        src = xmalloc((size_t)size + 1);
         if (fread(src, 1, (size_t)size, f) != (size_t)size)
         {
-            free(src);
             fclose(f);
             return 1;
         }
@@ -61,18 +72,14 @@ int main(int argc, char **argv)
     {
         size_t cap = 4096;
         size_t len = 0;
-        src = (char *)malloc(cap);
-        if (!src)
-        {
-            return 1;
-        }
+        src = xmalloc(cap);
         int ch;
         while ((ch = fgetc(stdin)) != EOF)
         {
             if (len + 1 >= cap)
             {
                 cap *= 2;
-                src = (char *)realloc(src, cap);
+                src = xrealloc(src, cap);
             }
             src[len++] = (char)ch;
         }
@@ -83,20 +90,17 @@ int main(int argc, char **argv)
     if (!formatted)
     {
         fprintf(stderr, "error: formatting failed\n");
-        free(src);
         return 1;
     }
 
     if (check)
     {
         int same = strcmp(formatted, src) == 0;
-        free(src);
-        free(formatted);
+        libc_free(formatted);
         return same ? 0 : 1;
     }
 
     fputs(formatted, stdout);
-    free(src);
-    free(formatted);
+    libc_free(formatted);
     return 0;
 }

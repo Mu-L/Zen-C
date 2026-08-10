@@ -9,14 +9,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static void z_tool_crash(int sig)
 {
-    fprintf(stderr, "\n------------------------------------------------\n");
-    fprintf(stderr, "CRITICAL: Compiler crashed with signal %d\n", sig);
-    fprintf(stderr, "This is likely a bug in the Zen compiler.\n");
-    fprintf(stderr, "Flushing all output files before exit...\n");
-    fprintf(stderr, "------------------------------------------------\n");
+    // Only async-signal-safe calls belong in a signal handler.
+    static const char hdr[] = "\nCRITICAL: Compiler crashed with signal ";
+    static const char flush[] = "\nThis is likely a bug in the Zen compiler.\n";
+    char msg[64];
+    int n = snprintf(msg, sizeof(msg), "%d\n", sig);
+    (void)write(STDERR_FILENO, hdr, sizeof(hdr) - 1);
+    if (n > 0 && n < (int)sizeof(msg))
+    {
+        (void)write(STDERR_FILENO, msg, (size_t)n);
+    }
+    (void)write(STDERR_FILENO, flush, sizeof(flush) - 1);
     fflush(NULL);
     _exit(139);
 }

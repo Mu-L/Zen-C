@@ -531,7 +531,7 @@ test-filcc: $(TARGET) $(PLUGINS)
 	fi
 	FILC_LIBRARY_PATH="$(FILC_LIB)" ./tests/scripts/run_tests.sh --cc "$(FILCC)"
 
-test-lsp: $(TARGET) $(PLUGINS)
+test-lsp: $(TARGET) $(PLUGINS) zc-lsp
 	@echo "=> Building LSP Test Runner"
 	$(CC) $(CFLAGS) -DZC_NO_ARENA tests/compiler/lsp/lsp_test_runner.c src/utils/cJSON.c -o tests/compiler/lsp/test_runner
 	@echo "=> Running LSP Tests"

@@ -42,6 +42,27 @@ int driver_run(ZenCompiler *compiler)
         zvec_push_Str(&compiler->config.cfg_defines, xstrdup("__FILCC__"));
     }
 
+    // Make the host OS available to @cfg(...) so @cfg(windows)/@cfg(not(windows))
+    // (used by e.g. std/sys/fs.zc and std/sys/env.zc) resolve against the host
+    // platform instead of always falling through to the non-Windows branch.
+    const char *host_os = z_get_system_name();
+    if (host_os && host_os[0])
+    {
+        int found = 0;
+        for (size_t i = 0; i < compiler->config.cfg_defines.length; i++)
+        {
+            if (strcmp(compiler->config.cfg_defines.data[i], host_os) == 0)
+            {
+                found = 1;
+                break;
+            }
+        }
+        if (!found)
+        {
+            zvec_push_Str(&compiler->config.cfg_defines, xstrdup(host_os));
+        }
+    }
+
     init_builtins();
 
 #if ZC_HAS_PLUGINS
