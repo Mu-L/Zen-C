@@ -20,7 +20,7 @@ enum JsonType {
 struct JsonValue {
     kind: JsonType;
     string_val: char*;
-    number_val: double;
+    number_val: f64;
     bool_val: bool;
     array_val: Vec<JsonValue*>*;
     object_val: Map<JsonValue*>*;
@@ -88,7 +88,7 @@ fn _json_make_string(s: char*) -> JsonValue* {
     return v;
 }
 
-fn _json_make_number(n: double) -> JsonValue* {
+fn _json_make_number(n: f64) -> JsonValue* {
     let v: JsonValue* = alloc<JsonValue>();
     *v = JsonValue { kind: JsonType::JSON_NUMBER(), string_val: NULL, number_val: n, bool_val: false, array_val: NULL, object_val: NULL };
     return v;
@@ -224,7 +224,7 @@ impl JsonValue {
         return JsonValue { kind: JsonType::JSON_BOOL(), string_val: NULL, number_val: 0.0, bool_val: b, array_val: NULL, object_val: NULL };
     }
     
-    fn number(n: double) -> JsonValue {
+    fn number(n: f64) -> JsonValue {
         return JsonValue { kind: JsonType::JSON_NUMBER(), string_val: NULL, number_val: n, bool_val: false, array_val: NULL, object_val: NULL };
     }
     
@@ -263,7 +263,7 @@ impl JsonValue {
         return p;
     }
 
-    fn number_ptr(n: double) -> JsonValue* {
+    fn number_ptr(n: f64) -> JsonValue* {
         let p: JsonValue* = alloc<JsonValue>();
         *p = JsonValue::number(n);
         return p;
@@ -361,11 +361,11 @@ impl JsonValue {
         return Option<int>::None();
     }
 
-    fn as_float(self) -> Option<double> {
+    fn as_float(self) -> Option<f64> {
         if self.kind.tag == JsonType::JSON_NUMBER().tag {
-            return Option<double>::Some(self.number_val);
+            return Option<f64>::Some(self.number_val);
         }
-        return Option<double>::None();
+        return Option<f64>::None();
     }
 
     fn as_bool(self) -> Option<bool> {
@@ -405,10 +405,10 @@ impl JsonValue {
         return (*val).as_int();
     }
 
-    fn get_float(self, key: char*) -> Option<double> {
+    fn get_float(self, key: char*) -> Option<f64> {
         let opt = self.get(key);
         if opt.is_none() {
-            return Option<double>::None();
+            return Option<f64>::None();
         }
         let val = opt.unwrap();
         return (*val).as_float();

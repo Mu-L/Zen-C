@@ -84,7 +84,7 @@ impl Thread {
         
         memcpy(ctx, &func, sizeof(fn()));
         
-        // Zero out the drop field to prevent double-free by this function's cleanup
+        // Zero out the drop field to prevent f64-free by this function's cleanup
         raw {
             ((z_closure_T*)&func)->drop = NULL;
         }

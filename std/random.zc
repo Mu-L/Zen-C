@@ -27,7 +27,7 @@ impl Random {
     }
 
     // Creates a new random generator with a specific seed
-    fn from_seed(seed: U32) -> Random {
+    fn from_seed(seed: u32) -> Random {
         return Random { state: _splitmix64((u64)seed) | 1 };
     }
 
@@ -53,10 +53,10 @@ impl Random {
         return min + (int)(self.next_raw() % range);
     }
 
-    // Returns a pseudo-random double in the range [0.0, 1.0)
-    fn next_double(self) -> double {
+    // Returns a pseudo-random f64 in the range [0.0, 1.0)
+    fn next_double(self) -> f64 {
         let raw = self.next_raw() >> 11;
-        return (double)raw / 9007199254740992.0;
+        return (f64)raw / 9007199254740992.0;
     }
 
     // Returns a pseudo-random boolean

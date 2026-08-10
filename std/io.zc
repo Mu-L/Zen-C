@@ -183,7 +183,7 @@ fn itos_new(n: int) -> char* {
 }
 
 // Unsigned integer to string
-fn utos(n: uint) -> char* {
+fn utos(n: u32) -> char* {
     @thread_local static let buffer: char[32];
     sprintf((char*)buffer, "%u", n);
     return (char*)buffer;

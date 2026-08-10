@@ -10,8 +10,8 @@ fn _map_hash_str(str: const char*) -> usize {
     let i: usize = 0;
     
     while (str[i] != 0) {
-        // Cast char to U8 for unsigned byte value
-        let b: U8 = (U8)str[i];
+        // Cast char to u8 for unsigned byte value
+        let b: u8 = (u8)str[i];
         hash = hash_combine(hash, (usize)b);
         i = i + 1;
     }
