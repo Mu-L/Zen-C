@@ -23,8 +23,8 @@ static int is_ident_char(char c)
     return isalnum(c) || c == '_';
 }
 
-static int lexer_scan_string_internal(Lexer *l, const char *s, char quote,
-                                      int is_raw, int prefix_len)
+static int lexer_scan_string_internal(Lexer *l, const char *s, char quote, int is_raw,
+                                      int prefix_len)
 {
     int is_multi = 0;
     if (quote == '"' && s[prefix_len + 1] == '"' && s[prefix_len + 2] == '"')

@@ -1644,4 +1644,3 @@ void misra_check_evaluation_order(struct ParserContext *ctx, struct ASTNode *exp
         arg = arg->next;
     }
 }
-
