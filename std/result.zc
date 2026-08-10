@@ -100,4 +100,10 @@ impl Result<T> {
         }
         return self.err;
     }
+
+    // Converts to an Option, mapping Ok to Some and discarding the error.
+    fn ok(self) -> Option<T> {
+        if (self.is_ok) { return Option<T>::Some(self.val); }
+        return Option<T>::None();
+    }
 }

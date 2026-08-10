@@ -897,7 +897,12 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
                                                 snprintf(tmp_raw, sizeof(tmp_raw), "%s__%.*s", acc,
                                                          (int)suffix.len, suffix.start);
                                                 char *direct = merge_underscores(tmp_raw);
-                                                if (!find_func(ctx, direct))
+                                                // Do not resolve a generic-dependent path (e.g.
+                                                // Option__V) to an existing concrete instantiation:
+                                                // the concrete arg is a placeholder substituted at
+                                                // instantiation time.
+                                                if (!is_generic_dependent_str(ctx, acc) &&
+                                                    !find_func(ctx, direct))
                                                 {
                                                     char mbuf[128];
                                                     if (suffix.len < (int)sizeof(mbuf))
@@ -941,7 +946,12 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
                                                 snprintf(tmp_raw, sizeof(tmp_raw), "%s__%.*s", acc,
                                                          (int)suffix.len, suffix.start);
                                                 char *direct = merge_underscores(tmp_raw);
-                                                if (!find_func(ctx, direct))
+                                                // Do not resolve a generic-dependent path (e.g.
+                                                // Option__V) to an existing concrete instantiation:
+                                                // the concrete arg is a placeholder substituted at
+                                                // instantiation time.
+                                                if (!is_generic_dependent_str(ctx, acc) &&
+                                                    !find_func(ctx, direct))
                                                 {
                                                     char mbuf[128];
                                                     if (suffix.len < (int)sizeof(mbuf))
