@@ -93,8 +93,8 @@ src/lsp/lsp_semantic.c
 src/lsp/lsp_index.c
 src/lsp/lsp_formatter.c
 src/lsp/lsp_project.c
-src/lsp/cJSON.c
-src/zen/zen_facts.c
+src/utils/cJSON.c
+src/tools/tool_common.c
 src/zen/zen_doc.c
 src/repl/repl.c
 src/repl/repl_highlight.c

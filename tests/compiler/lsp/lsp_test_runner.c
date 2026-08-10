@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <signal.h>
-#include "../../src/lsp/cJSON.h"
+#include "../../src/utils/cJSON.h"
 #include "../../src/platform/compiler.h"
 
 #define MAX_BUFFER (2 * 1024 * 1024)

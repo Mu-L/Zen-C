@@ -94,6 +94,8 @@ ifeq ($(ZC_HAS_JIT), 1)
 endif
 
 TARGET = zc$(EXE)
+# Standalone tools built alongside the compiler (Unix-style separation)
+TOOLS = zc-lsp zc-repl zc-doc zc-format
 ifeq ($(OS),Windows_NT)
     LIBS = -lws2_32
     ifeq ($(ZC_HAS_JIT), 1)
@@ -114,11 +116,9 @@ endif
 ZC_LSP ?= 1
 ZC_REPL ?= 1
 ZC_PLUGINS ?= 1
-ZC_ZEN ?= 1
 ZC_BACKENDS ?= 1
 
-DEFINES += -DZC_HAS_LSP=$(ZC_LSP) -DZC_HAS_REPL=$(ZC_REPL)
-DEFINES += -DZC_HAS_PLUGINS=$(ZC_PLUGINS) -DZC_HAS_ZEN=$(ZC_ZEN)
+DEFINES += -DZC_HAS_PLUGINS=$(ZC_PLUGINS)
 DEFINES += -DZC_HAS_CPP_BACKEND=$(ZC_BACKENDS)
 DEFINES += -DZC_HAS_CUDA_BACKEND=$(ZC_BACKENDS)
 DEFINES += -DZC_HAS_OBJC_BACKEND=$(ZC_BACKENDS)
@@ -132,9 +132,8 @@ ALL_SRCS := $(shell cat src-sources.txt)
 ZC_FILTER_LSP = $(if $(filter-out 1,$(ZC_LSP)),src/lsp/lsp_main.c src/lsp/lsp_analysis.c src/lsp/lsp_semantic.c src/lsp/lsp_index.c src/lsp/lsp_formatter.c src/lsp/lsp_project.c src/lsp/json_rpc.c)
 ZC_FILTER_REPL = $(if $(filter-out 1,$(ZC_REPL)),src/repl/% src/platform/console.c)
 ZC_FILTER_PLUGINS = $(if $(filter-out 1,$(ZC_PLUGINS)),src/plugins/% src/parser/utils/utils_plugins.c)
-ZC_FILTER_ZEN = $(if $(filter-out 1,$(ZC_ZEN)),src/zen/%)
 ZC_FILTER_BACKENDS = $(if $(filter-out 1,$(ZC_BACKENDS)),src/codegen/codegen_backend_cpp.c src/codegen/codegen_backend_cuda.c src/codegen/codegen_backend_objc.c src/codegen/codegen_backend_json.c src/codegen/codegen_backend_lisp.c src/codegen/codegen_backend_dot.c src/codegen/codegen_backend_astdump.c)
-SRCS = $(filter-out $(ZC_FILTER_LSP) $(ZC_FILTER_REPL) $(ZC_FILTER_PLUGINS) $(ZC_FILTER_ZEN) $(ZC_FILTER_BACKENDS),$(ALL_SRCS))
+SRCS = $(filter-out $(ZC_FILTER_LSP) $(ZC_FILTER_REPL) $(ZC_FILTER_PLUGINS) $(ZC_FILTER_BACKENDS),$(ALL_SRCS))
 
 OBJ_DIR = obj
 OBJS = $(patsubst %.c, $(OBJ_DIR)/%.o, $(SRCS))
@@ -179,7 +178,7 @@ sanitize_name = $(shell echo $(1) | sed 's/[^a-zA-Z0-9]/_/g')
 
 # Default target
 .DEFAULT_GOAL := all
-all: $(TARGET) $(PLUGINS)
+all: $(TARGET) $(PLUGINS) $(TOOLS)
 
 # APE target
 ape: $(ZC_COM) $(ZC_BOOT_COM)
@@ -202,6 +201,14 @@ ZEN_OBJS     = $(filter $(OBJ_DIR)/src/zen/%, $(OBJS))
 PLUGIN_OBJS  = $(filter $(OBJ_DIR)/src/plugins/%, $(OBJS))
 DIAG_OBJS    = $(filter $(OBJ_DIR)/src/diagnostics/%, $(OBJS))
 DRIVER_OBJS  = $(filter $(OBJ_DIR)/src/driver/%, $(OBJS))
+TOOLS_COMMON = $(OBJ_DIR)/src/tools/tool_common.o
+
+# Objects shared by zc and the standalone tools, excluding the tool-specific
+# lsp/repl/zen sources (those only ship in their respective binaries).
+TOOL_BASE_OBJS = $(CORE_OBJS) $(ANALYSIS_OBJS) $(CODEGEN_OBJS) $(MISRA_OBJS) \
+                 $(PLATFORM_OBJS) $(UTILS_OBJS) $(DIAG_OBJS) $(PLUGIN_OBJS)
+ZC_BASE_OBJS   = $(filter-out $(LSP_OBJS) $(REPL_OBJS) $(ZEN_OBJS), $(OBJS))
+
 
 ALL_LIBS = libzc-core.a libzc-analysis.a libzc-codegen.a libzc-misra.a \
            libzc-platform.a libzc-utils.a libzc-lsp.a libzc-repl.a \
@@ -243,15 +250,54 @@ libzc-diag.a: $(DIAG_OBJS)
 libzc-driver.a: $(DRIVER_OBJS)
 	ar rcs $@ $^
 
-# Default: direct .o linking (reliable incremental builds)
-$(TARGET): $(OBJS)
+# Default: direct .o linking (reliable incremental builds).
+# zc links everything except the lsp/repl/zen sources, which now live in the
+# standalone tools (zc-lsp, zc-repl, zc-doc, zc-format).
+$(TARGET): $(ZC_BASE_OBJS)
 	@$(MKDIR) $(dir $@)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $(ZC_BASE_OBJS) $(LIBS)
 	@echo "=> Build complete: $(TARGET)"
+
+# Standalone tools (Unix-style: one focused program each)
+zc-lsp: $(TOOL_BASE_OBJS) $(LSP_OBJS) $(TOOLS_COMMON) $(OBJ_DIR)/src/tools/main_lsp.o
+	@$(MKDIR) $(dir $@)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+	@echo "=> Build complete: $@"
+
+zc-repl: $(TOOL_BASE_OBJS) $(REPL_OBJS) $(TOOLS_COMMON) $(OBJ_DIR)/src/tools/main_repl.o
+	@$(MKDIR) $(dir $@)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+	@echo "=> Build complete: $@"
+
+zc-doc: $(TOOL_BASE_OBJS) $(ZEN_OBJS) $(TOOLS_COMMON) $(OBJ_DIR)/src/tools/main_doc.o
+	@$(MKDIR) $(dir $@)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+	@echo "=> Build complete: $@"
+
+zc-format: $(TOOL_BASE_OBJS) $(LSP_OBJS) $(TOOLS_COMMON) $(OBJ_DIR)/src/tools/main_format.o
+	@$(MKDIR) $(dir $@)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+	@echo "=> Build complete: $@"
+
+$(OBJ_DIR)/src/tools/main_lsp.o: src/tools/main_lsp.c $(TOOLS_COMMON)
+	@$(MKDIR) $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/src/tools/main_repl.o: src/tools/main_repl.c $(TOOLS_COMMON)
+	@$(MKDIR) $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/src/tools/main_doc.o: src/tools/main_doc.c $(TOOLS_COMMON)
+	@$(MKDIR) $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/src/tools/main_format.o: src/tools/main_format.c $(TOOLS_COMMON)
+	@$(MKDIR) $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # Library-based build (for systems without .o linking or for packaging)
 libs: $(ALL_LIBS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJ_DIR)/src/main.o \
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJ_DIR)/src/main.o $(TOOLS_COMMON) \
 		libzc-driver.a libzc-repl.a libzc-lsp.a \
 		libzc-codegen.a libzc-analysis.a \
 		libzc-core.a libzc-misra.a libzc-zen.a libzc-plugin.a \
@@ -338,14 +384,13 @@ $(ZC_BOOT_COM): $(ZC_BOOT_COM_BIN) ape/boot/.args
 	@$(MKDIR) $(@D)
 	@$(CP) $(ZC_BOOT_COM_BIN) $(wildcard $(ZC_BOOT_COM_BIN).*) "$(@D)"; \
 	cp src/misc/zenc.json zenc.json; \
-	cp src/zen/facts.json facts.json; \
 	cp src/repl/docs.json docs.json; \
 	(cd ape/boot && zip "$(abspath $@)" .args hello.zc instructions.txt Makefile); \
-	zip "$(abspath $@)" LICENSE zenc.json facts.json docs.json; \
-	rm -f zenc.json facts.json docs.json
+	zip "$(abspath $@)" LICENSE zenc.json docs.json; \
+	rm -f zenc.json docs.json
 
 # Install
-install: $(TARGET) install-zls
+install: $(TARGET) install-tools
 	$(INSTALL) -d $(BINDIR)
 	$(INSTALL) -m 755 $(TARGET) $(BINDIR)/$(TARGET)
 
@@ -361,8 +406,7 @@ install: $(TARGET) install-zls
 	$(INSTALL) -m 644 std.zc $(SHAREDIR)/std.zc
 	$(CP) std $(SHAREDIR)/
 
-	# Install facts
-	$(INSTALL) -m 644 src/zen/facts.json $(SHAREDIR)/facts.json
+	# Install repl/compiler data
 	$(INSTALL) -m 644 src/repl/docs.json $(SHAREDIR)/docs.json
 	$(INSTALL) -m 644 src/misc/zenc.json $(SHAREDIR)/zenc.json
 
@@ -382,14 +426,17 @@ install: $(TARGET) install-zls
 	@echo "=> Man pages installed to $(MANDIR)"
 	@echo "=> Standard library installed to $(SHAREDIR)/std"
 
-# Install zls (LSP binary, symlink to zc)
-install-zls:
+# Install the standalone tools
+install-tools: $(TOOLS)
 	$(INSTALL) -d $(BINDIR)
-	$(INSTALL) -m 755 $(TARGET) $(BINDIR)/zls
+	for t in $(TOOLS); do $(INSTALL) -m 755 $$t $(BINDIR)/$$t; done
+	# Backward-compat alias: the LSP was previously installed as `zls`
+	$(INSTALL) -m 755 zc-lsp $(BINDIR)/zls
 
 # Uninstall
 uninstall:
 	$(RM) $(BINDIR)/$(TARGET) $(BINDIR)/zls
+	for t in $(TOOLS); do $(RM) $(BINDIR)/$$t; done
 	$(RM) $(MANDIR)/man1/zc.1
 	$(RM) $(MANDIR)/man5/zc.5
 	$(RM) $(MANDIR)/man7/zc.7
@@ -425,7 +472,7 @@ uninstall-ape:
 
 # Clean
 clean:
-	$(RM) $(OBJ_DIR) obj-ape obj-fuzz obj-fuzz-cmplog $(TARGET) libzc-*.a
+	$(RM) $(OBJ_DIR) obj-ape obj-fuzz obj-fuzz-cmplog $(TARGET) $(TOOLS) libzc-*.a
 	$(RM) out.c out.cpp out.m out.cu plugins/*.so a.out* out test_out_* rule_*
 	$(RM) *.gcda *.gcno *.gcov coverage.info
 	$(RM) -r coverage-report/
@@ -486,7 +533,7 @@ test-filcc: $(TARGET) $(PLUGINS)
 
 test-lsp: $(TARGET) $(PLUGINS)
 	@echo "=> Building LSP Test Runner"
-	$(CC) $(CFLAGS) -DZC_NO_ARENA tests/compiler/lsp/lsp_test_runner.c src/lsp/cJSON.c -o tests/compiler/lsp/test_runner
+	$(CC) $(CFLAGS) -DZC_NO_ARENA tests/compiler/lsp/lsp_test_runner.c src/utils/cJSON.c -o tests/compiler/lsp/test_runner
 	@echo "=> Running LSP Tests"
 	./tests/compiler/lsp/test_runner
 
@@ -572,14 +619,16 @@ test-plugins: $(TARGET) $(PLUGINS)
 	./zc run tests/language/features/test_plugins_suite.zc
 
 # Convenience targets for modular builds
+# zc no longer links lsp/repl/zen at all; these variants additionally strip
+# plugins/backends and skip building the standalone tools.
 core:
-	$(MAKE) ZC_LSP=0 ZC_REPL=0 ZC_PLUGINS=0 ZC_ZEN=0 ZC_BACKENDS=0
+	$(MAKE) ZC_LSP=0 ZC_REPL=0 ZC_PLUGINS=0 ZC_BACKENDS=0 TOOLS=
 
 lite:
-	$(MAKE) ZC_LSP=0 ZC_REPL=0 ZC_ZEN=0
+	$(MAKE) ZC_LSP=0 ZC_REPL=0 TOOLS=
 
 minimal:
-	$(MAKE) ZC_LSP=0 ZC_REPL=0 ZC_PLUGINS=0 ZC_ZEN=0 ZC_BACKENDS=0
+	$(MAKE) ZC_LSP=0 ZC_REPL=0 ZC_PLUGINS=0 ZC_BACKENDS=0 TOOLS=
 
 # Fuzzing
 FUZZ_TARGET = zc-fuzz
@@ -657,4 +706,4 @@ fuzz-clean:
 	rm -f $(FUZZ_TARGET) $(FUZZ_CMPLOG_TARGET) $(FUZZ_HARNESS)
 	rm -rf obj-fuzz obj-fuzz-cmplog
 
-.PHONY: all clean install uninstall install-ape uninstall-ape format format-check lint bench test test-misra test-tcc test-filcc test-lsp test-asan test-plugins zig clang filcc ape windows asan tsan msan lsan analyzer coverage coverage-report core lite minimal fuzz-build fuzz-run fuzz-clean test-fuzz-regression
+.PHONY: all clean install uninstall install-ape uninstall-ape install-tools format format-check lint bench test test-misra test-tcc test-filcc test-lsp test-asan test-plugins zig clang filcc ape windows asan tsan msan lsan analyzer coverage coverage-report core lite minimal fuzz-build fuzz-run fuzz-clean test-fuzz-regression zc-lsp zc-repl zc-doc zc-format

@@ -9,7 +9,6 @@
 #include <sys/stat.h>
 
 LSPProject *g_project = NULL;
-int g_is_indexing = 0;
 
 static void scan_dir(const char *dir_path);
 void lsp_default_on_error(void *data, Token t, const char *msg);

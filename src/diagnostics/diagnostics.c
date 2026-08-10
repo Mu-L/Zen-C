@@ -3,7 +3,7 @@
 #include "../utils/colors.h"
 #include "constants.h"
 #include "parser.h"
-#include "lsp/cJSON.h"
+#include "utils/cJSON.h"
 #include <stdio.h>
 #include <stddef.h>
 

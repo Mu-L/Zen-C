@@ -43,7 +43,6 @@ typedef struct CompilerConfig
     int emit_c;
     int verbose;
     int quiet;
-    int zen_mode;
     int mode_doc;
     int repl_mode;
     int is_freestanding;

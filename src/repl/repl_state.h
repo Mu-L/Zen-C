@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "cJSON.h"
+#include "../utils/cJSON.h"
 #include "constants.h"
 
 /* Forward declaration */
