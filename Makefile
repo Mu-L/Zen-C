@@ -54,12 +54,7 @@ CONSTEXPR_SUPPORTED := $(shell echo "constexpr int x = 42; int main(void){return
 ifneq ($(CONSTEXPR_SUPPORTED),)
 DEFINES += -DHAS_CONSTEXPR
 endif
-CFLAGS = -std=$(C_STD) -g -Wall -Wextra -Wshadow -Wformat=2 -Wmissing-prototypes -Wstrict-prototypes -Wnull-dereference -Wundef -Wfloat-equal -Wmissing-field-initializers -Wsign-compare -Wtype-limits -Wuninitialized -Wdouble-promotion -Wtautological-compare -Wshift-negative-value -Wdangling-else -Wreturn-local-addr -Wconversion -Wno-float-conversion -Wswitch-default -Wvla -Wimplicit-fallthrough -Wredundant-decls -Wcast-align -Wpacked -Wdisabled-optimization -fstack-protector-strong $(DEPFLAGS) $(TCC_EXTRA) $(if $(filter 1,$(WERROR)),-Werror -Wno-error=sign-conversion,) -I./src -I./src/ast -I./src/parser -I./src/codegen -I./plugins -I./src/zen -I./src/utils -I./src/lexer -I./src/analysis -I./src/lsp -I./src/diagnostics -I./std/third-party/tre/include $(DEFINES)
-
-# 145 of 191 TRE warnings were fixed directly in source. The remaining 46 come from macro
-# expansions (ALIGN, IS_WORD_CHAR) and explicit sign-conversion casts in vendored code.
-obj/std/third-party/tre/%.o: CFLAGS += -Wno-sign-conversion -Wno-sign-compare -Wno-switch-default -Wno-cast-align -Wno-implicit-fallthrough -Wno-redundant-decls $(if $(filter 1,$(CC_IS_CLANG)),,-Wno-analyzer-null-dereference -Wno-analyzer-out-of-bounds -Wno-analyzer-malloc-leak -Wno-analyzer-file-leak)
-
+CFLAGS = -std=$(C_STD) -g -Wall -Wextra -Wshadow -Wformat=2 -Wmissing-prototypes -Wstrict-prototypes -Wnull-dereference -Wundef -Wfloat-equal -Wmissing-field-initializers -Wsign-compare -Wtype-limits -Wuninitialized -Wdouble-promotion -Wtautological-compare -Wshift-negative-value -Wdangling-else -Wreturn-local-addr -Wconversion -Wno-float-conversion -Wswitch-default -Wvla -Wimplicit-fallthrough -Wredundant-decls -Wcast-align -Wpacked -Wdisabled-optimization -fstack-protector-strong $(DEPFLAGS) $(TCC_EXTRA) $(if $(filter 1,$(WERROR)),-Werror -Wno-error=sign-conversion,) -I./src -I./src/ast -I./src/parser -I./src/codegen -I./plugins -I./src/zen -I./src/utils -I./src/lexer -I./src/analysis -I./src/lsp -I./src/diagnostics $(DEFINES)
 
 # Detect Clang by macro (works even when CC=cc on macOS, or CC=clang on Linux)
 # Uses recursive = so it re-evaluates with target-specific CC overrides (e.g. msan: CC=clang)
@@ -79,7 +74,7 @@ CFLAGS += $(if $(filter 1,$(CC_IS_CLANG)),$(CLANG_WARN_FLAGS),$(GCC_WARN_FLAGS))
 ifeq ($(findstring tcc,$(CC)),tcc)
 TCC_BASE = -std=$(C_STD) -Wall -Wextra -Werror -g -DZC_ALLOW_INTERNAL -DZC_HAS_JIT
 TCC_DEFS = $(filter -DZC_% -DZEN_% -DHAS_%,$(DEFINES))
-TCC_INCS = -I/usr/local/include -I./src -I./src/ast -I./src/parser -I./src/codegen -I./plugins -I./src/zen -I./src/utils -I./src/lexer -I./src/analysis -I./src/lsp -I./src/diagnostics -I./std/third-party/tre/include
+TCC_INCS = -I/usr/local/include -I./src -I./src/ast -I./src/parser -I./src/codegen -I./plugins -I./src/zen -I./src/utils -I./src/lexer -I./src/analysis -I./src/lsp -I./src/diagnostics
 CFLAGS = $(TCC_BASE) $(TCC_DEFS) $(TCC_INCS)
 endif
 
@@ -121,7 +116,6 @@ ZC_REPL ?= 1
 ZC_PLUGINS ?= 1
 ZC_ZEN ?= 1
 ZC_BACKENDS ?= 1
-ZC_TRE ?= 1
 
 DEFINES += -DZC_HAS_LSP=$(ZC_LSP) -DZC_HAS_REPL=$(ZC_REPL)
 DEFINES += -DZC_HAS_PLUGINS=$(ZC_PLUGINS) -DZC_HAS_ZEN=$(ZC_ZEN)
@@ -140,8 +134,7 @@ ZC_FILTER_REPL = $(if $(filter-out 1,$(ZC_REPL)),src/repl/% src/platform/console
 ZC_FILTER_PLUGINS = $(if $(filter-out 1,$(ZC_PLUGINS)),src/plugins/% src/parser/utils/utils_plugins.c)
 ZC_FILTER_ZEN = $(if $(filter-out 1,$(ZC_ZEN)),src/zen/%)
 ZC_FILTER_BACKENDS = $(if $(filter-out 1,$(ZC_BACKENDS)),src/codegen/codegen_backend_cpp.c src/codegen/codegen_backend_cuda.c src/codegen/codegen_backend_objc.c src/codegen/codegen_backend_json.c src/codegen/codegen_backend_lisp.c src/codegen/codegen_backend_dot.c src/codegen/codegen_backend_astdump.c)
-ZC_FILTER_TRE = $(if $(filter-out 1,$(ZC_TRE)),std/third-party/tre/%)
-SRCS = $(filter-out $(ZC_FILTER_LSP) $(ZC_FILTER_REPL) $(ZC_FILTER_PLUGINS) $(ZC_FILTER_ZEN) $(ZC_FILTER_BACKENDS) $(ZC_FILTER_TRE),$(ALL_SRCS))
+SRCS = $(filter-out $(ZC_FILTER_LSP) $(ZC_FILTER_REPL) $(ZC_FILTER_PLUGINS) $(ZC_FILTER_ZEN) $(ZC_FILTER_BACKENDS),$(ALL_SRCS))
 
 OBJ_DIR = obj
 OBJS = $(patsubst %.c, $(OBJ_DIR)/%.o, $(SRCS))
@@ -209,12 +202,10 @@ ZEN_OBJS     = $(filter $(OBJ_DIR)/src/zen/%, $(OBJS))
 PLUGIN_OBJS  = $(filter $(OBJ_DIR)/src/plugins/%, $(OBJS))
 DIAG_OBJS    = $(filter $(OBJ_DIR)/src/diagnostics/%, $(OBJS))
 DRIVER_OBJS  = $(filter $(OBJ_DIR)/src/driver/%, $(OBJS))
-TRE_OBJS     = $(filter $(OBJ_DIR)/std/third-party/tre/%, $(OBJS))
 
 ALL_LIBS = libzc-core.a libzc-analysis.a libzc-codegen.a libzc-misra.a \
            libzc-platform.a libzc-utils.a libzc-lsp.a libzc-repl.a \
-           libzc-zen.a libzc-plugin.a libzc-diag.a libzc-driver.a \
-           libzc-tre.a
+           libzc-zen.a libzc-plugin.a libzc-diag.a libzc-driver.a
 
 libzc-core.a: $(CORE_OBJS)
 	ar rcs $@ $^
@@ -252,9 +243,6 @@ libzc-diag.a: $(DIAG_OBJS)
 libzc-driver.a: $(DRIVER_OBJS)
 	ar rcs $@ $^
 
-libzc-tre.a: $(TRE_OBJS)
-	ar rcs $@ $^
-
 # Default: direct .o linking (reliable incremental builds)
 $(TARGET): $(OBJS)
 	@$(MKDIR) $(dir $@)
@@ -267,7 +255,7 @@ libs: $(ALL_LIBS)
 		libzc-driver.a libzc-repl.a libzc-lsp.a \
 		libzc-codegen.a libzc-analysis.a \
 		libzc-core.a libzc-misra.a libzc-zen.a libzc-plugin.a \
-		libzc-diag.a libzc-utils.a libzc-platform.a libzc-tre.a \
+		libzc-diag.a libzc-utils.a libzc-platform.a \
 		$(LIBS)
 	@echo "=> Build complete: $(TARGET) (libraries)"
 
@@ -525,7 +513,7 @@ filcc:
 	$(MAKE) CC="$(FILCC)" ZC_HAS_JIT=0
 
 windows:
-	$(MAKE) CC="x86_64-w64-mingw32-gcc" TARGET="zc.exe" UI_OS="Windows" LIBS="-static -lm -lpthread"
+	$(MAKE) CC="x86_64-w64-mingw32-gcc" TARGET="zc.exe" LIBS="-static -lm -lpthread"
 
 asan: CFLAGS += -fsanitize=address,undefined -O1 -g -fno-omit-frame-pointer
 asan: LIBS += -fsanitize=address,undefined
@@ -591,7 +579,7 @@ lite:
 	$(MAKE) ZC_LSP=0 ZC_REPL=0 ZC_ZEN=0
 
 minimal:
-	$(MAKE) ZC_LSP=0 ZC_REPL=0 ZC_PLUGINS=0 ZC_ZEN=0 ZC_BACKENDS=0 ZC_TRE=0
+	$(MAKE) ZC_LSP=0 ZC_REPL=0 ZC_PLUGINS=0 ZC_ZEN=0 ZC_BACKENDS=0
 
 # Fuzzing
 FUZZ_TARGET = zc-fuzz
@@ -629,8 +617,7 @@ fuzz-corpus:
 	@find tests -name '*.zc' -exec cp {} $(FUZZ_CORPUS)/ \; 2>/dev/null || true
 	@echo "=> Seed corpus created from existing tests ($(shell ls -1 $(FUZZ_CORPUS) 2>/dev/null | wc -l) files)"
 
-fuzz-run: fuzz-build
-	@if [ ! -d "$(FUZZ_CORPUS)" ]; then sh $(FUZZ_DIR)/scripts/generate_corpus.sh; fi
+fuzz-run: fuzz-build fuzz-corpus
 	@$(MKDIR) $(FUZZ_OUT)
 	@echo "-> Starting fuzzer (Persistent Mode enabled)"
 	@echo "-> Tip: For parallel runs, use '-M main' and '-S secondaryN'"
