@@ -12,8 +12,6 @@ struct timeval {
 }
 
 extern fn gettimeofday(tv: timeval*, tz: void*) -> int;
-extern fn srand(seed: U32);
-extern fn rand() -> int;
 // Note: time() is declared by <time.h> which is already included above.
 // Zen C does not redeclare it to avoid type conflicts (time_t varies by platform).
 
