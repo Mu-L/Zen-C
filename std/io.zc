@@ -7,14 +7,36 @@ include <stdio.h>
 include <stdarg.h>
 
 fn format(fmt: char*, ...) -> char* {
-    @thread_local static let buffer: char[1024];
+    // A small ring of thread-local buffers so nested format() calls (e.g.
+    // format("%s", format("%d", x))) do not clobber each other. Each returned
+    // pointer stays valid until 4 further format() calls on the same thread.
+    @thread_local static let buffer0: char[4096];
+    @thread_local static let buffer1: char[4096];
+    @thread_local static let buffer2: char[4096];
+    @thread_local static let buffer3: char[4096];
+    @thread_local static let slot: int = 0;
+
+    let idx = slot;
+    slot = (slot + 1) % 4;
+
+    let buf: char* = NULL;
+    if (idx == 0) {
+        buf = (char*)buffer0;
+    } else if (idx == 1) {
+        buf = (char*)buffer1;
+    } else if (idx == 2) {
+        buf = (char*)buffer2;
+    } else {
+        buf = (char*)buffer3;
+    }
+
     let ap: va_list;
     va_start(ap, fmt);
 
-    vsnprintf(buffer, 1024, fmt, ap);
+    vsnprintf(buf, 4096, fmt, ap);
     va_end(ap);
 
-    return (char*)buffer;
+    return buf;
 }
 
 fn format_into(buffer: char*, size: usize, fmt: char*, ...) -> c_int {
