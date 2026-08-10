@@ -340,7 +340,6 @@ int main(int argc, char **argv)
             }
             g_config.use_cpp = 1;
             g_config.backend_name = "cpp";
-            g_config.use_cpp = 1;
         }
         else if (strcmp(arg, "--cuda") == 0)
         {

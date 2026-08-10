@@ -55,7 +55,6 @@ typedef struct CompilerConfig
     int use_typecheck;
     int warn_as_errors;
     int no_suppress_warnings;
-    int warn_pedantic;
     int misra_mode;
     uint64_t diag_mask;
 

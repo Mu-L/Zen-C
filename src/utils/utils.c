@@ -10,11 +10,6 @@
 // ** Arena Implementation **
 #define ARENA_BLOCK_SIZE (1024 * 1024)
 
-void arena_reset(zarena *a)
-{
-    zarena_reset(a);
-}
-
 static void *arena_alloc(zarena *a, size_t size)
 {
     // We add a size_t header to support xrealloc's size lookup.

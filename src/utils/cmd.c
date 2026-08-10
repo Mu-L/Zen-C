@@ -111,7 +111,6 @@ void print_usage(void)
     print_help_item(COLOR_CYAN "--check, --free" COLOR_RESET,
                     "Borrow checker / No standard library");
     print_help_item(COLOR_CYAN "--misra" COLOR_RESET, "Generate strictly MISRA C compliant code");
-    print_help_item(COLOR_CYAN "-Wpedantic" COLOR_RESET, "Enable pedantic warnings");
     print_help_item(COLOR_CYAN "--cpp, --cuda" COLOR_RESET, "C++ or CUDA compatibility modes");
     print_help_item(COLOR_CYAN "-c, -S, -E, -shared" COLOR_RESET,
                     "Compile/Asm/Preprocess only / DLL");
@@ -373,96 +372,6 @@ void build_compile_arg_list(ArgList *list, const char *outfile, const char *temp
             arg_list_add(list, abs_input_dir);
         }
     }
-}
-
-void cmd_init(CmdBuilder *cmd)
-{
-    cmd->cap = 1024;
-    cmd->len = 0;
-    cmd->buf = xmalloc(cmd->cap);
-    cmd->buf[0] = '\0';
-}
-
-static void ensure_cap(CmdBuilder *cmd, size_t needed)
-{
-    if (cmd->len + needed >= cmd->cap)
-    {
-        while (cmd->len + needed >= cmd->cap)
-        {
-            cmd->cap *= 2;
-        }
-        cmd->buf = xrealloc(cmd->buf, cmd->cap);
-    }
-}
-
-void cmd_add(CmdBuilder *cmd, const char *str)
-{
-    if (!str || !str[0])
-    {
-        return;
-    }
-
-    size_t len = strlen(str);
-    size_t needed = len + 1 + 1; // + space + null terminator
-
-    ensure_cap(cmd, needed);
-
-    if (cmd->len > 0 && cmd->buf[cmd->len - 1] != ' ')
-    {
-        strcat(cmd->buf, " ");
-        cmd->len++;
-    }
-
-    strcat(cmd->buf, str);
-    cmd->len += len;
-}
-
-void cmd_add_fmt(CmdBuilder *cmd, const char *fmt, ...)
-{
-    va_list args;
-
-    if (!fmt)
-    {
-        return;
-    }
-
-    // First pass to get size
-    va_start(args, fmt);
-    int size = vsnprintf(NULL, 0, fmt, args);
-    va_end(args);
-
-    if (size < 0)
-    {
-        return;
-    }
-
-    size_t needed = (size_t)(size) + 1 + 1; // + space + null
-    ensure_cap(cmd, needed);
-
-    if (cmd->len > 0 && cmd->buf[cmd->len - 1] != ' ')
-    {
-        strcat(cmd->buf, " ");
-        cmd->len++;
-    }
-
-    va_start(args, fmt);
-    vsnprintf(cmd->buf + cmd->len, cmd->cap - cmd->len, fmt, args);
-    va_end(args);
-
-    cmd->len += (size_t)(size);
-}
-
-void cmd_free(CmdBuilder *cmd)
-{
-    zfree(cmd->buf);
-    cmd->buf = NULL;
-    cmd->len = 0;
-    cmd->cap = 0;
-}
-
-const char *cmd_to_string(CmdBuilder *cmd)
-{
-    return cmd->buf;
 }
 
 void arg_list_init(ArgList *list)

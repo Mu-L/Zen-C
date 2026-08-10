@@ -58,19 +58,6 @@ void auto_import_std_mem(ParserContext *ctx)
     mark_file_imported(ctx, resolved);
     zfree(resolved);
 }
-void mangle_method_name(char *out, size_t out_sz, const char *struct_name, const char *trait_name,
-                        const char *method_name)
-{
-    if (trait_name)
-    {
-        snprintf(out, out_sz, "%s__%s__%s", struct_name, trait_name, method_name);
-    }
-    else
-    {
-        snprintf(out, out_sz, "%s__%s", struct_name, method_name);
-    }
-}
-
 // Canonical symbol for a method: `Struct__Method` (or `Struct__Trait__Method`).
 // A method whose name starts with `_` must keep the resulting run of three
 // underscores (separator "__" plus the method's leading "_"), otherwise

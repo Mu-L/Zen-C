@@ -19,11 +19,6 @@ void register_trait(const char *name)
     registered_traits_local = r;
 }
 
-void clear_registered_traits(void)
-{
-    registered_traits_local = NULL;
-}
-
 int is_trait(const char *name)
 {
     if (!name)
@@ -66,20 +61,6 @@ int is_trait(const char *name)
     }
     zfree(base);
     return 0;
-}
-
-int is_trait_ptr(const char *name)
-{
-    if (!name)
-    {
-        return 0;
-    }
-    const char *p = (char *)strchr(name, '*');
-    if (!p)
-    {
-        return 0;
-    }
-    return is_trait(name);
 }
 
 ASTNode *ast_create(NodeType type)
@@ -133,14 +114,6 @@ Type *type_new_ptr(Type *inner)
 Type *type_new_array(Type *inner, int size)
 {
     Type *t = type_new(TYPE_ARRAY);
-    t->inner = inner;
-    t->array_size = size;
-    return t;
-}
-
-Type *type_new_vector(Type *inner, int size)
-{
-    Type *t = type_new(TYPE_VECTOR);
     t->inner = inner;
     t->array_size = size;
     return t;

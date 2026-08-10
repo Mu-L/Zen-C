@@ -612,7 +612,6 @@ char *consume_until_semicolon(Lexer *l);
 /**
  * @brief Consumes and rewrites tokens.
  */
-char *consume_and_rewrite(ParserContext *ctx, Lexer *l);
 
 // C reserved word warnings
 
@@ -674,7 +673,6 @@ ZenSymbol *find_symbol_entry(ParserContext *ctx, const char *n);
  */
 ZenSymbol *find_symbol_in_all(ParserContext *ctx, const char *n);
 char *find_similar_symbol(ParserContext *ctx, const char *name);
-char *find_method_owner_type(ParserContext *ctx, const char *method_name);
 char *find_method_owner_type_scoped(ParserContext *ctx, const char *struct_name,
                                     const char *method_name);
 
@@ -922,8 +920,6 @@ void replace_it_with_var(ASTNode *node, char *var_name);
 
 // struct/ declarations
 void auto_import_std_mem(ParserContext *ctx);
-void mangle_method_name(char *out, size_t out_sz, const char *struct_name, const char *trait_name,
-                        const char *method_name);
 char *mangle_method_symbol(const char *struct_name, const char *trait_name,
                            const char *method_name);
 void patch_and_fix_self(ParserContext *ctx, ASTNode *f, const char *full_struct_name);
