@@ -15,16 +15,35 @@ static void z_tool_crash(int sig)
 {
     // Only async-signal-safe calls belong in a signal handler.
     static const char hdr[] = "\nCRITICAL: Compiler crashed with signal ";
-    static const char flush[] = "\nThis is likely a bug in the Zen compiler.\n";
-    char msg[64];
-    int n = snprintf(msg, sizeof(msg), "%d\n", sig);
-    (void)write(STDERR_FILENO, hdr, sizeof(hdr) - 1);
-    if (n > 0 && n < (int)sizeof(msg))
+    static const char tail[] = "\nThis is likely a bug in the Zen compiler.\n";
+    char sigbuf[16];
+    int n = 0;
+    if (sig == 0)
     {
-        (void)write(STDERR_FILENO, msg, (size_t)n);
+        sigbuf[n++] = '0';
     }
-    (void)write(STDERR_FILENO, flush, sizeof(flush) - 1);
-    fflush(NULL);
+    else
+    {
+        char tmp[16];
+        int tn = 0;
+        int s = sig;
+        while (s > 0 && tn < 15)
+        {
+            tmp[tn++] = (char)('0' + (s % 10));
+            s /= 10;
+        }
+        while (tn > 0)
+        {
+            sigbuf[n++] = tmp[--tn];
+        }
+    }
+    sigbuf[n++] = '\n';
+    ssize_t r = write(STDERR_FILENO, hdr, sizeof(hdr) - 1);
+    (void)r;
+    r = write(STDERR_FILENO, sigbuf, (size_t)n);
+    (void)r;
+    r = write(STDERR_FILENO, tail, sizeof(tail) - 1);
+    (void)r;
     _exit(139);
 }
 
