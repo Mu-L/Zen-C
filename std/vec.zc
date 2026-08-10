@@ -53,6 +53,93 @@ impl VecIter<T> {
     fn iterator(self) -> VecIter<T> {
          return self;
     }
+
+    // Drains the remaining items into a new Vec.
+    fn collect(self) -> Vec<T> {
+        let out = Vec<T>::new();
+        let remaining = self.count - self.idx;
+        if (remaining > 0) {
+            out.grow_to_fit(remaining);
+        }
+        while (self.idx < self.count) {
+            out.push(self.data[self.idx]);
+            self.idx = self.idx + 1;
+        }
+        return out;
+    }
+
+    // Number of items still to be yielded.
+    fn count(self) -> usize {
+        return self.count - self.idx;
+    }
+
+    // Calls `f` for each remaining item.
+    fn forEach(self, f: fn(T)) {
+        while (self.idx < self.count) {
+            f(self.data[self.idx]);
+            self.idx = self.idx + 1;
+        }
+    }
+
+    // Returns the first item for which `pred` returns true.
+    fn find(self, pred: fn(T) -> bool) -> Option<T> {
+        while (self.idx < self.count) {
+            let item = self.data[self.idx];
+            self.idx = self.idx + 1;
+            if (pred(item)) {
+                return Option<T>::Some(item);
+            }
+        }
+        return Option<T>::None();
+    }
+
+    // Returns true when `pred` accepts at least one remaining item.
+    fn any(self, pred: fn(T) -> bool) -> bool {
+        while (self.idx < self.count) {
+            let item = self.data[self.idx];
+            self.idx = self.idx + 1;
+            if (pred(item)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Returns true when `pred` accepts every remaining item.
+    fn all(self, pred: fn(T) -> bool) -> bool {
+        while (self.idx < self.count) {
+            let item = self.data[self.idx];
+            self.idx = self.idx + 1;
+            if (!pred(item)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Collects the remaining items accepted by `pred` into a new Vec.
+    fn filter(self, pred: fn(T) -> bool) -> Vec<T> {
+        let out = Vec<T>::new();
+        while (self.idx < self.count) {
+            let item = self.data[self.idx];
+            self.idx = self.idx + 1;
+            if (pred(item)) {
+                out.push(item);
+            }
+        }
+        return out;
+    }
+
+    // Reduces the remaining items with `f` starting from `init`.
+    fn fold(self, init: T, f: fn(T, T) -> T) -> T {
+        let acc = init;
+        while (self.idx < self.count) {
+            let item = self.data[self.idx];
+            self.idx = self.idx + 1;
+            acc = f(acc, item);
+        }
+        return acc;
+    }
 }
 
 impl VecIterRef<T> {
@@ -67,6 +154,23 @@ impl VecIterRef<T> {
     
     fn iterator(self) -> VecIterRef<T> {
         return self;
+    }
+
+    // Number of items still to be yielded.
+    fn count(self) -> usize {
+        return self.count - self.idx;
+    }
+
+    // Returns the first item for which `pred` returns true.
+    fn find(self, pred: fn(T*) -> bool) -> VecIterResult<T> {
+        while (self.idx < self.count) {
+            let item = &self.data[self.idx];
+            self.idx = self.idx + 1;
+            if (pred(item)) {
+                return VecIterResult<T> { ptr: item };
+            }
+        }
+        return VecIterResult<T> { ptr: NULL };
     }
 }
 
