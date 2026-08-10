@@ -744,7 +744,8 @@ static int cmd_vars_funcs_structs(ReplState *state, const char *args)
             snprintf(cmdbuf, sizeof(cmdbuf), "\"\"%s\" run -q \"%s\"\"", state->compiler_path,
                      tmp_path);
 #else
-            snprintf(cmdbuf, sizeof(cmdbuf), "\"%s\" run -q \"%s\"", state->compiler_path, tmp_path);
+            snprintf(cmdbuf, sizeof(cmdbuf), "\"%s\" run -q \"%s\"", state->compiler_path,
+                     tmp_path);
 #endif
             {
                 int z_ret = system(cmdbuf);
@@ -828,7 +829,8 @@ static int cmd_type(ReplState *state, const char *args)
         snprintf(cmdbuf, sizeof(cmdbuf), "\"\"%s\" run -q \"%s\" 2>&1\"", state->compiler_path,
                  tmp_path);
 #else
-        snprintf(cmdbuf, sizeof(cmdbuf), "\"%s\" run -q \"%s\" 2>&1", state->compiler_path, tmp_path);
+        snprintf(cmdbuf, sizeof(cmdbuf), "\"%s\" run -q \"%s\" 2>&1", state->compiler_path,
+                 tmp_path);
 #endif
 
         FILE *p = popen(cmdbuf, "r");
@@ -939,7 +941,8 @@ static int cmd_time(ReplState *state, const char *args)
         fclose(f);
         char cmdbuf[2048];
 #if ZC_OS_WINDOWS
-        snprintf(cmdbuf, sizeof(cmdbuf), "\"\"%s\" run -q \"%s\"\"", state->compiler_path, tmp_path);
+        snprintf(cmdbuf, sizeof(cmdbuf), "\"\"%s\" run -q \"%s\"\"", state->compiler_path,
+                 tmp_path);
 #else
         snprintf(cmdbuf, sizeof(cmdbuf), "\"%s\" run -q \"%s\"", state->compiler_path, tmp_path);
 #endif

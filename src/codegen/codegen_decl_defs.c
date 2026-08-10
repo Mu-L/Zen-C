@@ -370,8 +370,7 @@ static void collect_lambda_return_types(ParserContext *ctx, ASTNode *node, char 
 // infer it from the body's return statements.
 static void infer_lambda_return_type(ParserContext *ctx, ASTNode *node)
 {
-    if (node->type_info && node->type_info->inner &&
-        node->type_info->inner->kind != TYPE_UNKNOWN)
+    if (node->type_info && node->type_info->inner && node->type_info->inner->kind != TYPE_UNKNOWN)
     {
         return;
     }
