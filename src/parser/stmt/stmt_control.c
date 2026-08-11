@@ -498,11 +498,12 @@ ASTNode *parse_for(ParserContext *ctx, Lexer *l)
 
                     char iter_type[MAX_TYPE_NAME_LEN];
                     snprintf(iter_type, sizeof(iter_type), "SliceIter<%s>",
-                            elem_type_str); /* TODO: check buffer size */
+                             elem_type_str); /* TODO: check buffer size */
                     instantiate_generic(ctx, "SliceIter", elem_type_str, elem_type_str, dummy_tok);
 
                     char option_type[MAX_TYPE_NAME_LEN];
-                    snprintf(option_type, sizeof(option_type), "Option<%s>", elem_type_str); /* TODO: check buffer size */
+                    snprintf(option_type, sizeof(option_type), "Option<%s>",
+                             elem_type_str); /* TODO: check buffer size */
                     instantiate_generic(ctx, "Option", elem_type_str, elem_type_str, dummy_tok);
 
                     ASTNode *slice_ref = ast_create(NODE_EXPR_VAR);

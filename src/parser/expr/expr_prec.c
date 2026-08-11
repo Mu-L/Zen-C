@@ -2717,13 +2717,14 @@ static ASTNode *parse_expr_prec_impl(ParserContext *ctx, Lexer *l, Precedence mi
                     !(lhs_is_num && rhs_is_num))
                 {
                     char msg[MAX_SHORT_MSG_LEN];
-                    snprintf(msg, sizeof(msg), "Type mismatch in comparison: cannot compare '%s' and '%s'",
-                            t1, /* safe */
-                            t2);
+                    snprintf(msg, sizeof(msg),
+                             "Type mismatch in comparison: cannot compare '%s' and '%s'",
+                             t1, /* safe */
+                             t2);
 
                     char suggestion[MAX_SHORT_MSG_LEN];
                     snprintf(suggestion, sizeof(suggestion),
-                            "Both operands must have compatible types for comparison"); /* safe */
+                             "Both operands must have compatible types for comparison"); /* safe */
 
                     if (ctx->config->mode_lsp)
                     {
@@ -2943,8 +2944,9 @@ static ASTNode *parse_expr_prec_impl(ParserContext *ctx, Lexer *l, Precedence mi
                             if (!valid_arith)
                             {
                                 char msg[MAX_SHORT_MSG_LEN];
-                                snprintf(msg, sizeof(msg), "Type mismatch in binary operation '%s'", /* safe */
-                                        bin->binary.op);
+                                snprintf(msg, sizeof(msg),
+                                         "Type mismatch in binary operation '%s'", /* safe */
+                                         bin->binary.op);
 
                                 char suggestion[MAX_MANGLED_NAME_LEN];
                                 sprintf(/* safe */

@@ -50,12 +50,14 @@ ASTNode *generate_derive_impls(ParserContext *ctx, ASTNode *strct, char **traits
 
                 if (has_payload)
                 {
-                    snprintf(body, sizeof(body), "return self.tag == other.tag;"); /* TODO: check buffer size */
+                    snprintf(body, sizeof(body),
+                             "return self.tag == other.tag;"); /* TODO: check buffer size */
                 }
                 else
                 {
                     // Simple enum: direct comparison via raw C (no .tag)
-                    snprintf(body, sizeof(body), "raw { return *self == *other; }"); /* TODO: check buffer size */
+                    snprintf(body, sizeof(body),
+                             "raw { return *self == *other; }"); /* TODO: check buffer size */
                 }
             }
             else
@@ -107,26 +109,26 @@ ASTNode *generate_derive_impls(ParserContext *ctx, ASTNode *strct, char **traits
                             if (ep)
                             {
                                 snprintf(cmp, sizeof(cmp), "self.%s.tag == other.%s.tag", fn,
-                                        fn); /* TODO: check buffer size */
+                                         fn); /* TODO: check buffer size */
                             }
                             else
                             {
                                 // Simple enum: direct comparison
                                 snprintf(cmp, sizeof(cmp), "self.%s == other.%s", fn,
-                                        fn); /* TODO: check buffer size */
+                                         fn); /* TODO: check buffer size */
                             }
                         }
                         else if (!is_ptr && fdef && fdef->type == NODE_STRUCT)
                         {
                             // Struct field: use __eq function
                             snprintf(cmp, sizeof(cmp), "%s__eq(&self.%s, &other.%s)", ft, fn,
-                                    fn); /* TODO: check buffer size */
+                                     fn); /* TODO: check buffer size */
                         }
                         else
                         {
                             // Primitive, POINTER, or unknown: use ==
                             snprintf(cmp, sizeof(cmp), "self.%s == other.%s", fn,
-                                    fn); /* TODO: check buffer size */
+                                     fn); /* TODO: check buffer size */
                         }
                         strncat(body, cmp, sizeof(body) - strlen(body) - 1);
                         first = 0;
@@ -206,19 +208,22 @@ ASTNode *generate_derive_impls(ParserContext *ctx, ASTNode *strct, char **traits
                     }
                     else if (strcmp(ft, "double") == 0)
                     {
-                        snprintf(assign, sizeof(assign), "let _f_%s = (*j).get_float(\"%s\").unwrap_or(0.0);\n",
-                                fn, /* TODO: check buffer size */
-                                fn);
+                        snprintf(assign, sizeof(assign),
+                                 "let _f_%s = (*j).get_float(\"%s\").unwrap_or(0.0);\n",
+                                 fn, /* TODO: check buffer size */
+                                 fn);
                     }
                     else if (strcmp(ft, "bool") == 0)
                     {
-                        snprintf(assign, sizeof(assign), "let _f_%s = (*j).get_bool(\"%s\").unwrap_or(false);\n",
-                                fn, /* TODO: check buffer size */
-                                fn);
+                        snprintf(assign, sizeof(assign),
+                                 "let _f_%s = (*j).get_bool(\"%s\").unwrap_or(false);\n",
+                                 fn, /* TODO: check buffer size */
+                                 fn);
                     }
                     else if (strcmp(ft, "char*") == 0)
                     {
-                        snprintf(assign, sizeof(assign),
+                        snprintf(
+                            assign, sizeof(assign),
                             "let _f_%s = (*j).get_string(\"%s\").unwrap_or(\"\");\n", /* TODO: check
                                                                                          buffer size
                                                                                        */
@@ -264,11 +269,11 @@ ASTNode *generate_derive_impls(ParserContext *ctx, ASTNode *strct, char **traits
                     {
                         // Nested struct: call NestedType::from_json recursively
                         snprintf(assign, sizeof(assign), /* TODO: check buffer size */
-                                "let _opt_%s = (*j).get(\"%s\");\n"
-                                "let _f_%s: %s;\n"
-                                "if _opt_%s.is_some() { _f_%s = "
-                                "%s::from_json(_opt_%s.unwrap()).unwrap(); }\n",
-                                fn, fn, fn, ft, fn, fn, ft, fn);
+                                 "let _opt_%s = (*j).get(\"%s\");\n"
+                                 "let _f_%s: %s;\n"
+                                 "if _opt_%s.is_some() { _f_%s = "
+                                 "%s::from_json(_opt_%s.unwrap()).unwrap(); }\n",
+                                 fn, fn, fn, ft, fn, fn, ft, fn);
                     }
                     strncat(body, assign, sizeof(body) - strlen(body) - 1);
                 }
@@ -364,24 +369,28 @@ ASTNode *generate_derive_impls(ParserContext *ctx, ASTNode *strct, char **traits
                     }
                     else if (strcmp(ft, "double") == 0)
                     {
-                        snprintf(set_call, sizeof(set_call), "_obj.set(\"%s\", JsonValue::number(self.%s));\n",
-                                fn, /* TODO: check buffer size */
-                                fn);
+                        snprintf(set_call, sizeof(set_call),
+                                 "_obj.set(\"%s\", JsonValue::number(self.%s));\n",
+                                 fn, /* TODO: check buffer size */
+                                 fn);
                     }
                     else if (strcmp(ft, "bool") == 0)
                     {
-                        snprintf(set_call, sizeof(set_call), "_obj.set(\"%s\", JsonValue::bool(self.%s));\n", fn,
-                                fn); /* TODO: check buffer size */
+                        snprintf(set_call, sizeof(set_call),
+                                 "_obj.set(\"%s\", JsonValue::bool(self.%s));\n", fn,
+                                 fn); /* TODO: check buffer size */
                     }
                     else if (strcmp(ft, "char*") == 0)
                     {
-                        snprintf(set_call, sizeof(set_call), "_obj.set(\"%s\", JsonValue::string(self.%s));\n",
-                                fn, /* TODO: check buffer size */
-                                fn);
+                        snprintf(set_call, sizeof(set_call),
+                                 "_obj.set(\"%s\", JsonValue::string(self.%s));\n",
+                                 fn, /* TODO: check buffer size */
+                                 fn);
                     }
                     else if (strcmp(ft, "String") == 0)
                     {
-                        snprintf(set_call, sizeof(set_call),
+                        snprintf(
+                            set_call, sizeof(set_call),
                             "_obj.set(\"%s\", JsonValue::string(self.%s.c_str()));\n", /* TODO:
                                                                                           check
                                                                                           buffer
@@ -390,20 +399,22 @@ ASTNode *generate_derive_impls(ParserContext *ctx, ASTNode *strct, char **traits
                     }
                     else if (ft && strstr(ft, "Vec") && strstr(ft, "String"))
                     {
-                        snprintf(set_call, sizeof(set_call), /* TODO: check buffer size */
-                                "let _arr_%s = JsonValue::array();\n"
-                                "for let _i_%s: usize = 0; _i_%s < self.%s.length(); _i_%s = _i_%s "
-                                "+ 1 {\n"
-                                "  _arr_%s.push(JsonValue::string(self.%s.get(_i_%s).c_str()));\n"
-                                "}\n"
-                                "_obj.set(\"%s\", _arr_%s);\n",
-                                fn, fn, fn, fn, fn, fn, fn, fn, fn, fn, fn);
+                        snprintf(
+                            set_call, sizeof(set_call), /* TODO: check buffer size */
+                            "let _arr_%s = JsonValue::array();\n"
+                            "for let _i_%s: usize = 0; _i_%s < self.%s.length(); _i_%s = _i_%s "
+                            "+ 1 {\n"
+                            "  _arr_%s.push(JsonValue::string(self.%s.get(_i_%s).c_str()));\n"
+                            "}\n"
+                            "_obj.set(\"%s\", _arr_%s);\n",
+                            fn, fn, fn, fn, fn, fn, fn, fn, fn, fn, fn);
                     }
                     else
                     {
                         // Nested struct: call to_json recursively
-                        snprintf(set_call, sizeof(set_call), "_obj.set(\"%s\", self.%s.to_json());\n", fn,
-                                fn); /* TODO: check buffer size */
+                        snprintf(set_call, sizeof(set_call),
+                                 "_obj.set(\"%s\", self.%s.to_json());\n", fn,
+                                 fn); /* TODO: check buffer size */
                     }
                     strncat(body, set_call, sizeof(body) - strlen(body) - 1);
                 }
