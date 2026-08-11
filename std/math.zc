@@ -6,73 +6,91 @@ struct Math {}
 
 impl Math {
     // Mathematical Constants
+    /// The constant pi.
     fn PI() -> f64 { return 3.14159265358979323846; }
+    /// The constant e.
     fn E()  -> f64 { return 2.71828182845904523536; }
 
     // Absolute Value
+    /// Returns the absolute value.
     fn abs(x: f64) -> f64 {
         return c_math::fabs(x);
     }
     
     // Trigonometry
+    /// Returns the sine (radians).
     fn sin(x: f64) -> f64 {
         return c_math::sin(x);
     }
 
+    /// Returns the cosine (radians).
     fn cos(x: f64) -> f64 {
         return c_math::cos(x);
     }
 
+    /// Returns the tangent (radians).
     fn tan(x: f64) -> f64 {
         return c_math::tan(x);
     }
 
+    /// Returns the arc sine.
     fn asin(x: f64) -> f64 {
         return c_math::asin(x);
     }
 
+    /// Returns the arc cosine.
     fn acos(x: f64) -> f64 {
         return c_math::acos(x);
     }
 
+    /// Returns the arc tangent.
     fn atan(x: f64) -> f64 {
         return c_math::atan(x);
     }
 
+    /// Returns the arc tangent of y/x.
     fn atan2(y: f64, x: f64) -> f64 {
         return c_math::atan2(y, x);
     }
 
     // Exponentials and Logarithms
+    /// Returns the square root.
     fn sqrt(x: f64) -> f64 {
         return c_math::sqrt(x);
     }
 
+    /// Returns base raised to an exponent.
     fn pow(base: f64, exp: f64) -> f64 {
         return c_math::pow(base, exp);
     }
 
+    /// Returns e raised to a power.
     fn exp(x: f64) -> f64 {
         return c_math::exp(x);
     }
 
+    /// Returns the natural logarithm.
     fn log(x: f64) -> f64 {
         return c_math::log(x);
     }
 
+    /// Returns the base-10 logarithm.
     fn log10(x: f64) -> f64 {
         return c_math::log10(x);
     }
 
     // Rounding and Remainder
+    /// Rounds up to the nearest integer.
     fn ceil(x: f64) -> f64 {
         return c_math::ceil(x);
     }
 
+    /// Rounds down to the nearest integer.
     fn floor(x: f64) -> f64 {
         return c_math::floor(x);
     }
 
+    /// Rounds to the nearest integer.
     fn round(x: f64) -> f64 {
         return c_math::round(x);
     }
@@ -82,10 +100,12 @@ impl Math {
     }
 
     // Min/Max
+    /// Returns the larger of two values.
     fn max(a: f64, b: f64) -> f64 {
         return c_math::fmax(a, b);
     }
 
+    /// Returns the smaller of two values.
     fn min(a: f64, b: f64) -> f64 {
         return c_math::fmin(a, b);
     }
