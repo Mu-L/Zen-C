@@ -365,8 +365,7 @@ ASTNode *parse_match(ParserContext *ctx, Lexer *l)
                             ft->func_node->func.arg_types[0] &&
                             ft->func_node->func.arg_types[0]->name)
                         {
-                            const char *gparam =
-                                gt->struct_node->strct.generic_params[0];
+                            const char *gparam = gt->struct_node->strct.generic_params[0];
                             const char *pname = ft->func_node->func.arg_types[0]->name;
                             char *real = NULL;
                             size_t plen = strlen(pname);
@@ -518,7 +517,7 @@ ASTNode *parse_match(ParserContext *ctx, Lexer *l)
 
                 if (strcmp(binding, "parsed") == 0)
                 {
-                    }
+                }
                 add_symbol(ctx, binding, binding_type, binding_type_info, 0);
             }
         }
