@@ -630,8 +630,8 @@ Type *replace_type_formal(Type *t, const char *p, const char *c, const char *os,
                 sub[sub_len] = 0;
 
                 char *clean_sub = sanitize_mangled_name(sub);
-                strcat(p_suffix, "__");
-                strcat(p_suffix, clean_sub);
+                strncat(p_suffix, "__", sizeof(p_suffix) - strlen(p_suffix) - 1);
+                strncat(p_suffix, clean_sub, sizeof(p_suffix) - strlen(p_suffix) - 1);
                 zfree(clean_sub);
                 zfree(sub);
 
@@ -708,8 +708,8 @@ Type *replace_type_formal(Type *t, const char *p, const char *c, const char *os,
 
                     char *clean = sanitize_mangled_name(sub);
                     // Standardize: always use __ for mangled part
-                    strcat(c_suffix, "__");
-                    strcat(c_suffix, clean);
+                    strncat(c_suffix, "__", sizeof(c_suffix) - strlen(c_suffix) - 1);
+                    strncat(c_suffix, clean, sizeof(c_suffix) - strlen(c_suffix) - 1);
                     zfree(clean);
                     zfree(sub);
 

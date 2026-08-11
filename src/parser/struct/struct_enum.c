@@ -86,12 +86,19 @@ ASTNode *parse_enum(ParserContext *ctx, Lexer *l, const char *link_name, int is_
                     zfree(s);
 
                     tuple_types = xmalloc(sizeof(Type *) * 32);
+                    int tuple_cap = 32;
                     tuple_types[tuple_count++] = first_t;
 
                     while (lexer_peek(l).type == TOK_COMMA)
                     {
                         lexer_next(l); // eat ,
                         strcat(sig, "__");
+                        if (tuple_count >= tuple_cap)
+                        {
+                            tuple_cap *= 2;
+                            tuple_types =
+                                xrealloc(tuple_types, sizeof(Type *) * (size_t)(tuple_cap));
+                        }
                         Type *next_t = parse_type_obj(ctx, l);
                         tuple_types[tuple_count++] = next_t;
                         char *ns = type_to_string(next_t);

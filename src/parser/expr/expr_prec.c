@@ -67,6 +67,11 @@ static ASTNode *parse_expr_prec_impl(ParserContext *ctx, Lexer *l, Precedence mi
                 {
                     while (1)
                     {
+                        if (ac >= 16)
+                        {
+                            zpanic_at(lexer_peek(l), "Too many arguments (max 16)");
+                            break;
+                        }
                         args[ac++] = parse_expression(ctx, l);
                         if (lexer_peek(l).type == TOK_COMMA)
                         {
@@ -1495,11 +1500,11 @@ static ASTNode *parse_expr_prec_impl(ParserContext *ctx, Lexer *l, Precedence mi
                                 ASTNode *m = it->impl_node->impl.methods;
 
                                 char idx_raw[MAX_MANGLED_NAME_LEN];
-                                sprintf(idx_raw, "%s__index", base); /* safe */
+                                snprintf(idx_raw, sizeof(idx_raw), "%s__index", base); /* safe */
                                 char *mangled_idx = merge_underscores(idx_raw);
 
                                 char g_raw[MAX_MANGLED_NAME_LEN];
-                                sprintf(g_raw, "%s__get", base); /* safe */
+                                snprintf(g_raw, sizeof(g_raw), "%s__get", base); /* safe */
                                 char *mangled_g = merge_underscores(g_raw);
 
                                 while (m)
@@ -2712,12 +2717,12 @@ static ASTNode *parse_expr_prec_impl(ParserContext *ctx, Lexer *l, Precedence mi
                     !(lhs_is_num && rhs_is_num))
                 {
                     char msg[MAX_SHORT_MSG_LEN];
-                    sprintf(msg, "Type mismatch in comparison: cannot compare '%s' and '%s'",
+                    snprintf(msg, sizeof(msg), "Type mismatch in comparison: cannot compare '%s' and '%s'",
                             t1, /* safe */
                             t2);
 
                     char suggestion[MAX_SHORT_MSG_LEN];
-                    sprintf(suggestion,
+                    snprintf(suggestion, sizeof(suggestion),
                             "Both operands must have compatible types for comparison"); /* safe */
 
                     if (ctx->config->mode_lsp)
@@ -2938,7 +2943,7 @@ static ASTNode *parse_expr_prec_impl(ParserContext *ctx, Lexer *l, Precedence mi
                             if (!valid_arith)
                             {
                                 char msg[MAX_SHORT_MSG_LEN];
-                                sprintf(msg, "Type mismatch in binary operation '%s'", /* safe */
+                                snprintf(msg, sizeof(msg), "Type mismatch in binary operation '%s'", /* safe */
                                         bin->binary.op);
 
                                 char suggestion[MAX_MANGLED_NAME_LEN];

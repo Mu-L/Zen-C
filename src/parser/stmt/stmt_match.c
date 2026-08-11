@@ -184,6 +184,7 @@ ASTNode *parse_match(ParserContext *ctx, Lexer *l)
 
             bindings = xcalloc(8, sizeof(char *));
             binding_refs = xcalloc(8, sizeof(int));
+            int binding_cap = 8;
 
             while (lexer_peek(l).type != TOK_RPAREN && lexer_peek(l).type != TOK_RBRACE)
             {
@@ -200,6 +201,13 @@ ASTNode *parse_match(ParserContext *ctx, Lexer *l)
                 {
                     zpanic_at(b, "Expected variable name in pattern");
                     break;
+                }
+
+                if (binding_count >= binding_cap)
+                {
+                    binding_cap *= 2;
+                    bindings = xrealloc(bindings, sizeof(char *) * (size_t)(binding_cap));
+                    binding_refs = xrealloc(binding_refs, sizeof(int) * (size_t)(binding_cap));
                 }
 
                 if (is_brace && lexer_peek(l).type == TOK_COLON)

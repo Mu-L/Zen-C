@@ -599,8 +599,13 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
                         else
                         {
                             char sbuf[MAX_TYPE_NAME_LEN];
-                            strncpy(sbuf, suffix.start, suffix.len);
-                            sbuf[suffix.len] = 0;
+                            size_t sblen = suffix.len;
+                            if (sblen >= sizeof(sbuf))
+                            {
+                                sblen = sizeof(sbuf) - 1;
+                            }
+                            strncpy(sbuf, suffix.start, sblen);
+                            sbuf[sblen] = 0;
 
                             if (is_extern_symbol(ctx, sbuf))
                             {
@@ -614,11 +619,11 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
                                     find_method_owner_type_scoped(ctx, mod->base_name, sbuf);
                                 if (type_name)
                                 {
-                                    sprintf(tmp2_raw, "%s__%s", type_name, sbuf);
+                                    snprintf(tmp2_raw, sizeof(tmp2_raw), "%s__%s", type_name, sbuf);
                                 }
                                 else
                                 {
-                                    sprintf(tmp2_raw, "%s__%s", mod->base_name, sbuf);
+                                    snprintf(tmp2_raw, sizeof(tmp2_raw), "%s__%s", mod->base_name, sbuf);
                                 }
                                 char *tmp2 = merge_underscores(tmp2_raw);
                                 zfree(acc);
@@ -1152,11 +1157,13 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
                         {
                             if (i > 0)
                             {
-                                strcat(full_concrete, ",");
-                                strcat(full_unmangled, ",");
+                                strncat(full_concrete, ",", sizeof(full_concrete) - strlen(full_concrete) - 1);
+                                strncat(full_unmangled, ",", sizeof(full_unmangled) - strlen(full_unmangled) - 1);
                             }
-                            strcat(full_concrete, concrete_types[i]);
-                            strcat(full_unmangled, unmangled_types[i]);
+                            strncat(full_concrete, concrete_types[i],
+                                    sizeof(full_concrete) - strlen(full_concrete) - 1);
+                            strncat(full_unmangled, unmangled_types[i],
+                                    sizeof(full_unmangled) - strlen(full_unmangled) - 1);
                         }
 
                         char *m =
@@ -1344,7 +1351,7 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
                     if (si)
                     {
                         char struct_name_raw[MAX_MANGLED_NAME_LEN];
-                        sprintf(struct_name_raw, "%s__%s", si->source_module,
+                        snprintf(struct_name_raw, sizeof(struct_name_raw), "%s__%s", si->source_module,
                                 si->symbol); /* TODO: check buffer size */
                         struct_name = merge_underscores(struct_name_raw);
                     }
@@ -1358,7 +1365,7 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
                     if (!find_struct_def(ctx, acc) && !find_type_alias(ctx, acc))
                     {
                         char prefixed_raw[MAX_MANGLED_NAME_LEN];
-                        sprintf(prefixed_raw, "%s__%s", ctx->imports.current_module_prefix,
+                        snprintf(prefixed_raw, sizeof(prefixed_raw), "%s__%s", ctx->imports.current_module_prefix,
                                 acc); /* TODO: check buffer size */
                         struct_name = merge_underscores(prefixed_raw);
                     }
@@ -1725,7 +1732,7 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
                                         f_self->var_decl.init_expr = def;
 
                                         char v_raw[MAX_MANGLED_NAME_LEN];
-                                        sprintf(v_raw, "%s__%s__VTable",
+                                        snprintf(v_raw, sizeof(v_raw), "%s__%s__VTable",
                                                 inner->name, /* TODO: check buffer size */
                                                 expected->name);
                                         char *vtable_name = merge_underscores(v_raw);
@@ -1766,7 +1773,7 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
                                 f_self->var_decl.init_expr = def;
 
                                 char v_raw[MAX_MANGLED_NAME_LEN];
-                                sprintf(v_raw, "%s__%s__VTable",
+                                snprintf(v_raw, sizeof(v_raw), "%s__%s__VTable",
                                         arg_type->inner->name, /* TODO: check buffer size */
                                         expected->name);
                                 char *vtable_name = merge_underscores(v_raw);
