@@ -22,6 +22,12 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
     char *name = token_strdup(n);
     Token name_token = n;
 
+    // Capture a pending /// doc comment (written before `struct`) here: the
+    // fields are parsed before the struct node is created, so they would
+    // otherwise consume the struct's own documentation.
+    char *pending_doc = ctx->last_doc_comment;
+    ctx->last_doc_comment = NULL;
+
     // Generic Params <T> or <K, V>
     char **gps = NULL;
     int gp_count = 0;
@@ -69,6 +75,7 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
     {
         lexer_next(l);
         ASTNode *node = ast_create(NODE_STRUCT);
+        node->doc_comment = pending_doc; // struct-level /// doc (captured on entry)
         node->strct.name = name;
         node->link_name = link_name ? xstrdup(link_name) : NULL;
         node->strct.is_template = (gp_count > 0);
@@ -306,6 +313,7 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
     node->token = name_token;
     node->link_name = link_name ? xstrdup(link_name) : NULL;
     add_to_struct_list(ctx, node);
+    node->doc_comment = pending_doc; // struct-level /// doc (captured on entry)
 
     node->strct.name = name;
 

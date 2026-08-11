@@ -349,7 +349,6 @@ static void generate_docs_internal(struct ParserContext *ctx, ASTNode *node, int
 
 void generate_docs(struct ParserContext *ctx, ASTNode *root)
 {
-    (void)ctx;
     if (root->type != NODE_ROOT)
     {
         return;
@@ -362,4 +361,18 @@ void generate_docs(struct ParserContext *ctx, ASTNode *root)
     }
 
     generate_docs_internal(ctx, root->root.children, 0);
+
+    // Generic impl blocks (`impl Box<T>`) are registered as templates instead
+    // of top-level AST nodes, so the walk above skips them. Render their
+    // methods here (isolating each impl node so the iterator stops cleanly).
+    for (GenericImplTemplate *it = ctx->impl_templates; it; it = it->next)
+    {
+        if (it->impl_node && it->impl_node->type == NODE_IMPL)
+        {
+            ASTNode *saved_next = it->impl_node->next;
+            it->impl_node->next = NULL;
+            generate_docs_internal(ctx, it->impl_node, 0);
+            it->impl_node->next = saved_next;
+        }
+    }
 }
