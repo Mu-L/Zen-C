@@ -28,8 +28,6 @@ ASTNode *parse_match(ParserContext *ctx, Lexer *l)
     if (t_brace.type != TOK_LBRACE)
     {
         zpanic_at(t_brace, "Expected '{' in match");
-        return NULL;
-        return NULL;
         if (ctx->is_fault_tolerant)
         {
             ASTNode *node = ast_create(NODE_MATCH);
@@ -38,6 +36,7 @@ ASTNode *parse_match(ParserContext *ctx, Lexer *l)
             node->match_stmt.cases = NULL;
             return node;
         }
+        return NULL;
     }
 
     ASTNode *h = 0, *tl = 0;

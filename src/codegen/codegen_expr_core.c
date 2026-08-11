@@ -466,6 +466,15 @@ void handle_ast_comment(ParserContext *ctx, ASTNode *node)
     EMIT(ctx, "%s\n", node->comment.content);
 }
 
+// Error-recovered node from fault-tolerant (LSP/REPL) parsing: emit a C
+// comment so the recovered source is visibly incomplete rather than silently
+// producing wrong output.
+void handle_erroneous(ParserContext *ctx, ASTNode *node)
+{
+    (void)node;
+    EMIT(ctx, "/* <error-recovered> */\n");
+}
+
 void handle_ternary(ParserContext *ctx, ASTNode *node)
 {
     EMIT(ctx, "((");

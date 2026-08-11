@@ -522,6 +522,7 @@ enum
     if (++((ctx)->recursion_depth) > MAX_RECURSION_DEPTH)                                          \
     {                                                                                              \
         zpanic_at(lexer_peek(l), "Recursion limit exceeded");                                      \
+        (ctx)->recursion_depth--;                                                                  \
         return ret;                                                                                \
     }
 
@@ -529,6 +530,7 @@ enum
     if (++((ctx)->recursion_depth) > MAX_RECURSION_DEPTH)                                          \
     {                                                                                              \
         zpanic_at(tok, "Recursion limit exceeded");                                                \
+        (ctx)->recursion_depth--;                                                                  \
         return ret;                                                                                \
     }
 
