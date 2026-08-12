@@ -26,7 +26,7 @@ Token z_parse_expect(Lexer *l, ZenTokenType type, const char *msg)
     if (t.type != type)
     {
         zpanic_at(t, "Expected %s, but got '%.*s'", msg, (int)(t.len), t.start);
-        return (Token){0};
+        // Fault-tolerant (LSP) mode: resume as if the expected token was found.
         return (Token){type, t.start, 0, t.line, t.col, t.file};
     }
     return t;

@@ -469,7 +469,6 @@ Type *parse_type_base(ParserContext *ctx, Lexer *l)
                 zpanic_at(size_expr->token,
                           "Array size must be a compile-time constant or integer literal");
                 return NULL;
-                return NULL;
             }
             if (lexer_next(l).type != TOK_RBRACKET)
             {

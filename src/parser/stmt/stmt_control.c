@@ -133,7 +133,6 @@ ASTNode *parse_guard(ParserContext *ctx, Lexer *l)
     {
         zpanic_at(t, "Expected 'else' after guard condition");
         return NULL;
-        return NULL;
     }
     lexer_next(l);
 

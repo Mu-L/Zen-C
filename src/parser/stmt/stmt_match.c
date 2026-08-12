@@ -246,12 +246,10 @@ ASTNode *parse_match(ParserContext *ctx, Lexer *l)
             {
                 zpanic_at(end, "Expected }");
                 return NULL;
-                return NULL;
             }
             else if (!is_brace && end.type != TOK_RPAREN)
             {
                 zpanic_at(end, "Expected )");
-                return NULL;
                 return NULL;
             }
             is_destructure = 1;
@@ -267,7 +265,6 @@ ASTNode *parse_match(ParserContext *ctx, Lexer *l)
         if (lexer_next(l).type != TOK_ARROW)
         {
             zpanic_at(lexer_peek(l), "Expected => after match pattern");
-            return NULL;
             return NULL;
             if (ctx->is_fault_tolerant)
             {

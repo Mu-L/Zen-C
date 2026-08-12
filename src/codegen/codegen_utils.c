@@ -7,7 +7,6 @@
 #include "codegen.h"
 #include "../ast/primitives.h"
 #include <ctype.h>
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

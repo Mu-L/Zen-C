@@ -14,12 +14,6 @@
 
 void auto_import_std_mem(ParserContext *ctx)
 {
-    // Check if Drop trait is already registered (means mem.zc was imported)
-    if (check_impl(ctx, "Drop", "__trait_marker__"))
-    {
-        // Check_impl returns 0 if not found, but we need a different check
-        // Let's check if we can find any indicator that mem.zc was loaded
-    }
     // Resolve path to std/mem.zc
     char *resolved = z_resolve_path("std/mem.zc", ctx->current_filename, ctx->config);
     if (!resolved)

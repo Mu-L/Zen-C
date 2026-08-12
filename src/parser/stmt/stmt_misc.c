@@ -229,7 +229,6 @@ char *process_printf_sugar(ParserContext *ctx, Token srctoken, const char *conte
         {
             zpanic_at(srctoken, "Unclosed interpolation brace in printf-sugar");
             return NULL;
-            return NULL;
         }
         *p = 0;
         char *expr = brace + 1;
@@ -324,7 +323,6 @@ char *process_printf_sugar(ParserContext *ctx, Token srctoken, const char *conte
         else
         {
             zpanic_at(srctoken, "Could not parse expression in interpolation");
-            return NULL;
             return NULL;
         }
 
@@ -909,7 +907,6 @@ ASTNode *parse_macro_call(ParserContext *ctx, Lexer *l, char *macro_name)
     {
         zpanic_at(lexer_peek(l), "Expected { after macro invocation");
         return NULL;
-        return NULL;
     }
     lexer_next(l);
     int start_line = l->line;
@@ -923,7 +920,6 @@ ASTNode *parse_macro_call(ParserContext *ctx, Lexer *l, char *macro_name)
         if (t.type == TOK_EOF)
         {
             zpanic_at(t, "Unexpected EOF in macro block");
-            return NULL;
             return NULL;
         }
 
@@ -958,7 +954,6 @@ ASTNode *parse_macro_call(ParserContext *ctx, Lexer *l, char *macro_name)
                  macro_name, macro_name);
         zpanic_at(start_tok, "%s", err);
         return NULL;
-        return NULL;
 
         if (ctx->config->mode_lsp)
         {
@@ -982,7 +977,6 @@ ASTNode *parse_macro_call(ParserContext *ctx, Lexer *l, char *macro_name)
         snprintf(err, sizeof(err), "Plugin implementation not found: %s", plugin_name);
         zpanic_at(start_tok, "%s", err);
         return NULL;
-        return NULL;
 
         return NULL;
     }
@@ -991,8 +985,6 @@ ASTNode *parse_macro_call(ParserContext *ctx, Lexer *l, char *macro_name)
     if (!capture)
     {
         zpanic_at(start_tok, "Failed to create capture buffer for plugin expansion");
-        return NULL;
-        return NULL;
         return NULL;
     }
 
@@ -1066,7 +1058,6 @@ ASTNode *parse_comptime_body(ParserContext *ctx, Lexer *l)
         {
             zpanic_at(t, "Unexpected EOF in comptime block");
             return NULL;
-            return NULL;
         }
         if (t.type == TOK_STRING || t.type == TOK_FSTRING || t.type == TOK_RAW_STRING)
         {
@@ -1114,7 +1105,6 @@ ASTNode *parse_plugin(ParserContext *ctx, Lexer *l, Token tok)
     if (tk.type != TOK_IDENT)
     {
         zpanic_at(tk, "Expected plugin name after 'plugin' keyword");
-        return NULL;
         return NULL;
     }
 

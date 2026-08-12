@@ -27,7 +27,6 @@ char *parse_condition_raw(ParserContext *ctx, Lexer *l)
             {
                 zpanic_at(t, "Unterminated condition");
                 return NULL;
-                return NULL;
             }
             if (t.type == TOK_LPAREN)
             {
@@ -61,7 +60,6 @@ char *parse_condition_raw(ParserContext *ctx, Lexer *l)
         if (len == 0)
         {
             zpanic_at(lexer_peek(l), "Empty condition or missing body");
-            return NULL;
             return NULL;
         }
         char *c = xmalloc((size_t)(len + 1));
@@ -573,7 +571,6 @@ char *parse_and_convert_args(ParserContext *ctx, Lexer *l, char ***defaults_out,
     {
         zpanic_at(t, "Expected '(' in function args");
         return NULL;
-        return NULL;
     }
 
     size_t buf_size = 8192;
@@ -627,13 +624,11 @@ char *parse_and_convert_args(ParserContext *ctx, Lexer *l, char ***defaults_out,
                     {
                         zpanic_at(lexer_peek(l), "Expected ( after @ctype");
                         return NULL;
-                        return NULL;
                     }
                     Token ctype_tok = lexer_next(l);
                     if (ctype_tok.type != TOK_STRING)
                     {
                         zpanic_at(ctype_tok, "@ctype requires a string argument");
-                        return NULL;
                         return NULL;
                     }
                     // Extract string content (strip quotes)
@@ -644,13 +639,11 @@ char *parse_and_convert_args(ParserContext *ctx, Lexer *l, char ***defaults_out,
                     {
                         zpanic_at(lexer_peek(l), "Expected ) after @ctype string");
                         return NULL;
-                        return NULL;
                     }
                 }
                 else
                 {
                     zpanic_at(attr, "Unknown parameter attribute @%.*s", (int)attr.len, attr.start);
-                    return NULL;
                     return NULL;
                 }
             }
@@ -734,7 +727,6 @@ char *parse_and_convert_args(ParserContext *ctx, Lexer *l, char ***defaults_out,
                 {
                     zpanic_at(lexer_peek(l), "Expected arg name");
                     return NULL;
-                    return NULL;
                 }
                 check_identifier(ctx, param_tok);
                 char *name = token_strdup(param_tok);
@@ -742,7 +734,6 @@ char *parse_and_convert_args(ParserContext *ctx, Lexer *l, char ***defaults_out,
                 if (lexer_next(l).type != TOK_COLON)
                 {
                     zpanic_at(lexer_peek(l), "Expected ':'");
-                    return NULL;
                     return NULL;
                 }
 
@@ -850,7 +841,6 @@ char *parse_and_convert_args(ParserContext *ctx, Lexer *l, char ***defaults_out,
     if (lexer_next(l).type != TOK_RPAREN)
     {
         zpanic_at(lexer_peek(l), "Expected ')' after args");
-        return NULL;
         return NULL;
     }
 

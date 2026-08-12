@@ -555,7 +555,6 @@ ASTNode *parse_import(ParserContext *ctx, Lexer *l, int is_re_export)
         else
         {
             zpanic_at(t, "Could not find module: %s", fn);
-            return NULL;
             for (size_t _c = 0; _c < symbols.length; _c++)
             {
                 zfree(symbols.data[_c]);

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
-/*
+
 #ifndef ZC_ALLOW_INTERNAL
 #error "utils/zalloc.h is internal to Zen C. Include the appropriate public header instead."
 #endif
 
+/*
  * zalloc.h — Modern memory management for C (Arenas, Pools, Debug)
  * Part of Zen Development Kit (ZDK)
  *

@@ -21,7 +21,6 @@ ASTNode *parse_trait(ParserContext *ctx, Lexer *l)
     {
         zpanic_at(n, "Expected trait name");
         return NULL;
-        return NULL;
     }
     char *name = xmalloc(n.len + 1);
     strncpy(name, n.start, n.len);
@@ -41,7 +40,6 @@ ASTNode *parse_trait(ParserContext *ctx, Lexer *l)
             if (p.type != TOK_IDENT)
             {
                 zpanic_at(p, "Expected generic parameter name");
-                return NULL;
                 return NULL;
             }
             generic_params[generic_count] = xmalloc(p.len + 1);
@@ -68,7 +66,6 @@ ASTNode *parse_trait(ParserContext *ctx, Lexer *l)
             else
             {
                 zpanic_at(sep, "Expected , or > in generic params");
-                return NULL;
                 return NULL;
             }
         }
@@ -110,7 +107,6 @@ ASTNode *parse_trait(ParserContext *ctx, Lexer *l)
         if (ft.type != TOK_IDENT || strncmp(ft.start, "fn", 2) != 0)
         {
             zpanic_at(ft, "Expected fn in trait");
-            return NULL;
             return NULL;
         }
 
@@ -176,7 +172,6 @@ ASTNode *parse_trait(ParserContext *ctx, Lexer *l)
         {
             // Default implementation? Not supported yet.
             zpanic_at(lexer_peek(l), "Trait methods must end with ; for now");
-            return NULL;
             return NULL;
         }
     }

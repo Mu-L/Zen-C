@@ -67,7 +67,6 @@ ASTNode *parse_test(ParserContext *ctx, Lexer *l)
     {
         zpanic_at(t, "Test name must be a string literal");
         return NULL;
-        return NULL;
     }
 
     char *name = token_get_string_content(t);
@@ -113,7 +112,6 @@ ASTNode *parse_assert(ParserContext *ctx, Lexer *l)
         else
         {
             zpanic_at(st, "Expected message string");
-            return NULL;
             return NULL;
         }
     }
@@ -169,7 +167,6 @@ ASTNode *parse_expect(ParserContext *ctx, Lexer *l)
         {
             zpanic_at(st, "Expected message string");
             return NULL;
-            return NULL;
         }
     }
 
@@ -197,7 +194,6 @@ ASTNode *parse_return(ParserContext *ctx, Lexer *l)
     if (ctx->cg.in_defer_block)
     {
         zpanic_at(return_token, "'return' is not allowed inside a 'defer' block");
-        return NULL;
         return NULL;
     }
 
