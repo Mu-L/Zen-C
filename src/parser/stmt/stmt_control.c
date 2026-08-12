@@ -181,7 +181,7 @@ ASTNode *parse_while(ParserContext *ctx, Lexer *l)
     check_assignment_condition(cond);
     if (!cond)
     {
-        zerror_at(lexer_peek(l), "Expected condition expression");
+        zpanic_at(lexer_peek(l), "Expected condition expression");
         return ast_create(NODE_BLOCK);
     }
 
@@ -872,7 +872,7 @@ ASTNode *parse_for(ParserContext *ctx, Lexer *l)
     {
         if (ctx->config->misra_mode)
         {
-            zerror_at(lexer_peek(l), "MISRA Rule 15.6compound-statement body");
+            zerror_at(lexer_peek(l), "MISRA Rule 15.6: compound-statement body");
         }
         body = parse_statement(ctx, l);
     }

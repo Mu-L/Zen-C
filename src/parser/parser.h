@@ -805,7 +805,10 @@ void check_identifier(ParserContext *ctx, Token t);
 ASTNode *parse_program_nodes(ParserContext *ctx, Lexer *l);
 
 /**
- * @brief Collapses triple or more underscores into a double underscore.
+ * @brief Collapses runs of four or more underscores into a double underscore.
+ *        A run of exactly three is preserved: it encodes the "__" separator
+ *        plus an identifier that begins with "_" (e.g. `Struct::_method`), so
+ *        collapsing it would make distinct symbols collide.
  */
 char *merge_underscores(const char *name);
 
