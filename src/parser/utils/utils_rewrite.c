@@ -83,7 +83,8 @@ static MixinResolution resolve_mixin_method(ParserContext *ctx, const char *stru
     MixinResolution res = {xstrdup(struct_name), NULL};
 
     char target_func_raw[MAX_FUNC_NAME_LEN];
-    snprintf(target_func_raw, sizeof(target_func_raw), "%s__%s", struct_name, method_name); /* TODO: check buffer size */
+    snprintf(target_func_raw, sizeof(target_func_raw), "%s__%s", struct_name,
+             method_name); /* TODO: check buffer size */
     char *target_func = merge_underscores(target_func_raw);
 
     if (!find_func(ctx, target_func))
