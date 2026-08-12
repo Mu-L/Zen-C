@@ -38,49 +38,11 @@ static void auto_import_std_slice(ParserContext *ctx)
     {
         if (strcmp(t->name, "Slice") == 0)
         {
-            return;
+            return; // slice module already loaded
         }
         t = t->next;
     }
-
-    char *resolved = z_resolve_path("std/slice.zc", ctx->current_filename, ctx->config);
-    if (!resolved)
-    {
-        return;
-    }
-
-    if (is_file_imported(ctx, resolved))
-    {
-        zfree(resolved);
-        return;
-    }
-    if (zmap_get(&ctx->imports.currently_parsing, resolved))
-    {
-        zfree(resolved);
-        return;
-    }
-    zmap_put(&ctx->imports.currently_parsing, resolved, resolved);
-
-    char *src = load_file(resolved, ctx->current_filename);
-    if (!src)
-    {
-        zmap_remove(&ctx->imports.currently_parsing, resolved);
-        zfree(resolved);
-        return;
-    }
-
-    Lexer i;
-    lexer_init(&i, src, ctx->config, ctx->current_filename);
-
-    const char *saved_fn = ctx->current_filename;
-    ctx->current_filename = resolved;
-
-    parse_program_nodes(ctx, &i);
-
-    ctx->current_filename = saved_fn;
-    zmap_remove(&ctx->imports.currently_parsing, resolved);
-    mark_file_imported(ctx, resolved);
-    zfree(resolved);
+    load_std_module(ctx, "std/slice.zc");
 }
 
 ASTNode *parse_loop(ParserContext *ctx, Lexer *l)

@@ -921,6 +921,7 @@ ASTNode *generate_derive_impls(ParserContext *ctx, ASTNode *strct, char **traits
 void replace_it_with_var(ASTNode *node, char *var_name);
 
 // struct/ declarations
+void load_std_module(ParserContext *ctx, const char *path);
 void auto_import_std_mem(ParserContext *ctx);
 char *mangle_method_symbol(const char *struct_name, const char *trait_name,
                            const char *method_name);
