@@ -25,15 +25,16 @@ void emit_pending_closure_frees(ParserContext *ctx)
 // Returns newly allocated string, caller must free.
 
 // Helper to emit a mangled name (Type__Method) with standardized underscores.
+// Uses the canonical mangle_method_symbol so call sites always emit the same
+// name the parser used for the definition (e.g. `_method` keeps its triple
+// underscore).
 void emit_mangled_name(ParserContext *ctx, const char *base, const char *method)
 {
     if (!base || !method)
     {
         return;
     }
-    char buf[MAX_ERROR_MSG_LEN];
-    snprintf(buf, sizeof(buf), "%s__%s", base, method);
-    char *merged = merge_underscores(buf);
+    char *merged = mangle_method_symbol(base, NULL, method);
 
     ZenSymbol *sym = ctx ? find_symbol_in_all(ctx, merged) : NULL;
     if (sym && sym->link_name)
