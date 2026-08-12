@@ -34,8 +34,6 @@ static void initialize(void)
     if (initialized)
         return;
 
-    zen_init();
-
     memset(&g_compiler, 0, sizeof(g_compiler));
     g_compiler.config.mode_check = 1;
     g_compiler.config.use_typecheck = 1;
@@ -122,7 +120,6 @@ __attribute__((used)) int LLVMFuzzerTestOneInput(const uint8_t *data, size_t siz
     zvec_free_Str(&g_compiler.config.c_files);
     zvec_free_Str(&g_compiler.config.extra_files);
     zvec_free_Str(&g_compiler.config.backend_opts);
-    clear_registered_traits();
 
     return 0;
 }
