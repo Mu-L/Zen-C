@@ -13,6 +13,7 @@
 #include <fcntl.h>
 
 extern ZenCompiler g_compiler;
+extern char *curr_func_ret;
 
 static int initialized = 0;
 
@@ -80,6 +81,10 @@ __attribute__((used)) int LLVMFuzzerTestOneInput(const uint8_t *data, size_t siz
     module_state_init(&ctx.imports);
     token_set_parser_ctx(&ctx);
     diag_set_parser_ctx(&ctx);
+
+    // Reset persistent parser globals that would otherwise dangle into the
+    // reset arena between inputs.
+    curr_func_ret = NULL;
 
     scan_build_directives(&ctx, src);
 
