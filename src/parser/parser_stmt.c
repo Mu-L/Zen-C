@@ -274,6 +274,7 @@ ASTNode *parse_statement(ParserContext *ctx, Lexer *l)
                 if (t.kind == TOK_EOF)
                 {
                     zpanic_at(t, "Unexpected EOF in raw block");
+                    return NULL;
                 }
                 if (t.kind == TOK_LBRACE)
                 {

@@ -493,6 +493,16 @@ ASTNode *parse_import(ParserContext *ctx, Lexer *l, int is_re_export)
             if (sym_tok.kind != TOK_IDENT)
             {
                 zpanic_at(sym_tok, "Expected identifier in selective import");
+                for (size_t _c = 0; _c < symbols.length; _c++)
+                {
+                    zfree(symbols.data[_c]);
+                    if (aliases.data[_c])
+                    {
+                        zfree(aliases.data[_c]);
+                    }
+                }
+                zvec_free_Str(&symbols);
+                zvec_free_Str(&aliases);
                 return NULL;
             }
 
@@ -510,6 +520,16 @@ ASTNode *parse_import(ParserContext *ctx, Lexer *l, int is_re_export)
                 if (alias_tok.kind != TOK_IDENT)
                 {
                     zpanic_at(alias_tok, "Expected identifier after 'as'");
+                    for (size_t _c = 0; _c < symbols.length; _c++)
+                    {
+                        zfree(symbols.data[_c]);
+                        if (aliases.data[_c])
+                        {
+                            zfree(aliases.data[_c]);
+                        }
+                    }
+                    zvec_free_Str(&symbols);
+                    zvec_free_Str(&aliases);
                     return NULL;
                 }
 
@@ -532,6 +552,16 @@ ASTNode *parse_import(ParserContext *ctx, Lexer *l, int is_re_export)
         {
             zpanic_at(from_tok, "Expected 'from' after selective import list, got type=%d",
                       (int)from_tok.kind);
+            for (size_t _c = 0; _c < symbols.length; _c++)
+            {
+                zfree(symbols.data[_c]);
+                if (aliases.data[_c])
+                {
+                    zfree(aliases.data[_c]);
+                }
+            }
+            zvec_free_Str(&symbols);
+            zvec_free_Str(&aliases);
             return NULL;
         }
     }
@@ -541,6 +571,16 @@ ASTNode *parse_import(ParserContext *ctx, Lexer *l, int is_re_export)
     {
         zpanic_at(t, "Expected string (filename) after 'from' in selective import, got type %d",
                   (int)t.kind);
+        for (size_t _c = 0; _c < symbols.length; _c++)
+        {
+            zfree(symbols.data[_c]);
+            if (aliases.data[_c])
+            {
+                zfree(aliases.data[_c]);
+            }
+        }
+        zvec_free_Str(&symbols);
+        zvec_free_Str(&aliases);
         return NULL;
     }
     char *fn = token_get_string_content(t);
@@ -598,7 +638,6 @@ ASTNode *parse_import(ParserContext *ctx, Lexer *l, int is_re_export)
     if (zmap_get(&ctx->imports.currently_parsing, fn))
     {
         zpanic_at(t, "Circular import detected: '%s'", fn);
-        return NULL;
         for (size_t _c = 0; _c < symbols.length; _c++)
         {
             zfree(symbols.data[_c]);

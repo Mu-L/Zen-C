@@ -719,7 +719,9 @@ int is_file_imported(ParserContext *ctx, const char *path)
 
 void mark_file_imported(ParserContext *ctx, const char *path)
 {
-    zmap_put(&ctx->imports.imported_files, path, path);
+    // Duplicate into the arena so the map key outlives callers that free the
+    // original (e.g. driver.c stores realpath() results which it libc_frees).
+    zmap_put(&ctx->imports.imported_files, xstrdup(path), xstrdup(path));
 }
 
 void register_impl(ParserContext *ctx, const char *trait, const char *strct)

@@ -15,9 +15,9 @@ static ASTNode *parse_expr_prec_impl(ParserContext *ctx, Lexer *l, Precedence mi
 
 ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 {
-    if (++ctx->recursion_depth > 2000)
+    if (++ctx->recursion_depth > 64)
     {
-        zpanic_at(lexer_peek(l), "Expression nesting too deep (max 2000)");
+        zpanic_at(lexer_peek(l), "Expression nesting too deep (max 64)");
         ctx->recursion_depth--;
         return ast_create(NODE_ERRONEOUS);
     }
@@ -2429,7 +2429,7 @@ static ASTNode *parse_expr_prec_impl(ParserContext *ctx, Lexer *l, Precedence mi
 
         const char *method = get_operator_method(bin->binary.op);
 
-        if (method)
+        if (method && lhs)
         {
             Type *lt = lhs->type_info;
             int is_lhs_ptr = 0;

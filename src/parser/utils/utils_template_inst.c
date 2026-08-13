@@ -817,6 +817,12 @@ void instantiate_methods(ParserContext *ctx, GenericImplTemplate *it,
             while (gt)
             {
                 size_t tlen = strlen(gt->name);
+                size_t rlen = strlen(meth->func.ret_type);
+                if (tlen > rlen)
+                {
+                    gt = gt->next;
+                    continue;
+                }
                 char delim = meth->func.ret_type[tlen];
                 if (strncmp(meth->func.ret_type, gt->name, (size_t)(tlen)) == 0 &&
                     (delim == '_' || delim == '<'))

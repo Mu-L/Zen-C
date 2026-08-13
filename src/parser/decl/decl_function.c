@@ -113,6 +113,10 @@ ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async, int is_exter
 
     char *args = parse_and_convert_args(ctx, l, &defaults, &default_values, &count, &arg_types,
                                         &param_names, &is_varargs, &ctype_overrides);
+    if (!args)
+    {
+        return NULL;
+    }
 
     char *ret = "void";
     Type *ret_type_obj = type_new(TYPE_VOID);

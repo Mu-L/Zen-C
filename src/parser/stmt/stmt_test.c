@@ -215,7 +215,10 @@ ASTNode *parse_return(ParserContext *ctx, Lexer *l)
         if (is_tuple_lit)
         {
             n->ret.value = parse_tuple_expression(ctx, l, curr_func_ret, NULL);
-            n->ret.value->token = return_token;
+            if (n->ret.value)
+            {
+                n->ret.value->token = return_token;
+            }
             handled = 1;
         }
     }

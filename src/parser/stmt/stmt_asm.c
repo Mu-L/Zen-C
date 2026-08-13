@@ -68,8 +68,15 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
     char *code = xmalloc(code_cap);
     code[0] = 0;
 
+    int last_pos = -1;
     while (1)
     {
+        if (l->pos == last_pos)
+        {
+            zpanic_at(lexer_peek(l), "No progress in asm body");
+            break;
+        }
+        last_pos = l->pos;
         Token inner_t = lexer_peek(l);
 
         if (inner_t.kind == TOK_RBRACE)
@@ -121,8 +128,15 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
             }
             strncat(code, inner_t.start, inner_t.len);
 
+            int arg_prev = -1;
             while (lexer_peek(l).kind != TOK_RBRACE && lexer_peek(l).kind != TOK_COLON)
             {
+                if (l->pos == arg_prev)
+                {
+                    zpanic_at(lexer_peek(l), "No progress in asm body");
+                    break;
+                }
+                arg_prev = l->pos;
                 Token arg = lexer_peek(l);
 
                 if (arg.kind == TOK_SEMICOLON)
@@ -207,6 +221,11 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
                         code = xrealloc(code, code_cap);
                     }
                     strcat(code, " ");
+                }
+                if (strlen(code) + (size_t)(arg.len) + 1 > code_cap)
+                {
+                    code_cap = code_cap * 2 + (size_t)(arg.len);
+                    code = xrealloc(code, code_cap);
                 }
                 strncat(code, arg.start, arg.len);
             }

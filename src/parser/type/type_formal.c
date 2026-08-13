@@ -138,6 +138,11 @@ Type *parse_type_formal(ParserContext *ctx, Lexer *l)
     {
         // Handles: int, Struct, Generic<T>, [Slice], (Tuple)
         t = parse_type_base(ctx, l);
+        if (!t)
+        {
+            RECURSION_EXIT(ctx);
+            return NULL;
+        }
     }
 
     // Handles: T*, T**, etc.
