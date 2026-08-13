@@ -51,7 +51,7 @@ const char *get_missing_function_hint(ParserContext *ctx, const char *name)
     StructRef *ref = ctx->parsed_funcs_list;
     while (ref)
     {
-        if (ref->node && ref->node->type == NODE_FUNCTION)
+        if (ref->node && ref->node->kind == NODE_FUNCTION)
         {
             int dist = levenshtein(name, ref->node->func.name);
             if (dist < best_dist)
@@ -75,13 +75,13 @@ const char *get_missing_function_hint(ParserContext *ctx, const char *name)
 // Emit literal expression (int, float, string, char)
 static void codegen_literal_expr(ParserContext *ctx, ASTNode *node)
 {
-    if (node->literal.type_kind == LITERAL_STRING || node->literal.type_kind == LITERAL_RAW_STRING)
+    if (node->literal.kind == LITERAL_STRING || node->literal.kind == LITERAL_RAW_STRING)
     {
         EMIT(ctx, "\"");
         for (int i = 0; node->literal.string_val[i]; i++)
         {
             char c = node->literal.string_val[i];
-            if (node->literal.type_kind == LITERAL_RAW_STRING)
+            if (node->literal.kind == LITERAL_RAW_STRING)
             {
                 if (c == '\\')
                 {
@@ -115,7 +115,7 @@ static void codegen_literal_expr(ParserContext *ctx, ASTNode *node)
         }
         EMIT(ctx, "\"");
     }
-    else if (node->literal.type_kind == LITERAL_CHAR)
+    else if (node->literal.kind == LITERAL_CHAR)
     {
         if (node->literal.int_val > 127)
         {
@@ -126,7 +126,7 @@ static void codegen_literal_expr(ParserContext *ctx, ASTNode *node)
             EMIT(ctx, "%s", node->literal.string_val);
         }
     }
-    else if (node->literal.type_kind == LITERAL_FLOAT)
+    else if (node->literal.kind == LITERAL_FLOAT)
     {
         char buf[64];
         snprintf(buf, sizeof(buf), "%.17g", node->literal.float_val);
@@ -280,7 +280,7 @@ static void codegen_var_expr(ParserContext *ctx, ASTNode *node)
             int is_common_enum =
                 (strncmp(base, "Result", 6) == 0 || strncmp(base, "Option", 6) == 0 ||
                  strncmp(base, "JsonType", 8) == 0);
-            if (is_common_enum || (def && def->type == NODE_ENUM))
+            if (is_common_enum || (def && def->kind == NODE_ENUM))
             {
                 emit_mangled_name(ctx, base, underscore + 1);
                 return;

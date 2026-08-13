@@ -611,7 +611,7 @@ Type *replace_type_formal(Type *t, const char *p, const char *c, const char *os,
         {
             n->name = xstrdup(ns);
             n->kind = TYPE_STRUCT;
-            n->arg_count = 0;
+            n->count = 0;
             n->args = NULL;
         }
         else if (p && c)
@@ -753,7 +753,7 @@ Type *replace_type_formal(Type *t, const char *p, const char *c, const char *os,
                 }
                 n->name = new_name;
                 n->kind = TYPE_STRUCT;
-                n->arg_count = 0;
+                n->count = 0;
                 n->args = NULL;
             }
             else
@@ -773,10 +773,10 @@ Type *replace_type_formal(Type *t, const char *p, const char *c, const char *os,
         n->inner = replace_type_formal(t->inner, p, c, os, ns);
     }
 
-    if (t->arg_count > 0 && t->args)
+    if (t->count > 0 && t->args)
     {
-        n->args = xmalloc(sizeof(Type *) * (size_t)(t->arg_count));
-        for (int i = 0; i < t->arg_count; i++)
+        n->args = xmalloc(sizeof(Type *) * (size_t)(t->count));
+        for (int i = 0; i < t->count; i++)
         {
             n->args[i] = replace_type_formal(t->args[i], p, c, os, ns);
         }
@@ -793,7 +793,7 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
         return NULL;
     }
 
-    ASTNode *new_node = ast_create(n->type);
+    ASTNode *new_node = ast_create(n->kind);
     ASTNode *old_next =
         new_node->next; // Preserve next if ast_create did something (it doesn't currently)
     *new_node = *n;
@@ -807,7 +807,7 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
 
     new_node->next = copy_ast_replacing(n->next, p, c, os, ns);
 
-    switch (n->type)
+    switch (n->kind)
     {
     case NODE_FUNCTION:
         new_node->func.name = n->func.name ? xstrdup(n->func.name) : NULL;
@@ -886,11 +886,11 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
             zfree(tmp_args);
             tmp_args = tmp2;
         }
-        new_node->func.arg_count = n->func.arg_count;
-        if (n->func.arg_count > 0 && n->func.arg_types)
+        new_node->func.count = n->func.count;
+        if (n->func.count > 0 && n->func.arg_types)
         {
-            new_node->func.arg_types = xmalloc(sizeof(Type *) * (size_t)(n->func.arg_count));
-            for (int i = 0; i < n->func.arg_count; i++)
+            new_node->func.arg_types = xmalloc(sizeof(Type *) * (size_t)(n->func.count));
+            for (int i = 0; i < n->func.count; i++)
             {
                 new_node->func.arg_types[i] =
                     replace_type_formal(n->func.arg_types[i], p, c, os, ns);
@@ -905,16 +905,15 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
         new_node->func.ret_type_info = replace_type_formal(n->func.ret_type_info, p, c, os, ns);
 
         // Deep copy default values AST if present
-        if (n->func.default_values && n->func.arg_count > 0)
+        if (n->func.default_values && n->func.count > 0)
         {
-            new_node->func.default_values =
-                xmalloc(sizeof(ASTNode *) * (size_t)(n->func.arg_count));
+            new_node->func.default_values = xmalloc(sizeof(ASTNode *) * (size_t)(n->func.count));
             // We also need to regenerate the string defaults array based on the substituted ASTs
             // This ensures potential generic params in default values (T{}) are updated (i32{})
             // in the string representation used by codegen.
-            char **new_defaults_strs = xmalloc(sizeof(char *) * (size_t)(n->func.arg_count));
+            char **new_defaults_strs = xmalloc(sizeof(char *) * (size_t)(n->func.count));
 
-            for (int i = 0; i < n->func.arg_count; i++)
+            for (int i = 0; i < n->func.count; i++)
             {
                 if (n->func.default_values[i])
                 {
@@ -1043,7 +1042,7 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
         new_node->call.callee = copy_ast_replacing(n->call.callee, p, c, os, ns);
         new_node->call.args = copy_ast_replacing(n->call.args, p, c, os, ns);
         new_node->call.arg_names = n->call.arg_names; // Share pointer (shallow copy)
-        new_node->call.arg_count = n->call.arg_count;
+        new_node->call.count = n->call.count;
         break;
     case NODE_EXPR_VAR:
     {
@@ -1138,7 +1137,7 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
         new_node->field.type = replace_type_str(n->field.type, p, c, os, ns);
         break;
     case NODE_EXPR_LITERAL:
-        if (n->literal.type_kind == LITERAL_STRING)
+        if (n->literal.kind == LITERAL_STRING)
         {
             new_node->literal.string_val =
                 n->literal.string_val ? xstrdup(n->literal.string_val) : NULL;
@@ -1171,8 +1170,8 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
 
         if ((is_ptr || is_primitive) && !n->struct_init.fields)
         {
-            new_node->type = NODE_EXPR_LITERAL;
-            new_node->literal.type_kind = LITERAL_INT;
+            new_node->kind = NODE_EXPR_LITERAL;
+            new_node->literal.kind = LITERAL_INT;
             new_node->literal.int_val = 0;
             zfree(new_name);
         }
@@ -1351,12 +1350,12 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
     case NODE_LAMBDA:
         // Use a new lambda ID for each instantiation to ensure unique C function names
         new_node->lambda.lambda_id = token_parser_ctx->lambda_counter++;
-        new_node->lambda.num_params = n->lambda.num_params;
-        if (n->lambda.num_params > 0)
+        new_node->lambda.count = n->lambda.count;
+        if (n->lambda.count > 0)
         {
-            new_node->lambda.param_names = xmalloc(sizeof(char *) * (size_t)(n->lambda.num_params));
-            new_node->lambda.param_types = xmalloc(sizeof(char *) * (size_t)(n->lambda.num_params));
-            for (int i = 0; i < n->lambda.num_params; i++)
+            new_node->lambda.param_names = xmalloc(sizeof(char *) * (size_t)(n->lambda.count));
+            new_node->lambda.param_types = xmalloc(sizeof(char *) * (size_t)(n->lambda.count));
+            for (int i = 0; i < n->lambda.count; i++)
             {
                 new_node->lambda.param_names[i] = xstrdup(n->lambda.param_names[i]);
                 new_node->lambda.param_types[i] =

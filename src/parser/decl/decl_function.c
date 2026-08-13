@@ -32,7 +32,7 @@ ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async, int is_exter
     }
 
     char *gen_param = NULL;
-    if (lexer_peek(l).type == TOK_LANGLE)
+    if (lexer_peek(l).kind == TOK_LANGLE)
     {
         lexer_next(l);
 
@@ -43,7 +43,7 @@ ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async, int is_exter
         while (1)
         {
             Token gt = lexer_next(l);
-            if (gt.type != TOK_IDENT)
+            if (gt.kind != TOK_IDENT)
             {
                 zpanic_at(gt, "Expected generic parameter name");
                 return NULL;
@@ -71,7 +71,7 @@ ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async, int is_exter
 
             zfree(s);
 
-            if (lexer_peek(l).type == TOK_COMMA)
+            if (lexer_peek(l).kind == TOK_COMMA)
             {
                 lexer_next(l);
                 continue;
@@ -79,7 +79,7 @@ ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async, int is_exter
             break;
         }
 
-        if (lexer_next(l).type != TOK_RANGLE)
+        if (lexer_next(l).kind != TOK_RANGLE)
         {
             zpanic_at(lexer_peek(l), "Expected >");
             return NULL;
@@ -123,7 +123,7 @@ ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async, int is_exter
         ret_type_obj = type_new(TYPE_C_INT);
     }
 
-    if (lexer_peek(l).type == TOK_ARROW)
+    if (lexer_peek(l).kind == TOK_ARROW)
     {
         lexer_next(l);
         ret_type_obj = parse_type_formal(ctx, l);
@@ -133,7 +133,7 @@ ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async, int is_exter
         }
         ret = type_to_string(ret_type_obj);
     }
-    else if (lexer_peek(l).type == TOK_COLON)
+    else if (lexer_peek(l).kind == TOK_COLON)
     {
         zpanic_at(lexer_peek(l), "Functions use '->' for the return type, not ':'");
         return NULL;
@@ -165,11 +165,11 @@ ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async, int is_exter
 
     ASTNode *body = NULL;
     Token next_tok = lexer_peek(l);
-    if (next_tok.type == TOK_SEMICOLON)
+    if (next_tok.kind == TOK_SEMICOLON)
     {
         lexer_next(l); // consume ;
     }
-    else if (next_tok.type == TOK_LBRACE)
+    else if (next_tok.kind == TOK_LBRACE)
     {
         // Set self context flags for .member shorthand in methods with self
         int prev_in_method = ctx->in_method_with_self;
@@ -227,7 +227,7 @@ ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async, int is_exter
 
     node->func.arg_types = arg_types;
     node->func.param_names = param_names;
-    node->func.arg_count = count;
+    node->func.count = count;
     node->func.defaults = defaults;
     node->func.default_values = default_values;
     node->func.ret_type_info = ret_type_obj;

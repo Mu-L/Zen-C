@@ -73,7 +73,7 @@ typedef struct DeclarationAttributes
     char **derived_traits;
     int derived_count;
     char *link_name;
-    char *crepr_c_type; // @crepr("C.type.name") attribute
+    char *crepr_c_type; // @crepr("C.kind.name") attribute
     char *link_path;    // @link("path/to/file.c")
 } DeclarationAttributes;
 
@@ -539,7 +539,7 @@ enum
 // Break out of a parsing loop when EOF is reached unexpectedly.
 // Place after the closing-delimiter checks in every while(1) token loop.
 #define TOK_EOF_GUARD(tok)                                                                         \
-    if ((tok).type == TOK_EOF)                                                                     \
+    if ((tok).kind == TOK_EOF)                                                                     \
     {                                                                                              \
         zpanic_at(tok, "Unexpected end of file");                                                  \
         break;                                                                                     \
@@ -890,7 +890,7 @@ char *instantiate_function_template(ParserContext *ctx, const char *name, const 
                                     const char *arg2);
 void instantiate_generic(ParserContext *ctx, const char *name, const char *arg_str,
                          const char *arg_name, Token t);
-void instantiate_generic_multi(ParserContext *ctx, const char *name, char **args, int arg_count,
+void instantiate_generic_multi(ParserContext *ctx, const char *name, char **args, int count,
                                Token t);
 
 // stmt/ declarations

@@ -31,7 +31,7 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
     // Generic Params <T> or <K, V>
     char **gps = NULL;
     int gp_count = 0;
-    if (lexer_peek(l).type == TOK_LANGLE)
+    if (lexer_peek(l).kind == TOK_LANGLE)
     {
         lexer_next(l); // eat <
         while (1)
@@ -42,16 +42,16 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
             gps[gp_count++] = token_strdup(g);
 
             Token next = lexer_peek(l);
-            if (next.type == TOK_EOF)
+            if (next.kind == TOK_EOF)
             {
                 zpanic_at(next, "Expected '>' in generic parameter list");
                 break;
             }
-            if (next.type == TOK_COMMA)
+            if (next.kind == TOK_COMMA)
             {
                 lexer_next(l); // eat ,
             }
-            else if (next.type == TOK_RANGLE)
+            else if (next.kind == TOK_RANGLE)
             {
                 lexer_next(l); // eat >
                 break;
@@ -70,7 +70,7 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
     }
 
     // Check for prototype (forward declaration)
-    if (lexer_peek(l).type == TOK_SEMICOLON)
+    if (lexer_peek(l).kind == TOK_SEMICOLON)
     {
         lexer_next(l);
         ASTNode *node = ast_create(NODE_STRUCT);
@@ -105,9 +105,9 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
             while (1)
             {
                 Token r = lexer_peek(l);
-                if (r.type == TOK_EOF || r.type == TOK_RBRACE || r.type == TOK_SEMICOLON)
+                if (r.kind == TOK_EOF || r.kind == TOK_RBRACE || r.kind == TOK_SEMICOLON)
                 {
-                    if (r.type == TOK_SEMICOLON)
+                    if (r.kind == TOK_SEMICOLON)
                     {
                         lexer_next(l);
                     }
@@ -121,24 +121,24 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
         skip_comments(l);
         Token t = lexer_peek(l);
 
-        if (t.type == TOK_RBRACE)
+        if (t.kind == TOK_RBRACE)
         {
             lexer_next(l);
             break;
         }
-        if (t.type == TOK_EOF)
+        if (t.kind == TOK_EOF)
         {
             zpanic_at(t, "Unterminated struct body — expected '}'");
             break;
         }
-        if (t.type == TOK_SEMICOLON || t.type == TOK_COMMA)
+        if (t.kind == TOK_SEMICOLON || t.kind == TOK_COMMA)
         {
             lexer_next(l);
             continue;
         }
 
         // Handle 'use' (Struct Embedding)
-        if (t.type == TOK_USE)
+        if (t.kind == TOK_USE)
         {
             lexer_next(l); // eat use
 
@@ -146,7 +146,7 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
             Token t1 = lexer_peek(l);
             Token t2 = lexer_peek2(l);
 
-            if (t1.type == TOK_IDENT && t2.type == TOK_COLON)
+            if (t1.kind == TOK_IDENT && t2.kind == TOK_COLON)
             {
                 // Named use -> Composition (Add field, don't flatten)
                 Token field_name = lexer_next(l);
@@ -201,7 +201,7 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
                 zfree(mangled);
             }
 
-            if (def && def->type == NODE_STRUCT)
+            if (def && def->kind == NODE_STRUCT)
             {
                 if (!temp_used_structs)
                 {
@@ -233,7 +233,7 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
             continue;
         }
 
-        if (t.type == TOK_IDENT)
+        if (t.kind == TOK_IDENT)
         {
             Token f_name = lexer_next(l);
             check_identifier(ctx, f_name);
@@ -253,11 +253,11 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
             f->field.bit_width = 0;
 
             // Optional bit width: name: type : 3
-            if (lexer_peek(l).type == TOK_COLON)
+            if (lexer_peek(l).kind == TOK_COLON)
             {
                 lexer_next(l); // eat :
                 Token width_tok = lexer_next(l);
-                if (width_tok.type != TOK_INT)
+                if (width_tok.kind != TOK_INT)
                 {
                     zpanic_at(width_tok, "Expected bit width integer");
                     return NULL;
@@ -275,7 +275,7 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
             }
             tl = f;
 
-            if (lexer_peek(l).type == TOK_SEMICOLON || lexer_peek(l).type == TOK_COMMA)
+            if (lexer_peek(l).kind == TOK_SEMICOLON || lexer_peek(l).kind == TOK_COMMA)
             {
                 lexer_next(l);
             }
@@ -325,7 +325,7 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
     if (gp_count > 0)
     {
         node->type_info->kind = TYPE_GENERIC;
-        node->type_info->arg_count = gp_count;
+        node->type_info->count = gp_count;
         node->type_info->args = xmalloc(sizeof(Type *) * (size_t)(gp_count));
         for (int i = 0; i < gp_count; i++)
         {
@@ -366,7 +366,7 @@ Type *parse_type_obj(ParserContext *ctx, Lexer *l)
     Type *t = parse_type_base(ctx, l);
 
     // Handle Pointers
-    while (lexer_peek(l).type == TOK_OP && lexer_peek(l).start[0] == '*')
+    while (lexer_peek(l).kind == TOK_OP && lexer_peek(l).start[0] == '*')
     {
         lexer_next(l); // eat *
         // Wrap the current type in a Pointer type

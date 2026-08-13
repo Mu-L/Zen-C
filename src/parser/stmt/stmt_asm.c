@@ -23,7 +23,7 @@ ASTNode *parse_defer(ParserContext *ctx, Lexer *l)
     ctx->cg.in_defer_block = 1;
 
     ASTNode *s;
-    if (lexer_peek(l).type == TOK_LBRACE)
+    if (lexer_peek(l).kind == TOK_LBRACE)
     {
         s = parse_block(ctx, l);
     }
@@ -51,13 +51,13 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
     lexer_next(l); // eat 'asm'
 
     int is_volatile = 0;
-    if (lexer_peek(l).type == TOK_VOLATILE)
+    if (lexer_peek(l).kind == TOK_VOLATILE)
     {
         is_volatile = 1;
         lexer_next(l);
     }
 
-    if (lexer_peek(l).type != TOK_LBRACE)
+    if (lexer_peek(l).kind != TOK_LBRACE)
     {
         zpanic_at(lexer_peek(l), "Expected { after asm");
         return NULL;
@@ -72,21 +72,21 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
     {
         Token inner_t = lexer_peek(l);
 
-        if (inner_t.type == TOK_RBRACE)
+        if (inner_t.kind == TOK_RBRACE)
         {
             break;
         }
-        if (inner_t.type == TOK_COLON)
+        if (inner_t.kind == TOK_COLON)
         {
             break;
         }
-        if (inner_t.type == TOK_EOF)
+        if (inner_t.kind == TOK_EOF)
         {
             zpanic_at(inner_t, "Unexpected end of file in asm body");
             break;
         }
 
-        if (inner_t.type == TOK_STRING)
+        if (inner_t.kind == TOK_STRING)
         {
             lexer_next(l);
             int str_len = (int)(inner_t.len) - 2;
@@ -104,7 +104,7 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
             }
             strncat(code, inner_t.start + 1, (size_t)(str_len));
         }
-        else if (inner_t.type == TOK_IDENT)
+        else if (inner_t.kind == TOK_IDENT)
         {
             lexer_next(l);
             size_t current_len = strlen(code);
@@ -121,17 +121,17 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
             }
             strncat(code, inner_t.start, inner_t.len);
 
-            while (lexer_peek(l).type != TOK_RBRACE && lexer_peek(l).type != TOK_COLON)
+            while (lexer_peek(l).kind != TOK_RBRACE && lexer_peek(l).kind != TOK_COLON)
             {
                 Token arg = lexer_peek(l);
 
-                if (arg.type == TOK_SEMICOLON)
+                if (arg.kind == TOK_SEMICOLON)
                 {
                     lexer_next(l);
                     break;
                 }
 
-                if (arg.type == TOK_LBRACE)
+                if (arg.kind == TOK_LBRACE)
                 {
                     lexer_next(l);
 
@@ -142,7 +142,7 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
                     }
                     strcat(code, "{");
 
-                    while (lexer_peek(l).type != TOK_RBRACE && lexer_peek(l).type != TOK_EOF)
+                    while (lexer_peek(l).kind != TOK_RBRACE && lexer_peek(l).kind != TOK_EOF)
                     {
                         Token sub = lexer_next(l);
                         if (strlen(code) + sub.len + 1 >= code_cap)
@@ -152,7 +152,7 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
                         }
                         strncat(code, sub.start, sub.len);
                     }
-                    if (lexer_peek(l).type == TOK_RBRACE)
+                    if (lexer_peek(l).kind == TOK_RBRACE)
                     {
                         lexer_next(l);
                         if (strlen(code) + 2 >= code_cap)
@@ -165,7 +165,7 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
                     continue;
                 }
 
-                if (arg.type == TOK_IDENT)
+                if (arg.kind == TOK_IDENT)
                 {
                     char last_char = 0;
                     size_t clen = strlen(code);
@@ -222,7 +222,7 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
     char **output_modes = NULL;
     int num_outputs = 0;
 
-    if (lexer_peek(l).type == TOK_COLON)
+    if (lexer_peek(l).kind == TOK_COLON)
     {
         lexer_next(l);
 
@@ -232,27 +232,27 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
         while (1)
         {
             Token inner_t = lexer_peek(l);
-            if (inner_t.type == TOK_COLON || inner_t.type == TOK_RBRACE)
+            if (inner_t.kind == TOK_COLON || inner_t.kind == TOK_RBRACE)
             {
                 break;
             }
-            if (inner_t.type == TOK_EOF)
+            if (inner_t.kind == TOK_EOF)
             {
                 zpanic_at(inner_t, "Unexpected end of file in asm outputs");
                 break;
             }
-            if (inner_t.type == TOK_COMMA)
+            if (inner_t.kind == TOK_COMMA)
             {
                 lexer_next(l);
                 continue;
             }
 
-            if (inner_t.type == TOK_IDENT)
+            if (inner_t.kind == TOK_IDENT)
             {
                 char *mode = token_strdup(inner_t);
                 lexer_next(l);
 
-                if (lexer_peek(l).type != TOK_LPAREN)
+                if (lexer_peek(l).kind != TOK_LPAREN)
                 {
                     zpanic_at(lexer_peek(l), "Expected ( after output mode");
                     return NULL;
@@ -260,13 +260,13 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
                 lexer_next(l);
 
                 Token var = lexer_next(l);
-                if (var.type != TOK_IDENT)
+                if (var.kind != TOK_IDENT)
                 {
                     zpanic_at(var, "Expected variable name");
                     return NULL;
                 }
 
-                if (lexer_peek(l).type != TOK_RPAREN)
+                if (lexer_peek(l).kind != TOK_RPAREN)
                 {
                     zpanic_at(lexer_peek(l), "Expected ) after variable");
                     return NULL;
@@ -292,7 +292,7 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
     char **inputs = NULL;
     int num_inputs = 0;
 
-    if (lexer_peek(l).type == TOK_COLON)
+    if (lexer_peek(l).kind == TOK_COLON)
     {
         lexer_next(l);
 
@@ -301,26 +301,26 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
         while (1)
         {
             Token inner_t = lexer_peek(l);
-            if (inner_t.type == TOK_COLON || inner_t.type == TOK_RBRACE)
+            if (inner_t.kind == TOK_COLON || inner_t.kind == TOK_RBRACE)
             {
                 break;
             }
-            if (inner_t.type == TOK_EOF)
+            if (inner_t.kind == TOK_EOF)
             {
                 zpanic_at(inner_t, "Unexpected end of file in asm inputs");
                 break;
             }
-            if (inner_t.type == TOK_COMMA)
+            if (inner_t.kind == TOK_COMMA)
             {
                 lexer_next(l);
                 continue;
             }
 
-            if (inner_t.type == TOK_IDENT && strncmp(inner_t.start, "in", 2) == 0)
+            if (inner_t.kind == TOK_IDENT && strncmp(inner_t.start, "in", 2) == 0)
             {
                 lexer_next(l);
 
-                if (lexer_peek(l).type != TOK_LPAREN)
+                if (lexer_peek(l).kind != TOK_LPAREN)
                 {
                     zpanic_at(lexer_peek(l), "Expected ( after in");
                     return NULL;
@@ -328,13 +328,13 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
                 lexer_next(l);
 
                 Token var = lexer_next(l);
-                if (var.type != TOK_IDENT)
+                if (var.kind != TOK_IDENT)
                 {
                     zpanic_at(var, "Expected variable name");
                     return NULL;
                 }
 
-                if (lexer_peek(l).type != TOK_RPAREN)
+                if (lexer_peek(l).kind != TOK_RPAREN)
                 {
                     zpanic_at(lexer_peek(l), "Expected ) after variable");
                     return NULL;
@@ -359,7 +359,7 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
     char **clobbers = NULL;
     int num_clobbers = 0;
 
-    if (lexer_peek(l).type == TOK_COLON)
+    if (lexer_peek(l).kind == TOK_COLON)
     {
         lexer_next(l);
 
@@ -368,20 +368,20 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
         while (1)
         {
             Token inner_t = lexer_peek(l);
-            if (inner_t.type == TOK_RBRACE)
+            if (inner_t.kind == TOK_RBRACE)
             {
                 break;
             }
-            if (inner_t.type == TOK_COMMA)
+            if (inner_t.kind == TOK_COMMA)
             {
                 lexer_next(l);
                 continue;
             }
 
-            if (inner_t.type == TOK_IDENT && strncmp(inner_t.start, "clobber", 7) == 0)
+            if (inner_t.kind == TOK_IDENT && strncmp(inner_t.start, "clobber", 7) == 0)
             {
                 lexer_next(l);
-                if (lexer_peek(l).type != TOK_LPAREN)
+                if (lexer_peek(l).kind != TOK_LPAREN)
                 {
                     zpanic_at(lexer_peek(l), "Expected ( after clobber");
                     return NULL;
@@ -389,13 +389,13 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
                 lexer_next(l);
 
                 Token clob = lexer_next(l);
-                if (clob.type != TOK_STRING)
+                if (clob.kind != TOK_STRING)
                 {
                     zpanic_at(clob, "Expected string literal for clobber");
                     return NULL;
                 }
 
-                if (lexer_peek(l).type != TOK_RPAREN)
+                if (lexer_peek(l).kind != TOK_RPAREN)
                 {
                     zpanic_at(lexer_peek(l), "Expected ) after clobber string");
                     return NULL;
@@ -420,7 +420,7 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l)
         }
     }
 
-    if (lexer_peek(l).type != TOK_RBRACE)
+    if (lexer_peek(l).kind != TOK_RBRACE)
     {
         zpanic_at(lexer_peek(l), "Expected } at end of asm block");
         return NULL;
