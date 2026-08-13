@@ -1363,22 +1363,22 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
             }
         }
         new_node->lambda.return_type = replace_type_str(n->lambda.return_type, p, c, os, ns);
-        new_node->lambda.num_captures = n->lambda.num_captures;
-        if (n->lambda.num_captures > 0)
+        new_node->lambda.capture_count = n->lambda.capture_count;
+        if (n->lambda.capture_count > 0)
         {
             new_node->lambda.captured_vars =
-                xmalloc(sizeof(char *) * (size_t)(n->lambda.num_captures));
+                xmalloc(sizeof(char *) * (size_t)(n->lambda.capture_count));
             new_node->lambda.captured_types =
-                xmalloc(sizeof(char *) * (size_t)(n->lambda.num_captures));
+                xmalloc(sizeof(char *) * (size_t)(n->lambda.capture_count));
             new_node->lambda.captured_types_info =
-                xmalloc(sizeof(Type *) * (size_t)(n->lambda.num_captures));
+                xmalloc(sizeof(Type *) * (size_t)(n->lambda.capture_count));
             if (n->lambda.capture_modes)
             {
                 new_node->lambda.capture_modes =
-                    xmalloc(sizeof(int) * (size_t)(n->lambda.num_captures));
+                    xmalloc(sizeof(int) * (size_t)(n->lambda.capture_count));
             }
 
-            for (int i = 0; i < n->lambda.num_captures; i++)
+            for (int i = 0; i < n->lambda.capture_count; i++)
             {
                 new_node->lambda.captured_vars[i] = xstrdup(n->lambda.captured_vars[i]);
                 new_node->lambda.captured_types[i] =
@@ -1484,9 +1484,9 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
     case NODE_ASM:
         new_node->asm_stmt.code = n->asm_stmt.code ? xstrdup(n->asm_stmt.code) : NULL;
         new_node->asm_stmt.is_volatile = n->asm_stmt.is_volatile;
-        new_node->asm_stmt.num_outputs = n->asm_stmt.num_outputs;
-        new_node->asm_stmt.num_inputs = n->asm_stmt.num_inputs;
-        new_node->asm_stmt.num_clobbers = n->asm_stmt.num_clobbers;
+        new_node->asm_stmt.output_count = n->asm_stmt.output_count;
+        new_node->asm_stmt.input_count = n->asm_stmt.input_count;
+        new_node->asm_stmt.clobber_count = n->asm_stmt.clobber_count;
         // ASM usually doesn't contain generic parameters in constraints, but we could harden here
         // if needed
         break;

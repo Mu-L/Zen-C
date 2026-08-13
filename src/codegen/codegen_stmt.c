@@ -365,8 +365,8 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node)
 
     case NODE_ASM:
     {
-        int is_extended = (node->asm_stmt.num_outputs > 0 || node->asm_stmt.num_inputs > 0 ||
-                           node->asm_stmt.num_clobbers > 0);
+        int is_extended = (node->asm_stmt.output_count > 0 || node->asm_stmt.input_count > 0 ||
+                           node->asm_stmt.clobber_count > 0);
 
         if (node->asm_stmt.is_volatile)
         {
@@ -400,7 +400,7 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node)
                     int idx = -1;
 
                     // Check outputs first
-                    for (int i = 0; i < node->asm_stmt.num_outputs; i++)
+                    for (int i = 0; i < node->asm_stmt.output_count; i++)
                     {
                         if (strcmp(node->asm_stmt.outputs[i], var_name) == 0)
                         {
@@ -412,11 +412,11 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node)
                     // Then check inputs
                     if (idx == -1)
                     {
-                        for (int i = 0; i < node->asm_stmt.num_inputs; i++)
+                        for (int i = 0; i < node->asm_stmt.input_count; i++)
                         {
                             if (strcmp(node->asm_stmt.inputs[i], var_name) == 0)
                             {
-                                idx = node->asm_stmt.num_outputs + i;
+                                idx = node->asm_stmt.output_count + i;
                                 break;
                             }
                         }
@@ -499,10 +499,10 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node)
         }
         EMIT(ctx, "\\n\"");
 
-        if (node->asm_stmt.num_outputs > 0)
+        if (node->asm_stmt.output_count > 0)
         {
             EMIT(ctx, "\n        : ");
-            for (int i = 0; i < node->asm_stmt.num_outputs; i++)
+            for (int i = 0; i < node->asm_stmt.output_count; i++)
             {
                 if (i > 0)
                 {
@@ -526,10 +526,10 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node)
             }
         }
 
-        if (node->asm_stmt.num_inputs > 0)
+        if (node->asm_stmt.input_count > 0)
         {
             EMIT(ctx, "\n        : ");
-            for (int i = 0; i < node->asm_stmt.num_inputs; i++)
+            for (int i = 0; i < node->asm_stmt.input_count; i++)
             {
                 if (i > 0)
                 {
@@ -538,15 +538,15 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node)
                 EMIT(ctx, "\"r\"(%s)", node->asm_stmt.inputs[i]);
             }
         }
-        else if (node->asm_stmt.num_outputs > 0)
+        else if (node->asm_stmt.output_count > 0)
         {
             EMIT(ctx, "\n        : ");
         }
 
-        if (node->asm_stmt.num_clobbers > 0)
+        if (node->asm_stmt.clobber_count > 0)
         {
             EMIT(ctx, "\n        : ");
-            for (int i = 0; i < node->asm_stmt.num_clobbers; i++)
+            for (int i = 0; i < node->asm_stmt.clobber_count; i++)
             {
                 if (i > 0)
                 {
@@ -945,7 +945,7 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node)
                     int captured = -1;
                     if (ctx->cg.current_lambda->lambda.captured_vars)
                     {
-                        for (int i = 0; i < ctx->cg.current_lambda->lambda.num_captures; i++)
+                        for (int i = 0; i < ctx->cg.current_lambda->lambda.capture_count; i++)
                         {
                             if (strcmp(name, ctx->cg.current_lambda->lambda.captured_vars[i]) == 0)
                             {

@@ -1252,7 +1252,7 @@ void check_expr_lambda(TypeChecker *tc, ASTNode *node, int depth)
     Type *expected = get_inner_type(node->type_info);
     if (expected && expected->kind == TYPE_FUNCTION && expected->is_raw)
     {
-        if (node->lambda.num_captures == 0)
+        if (node->lambda.capture_count == 0)
         {
             node->lambda.is_bare = 1;
         }
@@ -1267,7 +1267,7 @@ void check_expr_lambda(TypeChecker *tc, ASTNode *node, int depth)
 
     if (node->lambda.captured_vars)
     {
-        for (int i = 0; i < node->lambda.num_captures; i++)
+        for (int i = 0; i < node->lambda.capture_count; i++)
         {
             char *var_name = node->lambda.captured_vars[i];
             int mode = node->lambda.capture_modes ? node->lambda.capture_modes[i]
@@ -1314,7 +1314,7 @@ void check_expr_lambda(TypeChecker *tc, ASTNode *node, int depth)
     {
         int saved_silent = tc->pctx->silent_warnings;
         tc->pctx->silent_warnings = 1;
-        for (int i = 0; i < node->lambda.num_captures; i++)
+        for (int i = 0; i < node->lambda.capture_count; i++)
         {
             char *var_name = node->lambda.captured_vars[i];
             int mode = node->lambda.capture_modes ? node->lambda.capture_modes[i]

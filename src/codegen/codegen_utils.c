@@ -378,7 +378,7 @@ int emit_move_invalidation(ParserContext *ctx, ASTNode *node)
             char *df_prefix = "";
             if (ctx->cg.current_lambda)
             {
-                for (int i = 0; i < ctx->cg.current_lambda->lambda.num_captures; i++)
+                for (int i = 0; i < ctx->cg.current_lambda->lambda.capture_count; i++)
                 {
                     if (strcmp(node->var_ref.name,
                                ctx->cg.current_lambda->lambda.captured_vars[i]) == 0)

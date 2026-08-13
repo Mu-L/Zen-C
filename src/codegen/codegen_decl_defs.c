@@ -411,11 +411,11 @@ void emit_lambda_defs(ParserContext *ctx)
 
         infer_lambda_return_type(ctx, node);
 
-        if (node->lambda.num_captures > 0)
+        if (node->lambda.capture_count > 0)
         {
             EMIT(ctx, "struct Lambda_%d_Ctx {\n", node->lambda.lambda_id);
             emitter_indent(&ctx->cg.emitter);
-            for (int i = 0; i < node->lambda.num_captures; i++)
+            for (int i = 0; i < node->lambda.capture_count; i++)
             {
                 if (node->lambda.capture_modes && node->lambda.capture_modes[i] == 1)
                 {
@@ -468,7 +468,7 @@ void emit_lambda_defs(ParserContext *ctx)
             EMIT(ctx, "struct Lambda_%d_Ctx* ctx = (struct Lambda_%d_Ctx*)_ctx;\n",
                  node->lambda.lambda_id, node->lambda.lambda_id);
 
-            for (int i = 0; i < node->lambda.num_captures; i++)
+            for (int i = 0; i < node->lambda.capture_count; i++)
             {
                 if (node->lambda.capture_modes && node->lambda.capture_modes[i] == 0)
                 {
@@ -551,7 +551,7 @@ void emit_lambda_defs(ParserContext *ctx)
         EMIT(ctx, ") {\n");
         emitter_indent(&ctx->cg.emitter);
 
-        if (node->lambda.num_captures > 0)
+        if (node->lambda.capture_count > 0)
         {
             EMIT(ctx, "struct Lambda_%d_Ctx* ctx = (struct Lambda_%d_Ctx*)_ctx;\n",
                  node->lambda.lambda_id, node->lambda.lambda_id);

@@ -755,7 +755,7 @@ void check_node(TypeChecker *tc, ASTNode *node, int depth)
         }
         break;
     case NODE_ASM:
-        for (int i = 0; i < node->asm_stmt.num_outputs; i++)
+        for (int i = 0; i < node->asm_stmt.output_count; i++)
         {
             ZenSymbol *sym = tc_lookup(tc, node->asm_stmt.outputs[i]);
             if (!sym)
@@ -783,7 +783,7 @@ void check_node(TypeChecker *tc, ASTNode *node, int depth)
                 }
             }
         }
-        for (int i = 0; i < node->asm_stmt.num_inputs; i++)
+        for (int i = 0; i < node->asm_stmt.input_count; i++)
         {
             ZenSymbol *sym = tc_lookup(tc, node->asm_stmt.inputs[i]);
             if (!sym)

@@ -395,20 +395,20 @@ void analyze_lambda_captures(ParserContext *ctx, ASTNode *lambda)
     char **capture_types = xmalloc(sizeof(char *) * 32);
     Type **captured_types_info = xmalloc(sizeof(Type *) * 32);
     int *capture_modes = xmalloc(sizeof(int) * 32);
-    int num_captures = 0;
+    int capture_count = 0;
 
-    for (int i = 0; i < lambda->lambda.num_explicit_captures; i++)
+    for (int i = 0; i < lambda->lambda.explicit_capture_count; i++)
     {
         const char *var_name = lambda->lambda.explicit_captures[i];
-        if (!is_in_list(var_name, captures, num_captures))
+        if (!is_in_list(var_name, captures, capture_count))
         {
-            captures[num_captures] = xstrdup(var_name);
-            capture_modes[num_captures] = lambda->lambda.explicit_capture_modes[i];
+            captures[capture_count] = xstrdup(var_name);
+            capture_modes[capture_count] = lambda->lambda.explicit_capture_modes[i];
 
             Type *t = find_symbol_type_info(ctx, var_name);
-            captured_types_info[num_captures] = t;
-            capture_types[num_captures] = t ? type_to_string(t) : xstrdup("int");
-            num_captures++;
+            captured_types_info[capture_count] = t;
+            capture_types[capture_count] = t ? type_to_string(t) : xstrdup("int");
+            capture_count++;
         }
     }
 
@@ -426,7 +426,7 @@ void analyze_lambda_captures(ParserContext *ctx, ASTNode *lambda)
             continue;
         }
 
-        if (is_in_list(var_name, captures, num_captures))
+        if (is_in_list(var_name, captures, capture_count))
         {
             continue;
         }
@@ -492,7 +492,7 @@ void analyze_lambda_captures(ParserContext *ctx, ASTNode *lambda)
         }
 
         int found = 0;
-        for (int j = 0; j < num_captures; j++)
+        for (int j = 0; j < capture_count; j++)
         {
             if (strcmp(var_name, captures[j]) == 0)
             {
@@ -505,27 +505,27 @@ void analyze_lambda_captures(ParserContext *ctx, ASTNode *lambda)
             continue;
         }
 
-        captures[num_captures] = xstrdup(var_name);
-        capture_modes[num_captures] = lambda->lambda.default_capture_mode;
+        captures[capture_count] = xstrdup(var_name);
+        capture_modes[capture_count] = lambda->lambda.default_capture_mode;
 
         Type *t = find_symbol_type_info(ctx, var_name);
-        captured_types_info[num_captures] = t;
+        captured_types_info[capture_count] = t;
         if (t)
         {
-            capture_types[num_captures] = type_to_string(t);
+            capture_types[capture_count] = type_to_string(t);
         }
         else
         {
-            capture_types[num_captures] = xstrdup("int");
+            capture_types[capture_count] = xstrdup("int");
         }
-        num_captures++;
+        capture_count++;
     }
 
     lambda->lambda.captured_vars = captures;
     lambda->lambda.captured_types = capture_types;
     lambda->lambda.captured_types_info = captured_types_info;
     lambda->lambda.capture_modes = capture_modes;
-    lambda->lambda.num_captures = num_captures;
+    lambda->lambda.capture_count = capture_count;
 
     if (local_decls)
     {

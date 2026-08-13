@@ -617,9 +617,9 @@ struct ASTNode
             char **output_modes;
             char **inputs;
             char **clobbers;
-            int num_outputs;
-            int num_inputs;
-            int num_clobbers;
+            int output_count;
+            int input_count;
+            int clobber_count;
         } asm_stmt;
 
         struct
@@ -641,12 +641,12 @@ struct ASTNode
             char **captured_vars;
             char **captured_types;
             Type **captured_types_info;
-            int num_captures;
+            int capture_count;
             int *capture_modes;
             int default_capture_mode;
             char **explicit_captures;
             int *explicit_capture_modes;
-            int num_explicit_captures;
+            int explicit_capture_count;
         } lambda;
 
         struct

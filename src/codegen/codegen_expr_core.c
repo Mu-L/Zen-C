@@ -154,7 +154,7 @@ static void codegen_var_expr(ParserContext *ctx, ASTNode *node)
 {
     if (ctx->cg.current_lambda)
     {
-        for (int i = 0; i < ctx->cg.current_lambda->lambda.num_captures; i++)
+        for (int i = 0; i < ctx->cg.current_lambda->lambda.capture_count; i++)
         {
             if (strcmp(node->var_ref.name, ctx->cg.current_lambda->lambda.captured_vars[i]) == 0)
             {
@@ -307,7 +307,7 @@ static void codegen_lambda_expr(ParserContext *ctx, ASTNode *node)
         return;
     }
 
-    if (node->lambda.num_captures > 0)
+    if (node->lambda.capture_count > 0)
     {
         int lid = node->lambda.lambda_id;
         if (ctx->config->use_cpp)
@@ -323,14 +323,14 @@ static void codegen_lambda_expr(ParserContext *ctx, ASTNode *node)
                  "({ struct Lambda_%d_Ctx *_z_ctx_%d = malloc(sizeof(struct Lambda_%d_Ctx));\n",
                  lid, lid, lid);
         }
-        for (int i = 0; i < node->lambda.num_captures; i++)
+        for (int i = 0; i < node->lambda.capture_count; i++)
         {
             if (node->lambda.capture_modes && node->lambda.capture_modes[i] == 1)
             {
                 int found = 0;
                 if (ctx->cg.current_lambda)
                 {
-                    for (int k = 0; k < ctx->cg.current_lambda->lambda.num_captures; k++)
+                    for (int k = 0; k < ctx->cg.current_lambda->lambda.capture_count; k++)
                     {
                         if (strcmp(node->lambda.captured_vars[i],
                                    ctx->cg.current_lambda->lambda.captured_vars[k]) == 0)
