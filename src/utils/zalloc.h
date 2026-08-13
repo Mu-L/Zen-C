@@ -70,13 +70,21 @@ static inline void *libc_realloc(void *ptr, size_t size)
  * AddressSanitizer, hand each allocation a poisoned 64-byte redzone so an
  * intra-arena overflow is reported at the exact write site. This is compiled
  * out (ZARENA_RZ = 0) in non-sanitizer builds. */
-#if defined(__SANITIZE_ADDRESS__) || (defined(__has_feature) && __has_feature(address_sanitizer))
+#if defined(__SANITIZE_ADDRESS__)
 #define ZARENA_ASAN_REDZONE 1
+#elif defined(__has_feature)
+#if __has_feature(address_sanitizer)
+#define ZARENA_ASAN_REDZONE 1
+#endif
+#endif
+#ifndef ZARENA_ASAN_REDZONE
+#define ZARENA_ASAN_REDZONE 0
+#endif
+#if ZARENA_ASAN_REDZONE
 #define ZARENA_RZ 64
 void __asan_poison_memory_region(void const volatile *addr, size_t size);
 void __asan_unpoison_memory_region(void const volatile *addr, size_t size);
 #else
-#define ZARENA_ASAN_REDZONE 0
 #define ZARENA_RZ 0
 #endif
 
