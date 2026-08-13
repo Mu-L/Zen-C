@@ -397,8 +397,8 @@ char *replace_type_str(const char *src, const char *param, const char *concrete,
     return final_res;
 }
 
-ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char *os,
-                            const char *ns);
+ASTNode *copy_ast_replacing(ParserContext *ctx, ASTNode *n, const char *p, const char *c,
+                            const char *os, const char *ns);
 
 Type *type_from_string_helper(const char *c)
 {
@@ -785,8 +785,8 @@ Type *replace_type_formal(Type *t, const char *p, const char *c, const char *os,
     return n;
 }
 
-ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char *os,
-                            const char *ns)
+ASTNode *copy_ast_replacing(ParserContext *ctx, ASTNode *n, const char *p, const char *c,
+                            const char *os, const char *ns)
 {
     if (!n)
     {
@@ -805,7 +805,7 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
     }
     new_node->type_info = replace_type_formal(n->type_info, p, c, os, ns);
 
-    new_node->next = copy_ast_replacing(n->next, p, c, os, ns);
+    new_node->next = copy_ast_replacing(ctx, n->next, p, c, os, ns);
 
     switch (n->kind)
     {
@@ -918,7 +918,7 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
                 if (n->func.default_values[i])
                 {
                     new_node->func.default_values[i] =
-                        copy_ast_replacing(n->func.default_values[i], p, c, os, ns);
+                        copy_ast_replacing(ctx, n->func.default_values[i], p, c, os, ns);
                     new_defaults_strs[i] = ast_to_string(new_node->func.default_values[i]);
                 }
                 else
@@ -936,10 +936,10 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
             new_node->func.defaults = new_defaults_strs;
         }
 
-        new_node->func.body = copy_ast_replacing(n->func.body, p, c, os, ns);
+        new_node->func.body = copy_ast_replacing(ctx, n->func.body, p, c, os, ns);
         break;
     case NODE_BLOCK:
-        new_node->block.statements = copy_ast_replacing(n->block.statements, p, c, os, ns);
+        new_node->block.statements = copy_ast_replacing(ctx, n->block.statements, p, c, os, ns);
         break;
     case NODE_RAW_STMT:
     {
@@ -1024,23 +1024,23 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
         new_node->var_decl.name = n->var_decl.name ? xstrdup(n->var_decl.name) : NULL;
         new_node->var_decl.type_str = replace_type_str(n->var_decl.type_str, p, c, os, ns);
         new_node->var_decl.type_info = replace_type_formal(n->var_decl.type_info, p, c, os, ns);
-        new_node->var_decl.init_expr = copy_ast_replacing(n->var_decl.init_expr, p, c, os, ns);
+        new_node->var_decl.init_expr = copy_ast_replacing(ctx, n->var_decl.init_expr, p, c, os, ns);
         break;
     case NODE_RETURN:
-        new_node->ret.value = copy_ast_replacing(n->ret.value, p, c, os, ns);
+        new_node->ret.value = copy_ast_replacing(ctx, n->ret.value, p, c, os, ns);
         break;
     case NODE_EXPR_BINARY:
-        new_node->binary.left = copy_ast_replacing(n->binary.left, p, c, os, ns);
-        new_node->binary.right = copy_ast_replacing(n->binary.right, p, c, os, ns);
+        new_node->binary.left = copy_ast_replacing(ctx, n->binary.left, p, c, os, ns);
+        new_node->binary.right = copy_ast_replacing(ctx, n->binary.right, p, c, os, ns);
         new_node->binary.op = n->binary.op ? xstrdup(n->binary.op) : NULL;
         break;
     case NODE_EXPR_UNARY:
         new_node->unary.op = n->unary.op ? xstrdup(n->unary.op) : NULL;
-        new_node->unary.operand = copy_ast_replacing(n->unary.operand, p, c, os, ns);
+        new_node->unary.operand = copy_ast_replacing(ctx, n->unary.operand, p, c, os, ns);
         break;
     case NODE_EXPR_CALL:
-        new_node->call.callee = copy_ast_replacing(n->call.callee, p, c, os, ns);
-        new_node->call.args = copy_ast_replacing(n->call.args, p, c, os, ns);
+        new_node->call.callee = copy_ast_replacing(ctx, n->call.callee, p, c, os, ns);
+        new_node->call.args = copy_ast_replacing(ctx, n->call.args, p, c, os, ns);
         new_node->call.arg_names = n->call.arg_names; // Share pointer (shallow copy)
         new_node->call.count = n->call.count;
         break;
@@ -1144,16 +1144,16 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
         }
         break;
     case NODE_EXPR_MEMBER:
-        new_node->member.target = copy_ast_replacing(n->member.target, p, c, os, ns);
+        new_node->member.target = copy_ast_replacing(ctx, n->member.target, p, c, os, ns);
         new_node->member.field = n->member.field ? xstrdup(n->member.field) : NULL;
         break;
     case NODE_EXPR_INDEX:
-        new_node->index.array = copy_ast_replacing(n->index.array, p, c, os, ns);
-        new_node->index.index = copy_ast_replacing(n->index.index, p, c, os, ns);
+        new_node->index.array = copy_ast_replacing(ctx, n->index.array, p, c, os, ns);
+        new_node->index.index = copy_ast_replacing(ctx, n->index.index, p, c, os, ns);
         break;
     case NODE_EXPR_CAST:
         new_node->cast.target_type = replace_type_str(n->cast.target_type, p, c, os, ns);
-        new_node->cast.expr = copy_ast_replacing(n->cast.expr, p, c, os, ns);
+        new_node->cast.expr = copy_ast_replacing(ctx, n->cast.expr, p, c, os, ns);
         break;
     case NODE_EXPR_STRUCT_INIT:
     {
@@ -1181,7 +1181,7 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
             ASTNode *h = NULL, *t = NULL, *curr = n->struct_init.fields;
             while (curr)
             {
-                ASTNode *cp = copy_ast_replacing(curr, p, c, os, ns);
+                ASTNode *cp = copy_ast_replacing(ctx, curr, p, c, os, ns);
                 cp->next = NULL;
                 if (!h)
                 {
@@ -1199,24 +1199,25 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
         break;
     }
     case NODE_IF:
-        new_node->if_stmt.condition = copy_ast_replacing(n->if_stmt.condition, p, c, os, ns);
-        new_node->if_stmt.then_body = copy_ast_replacing(n->if_stmt.then_body, p, c, os, ns);
-        new_node->if_stmt.else_body = copy_ast_replacing(n->if_stmt.else_body, p, c, os, ns);
+        new_node->if_stmt.condition = copy_ast_replacing(ctx, n->if_stmt.condition, p, c, os, ns);
+        new_node->if_stmt.then_body = copy_ast_replacing(ctx, n->if_stmt.then_body, p, c, os, ns);
+        new_node->if_stmt.else_body = copy_ast_replacing(ctx, n->if_stmt.else_body, p, c, os, ns);
         break;
     case NODE_WHILE:
-        new_node->while_stmt.condition = copy_ast_replacing(n->while_stmt.condition, p, c, os, ns);
-        new_node->while_stmt.body = copy_ast_replacing(n->while_stmt.body, p, c, os, ns);
+        new_node->while_stmt.condition =
+            copy_ast_replacing(ctx, n->while_stmt.condition, p, c, os, ns);
+        new_node->while_stmt.body = copy_ast_replacing(ctx, n->while_stmt.body, p, c, os, ns);
         break;
     case NODE_FOR:
-        new_node->for_stmt.init = copy_ast_replacing(n->for_stmt.init, p, c, os, ns);
-        new_node->for_stmt.condition = copy_ast_replacing(n->for_stmt.condition, p, c, os, ns);
-        new_node->for_stmt.step = copy_ast_replacing(n->for_stmt.step, p, c, os, ns);
-        new_node->for_stmt.body = copy_ast_replacing(n->for_stmt.body, p, c, os, ns);
+        new_node->for_stmt.init = copy_ast_replacing(ctx, n->for_stmt.init, p, c, os, ns);
+        new_node->for_stmt.condition = copy_ast_replacing(ctx, n->for_stmt.condition, p, c, os, ns);
+        new_node->for_stmt.step = copy_ast_replacing(ctx, n->for_stmt.step, p, c, os, ns);
+        new_node->for_stmt.body = copy_ast_replacing(ctx, n->for_stmt.body, p, c, os, ns);
         break;
     case NODE_FOR_RANGE:
-        new_node->for_range.start = copy_ast_replacing(n->for_range.start, p, c, os, ns);
-        new_node->for_range.end = copy_ast_replacing(n->for_range.end, p, c, os, ns);
-        new_node->for_range.body = copy_ast_replacing(n->for_range.body, p, c, os, ns);
+        new_node->for_range.start = copy_ast_replacing(ctx, n->for_range.start, p, c, os, ns);
+        new_node->for_range.end = copy_ast_replacing(ctx, n->for_range.end, p, c, os, ns);
+        new_node->for_range.body = copy_ast_replacing(ctx, n->for_range.body, p, c, os, ns);
         break;
 
     case NODE_MATCH_CASE:
@@ -1318,28 +1319,28 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
         new_node->match_case.is_default = n->match_case.is_default;
         new_node->match_case.is_destructuring = n->match_case.is_destructuring;
 
-        new_node->match_case.body = copy_ast_replacing(n->match_case.body, p, c, os, ns);
+        new_node->match_case.body = copy_ast_replacing(ctx, n->match_case.body, p, c, os, ns);
         if (n->match_case.guard)
         {
-            new_node->match_case.guard = copy_ast_replacing(n->match_case.guard, p, c, os, ns);
+            new_node->match_case.guard = copy_ast_replacing(ctx, n->match_case.guard, p, c, os, ns);
         }
         break;
 
     case NODE_IMPL:
         new_node->impl.struct_name = replace_type_str(n->impl.struct_name, p, c, os, ns);
-        new_node->impl.methods = copy_ast_replacing(n->impl.methods, p, c, os, ns);
+        new_node->impl.methods = copy_ast_replacing(ctx, n->impl.methods, p, c, os, ns);
         break;
     case NODE_IMPL_TRAIT:
         new_node->impl_trait.trait_name =
             n->impl_trait.trait_name ? xstrdup(n->impl_trait.trait_name) : NULL;
         new_node->impl_trait.target_type =
             replace_type_str(n->impl_trait.target_type, p, c, os, ns);
-        new_node->impl_trait.methods = copy_ast_replacing(n->impl_trait.methods, p, c, os, ns);
+        new_node->impl_trait.methods = copy_ast_replacing(ctx, n->impl_trait.methods, p, c, os, ns);
         break;
     case NODE_TYPEOF:
     case NODE_EXPR_SIZEOF:
         new_node->size_of.target_type = replace_type_str(n->size_of.target_type, p, c, os, ns);
-        new_node->size_of.expr = copy_ast_replacing(n->size_of.expr, p, c, os, ns);
+        new_node->size_of.expr = copy_ast_replacing(ctx, n->size_of.expr, p, c, os, ns);
         new_node->size_of.is_type = n->size_of.is_type;
         if (n->size_of.target_type_info)
         {
@@ -1349,7 +1350,7 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
         break;
     case NODE_LAMBDA:
         // Use a new lambda ID for each instantiation to ensure unique C function names
-        new_node->lambda.lambda_id = token_parser_ctx->lambda_counter++;
+        new_node->lambda.lambda_id = ctx->lambda_counter++;
         new_node->lambda.count = n->lambda.count;
         if (n->lambda.count > 0)
         {
@@ -1391,9 +1392,9 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
                 }
             }
         }
-        new_node->lambda.body = copy_ast_replacing(n->lambda.body, p, c, os, ns);
+        new_node->lambda.body = copy_ast_replacing(ctx, n->lambda.body, p, c, os, ns);
         new_node->lambda.is_bare = n->lambda.is_bare;
-        register_lambda(token_parser_ctx, new_node);
+        register_lambda(ctx, new_node);
         break;
     case NODE_DESTRUCT_VAR:
         if (n->destruct.count > 0)
@@ -1423,29 +1424,31 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
                 }
             }
         }
-        new_node->destruct.init_expr = copy_ast_replacing(n->destruct.init_expr, p, c, os, ns);
+        new_node->destruct.init_expr = copy_ast_replacing(ctx, n->destruct.init_expr, p, c, os, ns);
         new_node->destruct.struct_name = replace_type_str(n->destruct.struct_name, p, c, os, ns);
-        new_node->destruct.else_block = copy_ast_replacing(n->destruct.else_block, p, c, os, ns);
+        new_node->destruct.else_block =
+            copy_ast_replacing(ctx, n->destruct.else_block, p, c, os, ns);
         break;
     case NODE_MATCH:
-        new_node->match_stmt.expr = copy_ast_replacing(n->match_stmt.expr, p, c, os, ns);
-        new_node->match_stmt.cases = copy_ast_replacing(n->match_stmt.cases, p, c, os, ns);
+        new_node->match_stmt.expr = copy_ast_replacing(ctx, n->match_stmt.expr, p, c, os, ns);
+        new_node->match_stmt.cases = copy_ast_replacing(ctx, n->match_stmt.cases, p, c, os, ns);
         break;
     case NODE_LOOP:
-        new_node->loop_stmt.body = copy_ast_replacing(n->loop_stmt.body, p, c, os, ns);
+        new_node->loop_stmt.body = copy_ast_replacing(ctx, n->loop_stmt.body, p, c, os, ns);
         break;
     case NODE_REPEAT:
         new_node->repeat_stmt.count = n->repeat_stmt.count ? xstrdup(n->repeat_stmt.count) : NULL;
-        new_node->repeat_stmt.body = copy_ast_replacing(n->repeat_stmt.body, p, c, os, ns);
+        new_node->repeat_stmt.body = copy_ast_replacing(ctx, n->repeat_stmt.body, p, c, os, ns);
         break;
     case NODE_UNLESS:
         new_node->unless_stmt.condition =
-            copy_ast_replacing(n->unless_stmt.condition, p, c, os, ns);
-        new_node->unless_stmt.body = copy_ast_replacing(n->unless_stmt.body, p, c, os, ns);
+            copy_ast_replacing(ctx, n->unless_stmt.condition, p, c, os, ns);
+        new_node->unless_stmt.body = copy_ast_replacing(ctx, n->unless_stmt.body, p, c, os, ns);
         break;
     case NODE_GUARD:
-        new_node->guard_stmt.condition = copy_ast_replacing(n->guard_stmt.condition, p, c, os, ns);
-        new_node->guard_stmt.body = copy_ast_replacing(n->guard_stmt.body, p, c, os, ns);
+        new_node->guard_stmt.condition =
+            copy_ast_replacing(ctx, n->guard_stmt.condition, p, c, os, ns);
+        new_node->guard_stmt.body = copy_ast_replacing(ctx, n->guard_stmt.body, p, c, os, ns);
         break;
     case NODE_BREAK:
     case NODE_CONTINUE:
@@ -1453,33 +1456,33 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
         break;
     case NODE_EXPR_ARRAY_LITERAL:
         new_node->array_literal.elements =
-            copy_ast_replacing(n->array_literal.elements, p, c, os, ns);
+            copy_ast_replacing(ctx, n->array_literal.elements, p, c, os, ns);
         new_node->array_literal.count = n->array_literal.count;
         break;
     case NODE_EXPR_TUPLE_LITERAL:
         new_node->tuple_literal.elements =
-            copy_ast_replacing(n->tuple_literal.elements, p, c, os, ns);
+            copy_ast_replacing(ctx, n->tuple_literal.elements, p, c, os, ns);
         new_node->tuple_literal.count = n->tuple_literal.count;
         break;
     case NODE_EXPR_SLICE:
-        new_node->slice.array = copy_ast_replacing(n->slice.array, p, c, os, ns);
-        new_node->slice.start = copy_ast_replacing(n->slice.start, p, c, os, ns);
-        new_node->slice.end = copy_ast_replacing(n->slice.end, p, c, os, ns);
+        new_node->slice.array = copy_ast_replacing(ctx, n->slice.array, p, c, os, ns);
+        new_node->slice.start = copy_ast_replacing(ctx, n->slice.start, p, c, os, ns);
+        new_node->slice.end = copy_ast_replacing(ctx, n->slice.end, p, c, os, ns);
         break;
     case NODE_EXPECT:
     case NODE_ASSERT:
         new_node->assert_stmt.condition =
-            copy_ast_replacing(n->assert_stmt.condition, p, c, os, ns);
+            copy_ast_replacing(ctx, n->assert_stmt.condition, p, c, os, ns);
         new_node->assert_stmt.message =
             n->assert_stmt.message ? xstrdup(n->assert_stmt.message) : NULL;
         break;
     case NODE_DEFER:
-        new_node->defer_stmt.stmt = copy_ast_replacing(n->defer_stmt.stmt, p, c, os, ns);
+        new_node->defer_stmt.stmt = copy_ast_replacing(ctx, n->defer_stmt.stmt, p, c, os, ns);
         break;
     case NODE_TERNARY:
-        new_node->ternary.cond = copy_ast_replacing(n->ternary.cond, p, c, os, ns);
-        new_node->ternary.true_expr = copy_ast_replacing(n->ternary.true_expr, p, c, os, ns);
-        new_node->ternary.false_expr = copy_ast_replacing(n->ternary.false_expr, p, c, os, ns);
+        new_node->ternary.cond = copy_ast_replacing(ctx, n->ternary.cond, p, c, os, ns);
+        new_node->ternary.true_expr = copy_ast_replacing(ctx, n->ternary.true_expr, p, c, os, ns);
+        new_node->ternary.false_expr = copy_ast_replacing(ctx, n->ternary.false_expr, p, c, os, ns);
         break;
     case NODE_ASM:
         new_node->asm_stmt.code = n->asm_stmt.code ? xstrdup(n->asm_stmt.code) : NULL;
@@ -1499,11 +1502,12 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
             n->label_stmt.label_name ? xstrdup(n->label_stmt.label_name) : NULL;
         break;
     case NODE_DO_WHILE:
-        new_node->while_stmt.condition = copy_ast_replacing(n->while_stmt.condition, p, c, os, ns);
-        new_node->while_stmt.body = copy_ast_replacing(n->while_stmt.body, p, c, os, ns);
+        new_node->while_stmt.condition =
+            copy_ast_replacing(ctx, n->while_stmt.condition, p, c, os, ns);
+        new_node->while_stmt.body = copy_ast_replacing(ctx, n->while_stmt.body, p, c, os, ns);
         break;
     case NODE_TRY:
-        new_node->try_stmt.expr = copy_ast_replacing(n->try_stmt.expr, p, c, os, ns);
+        new_node->try_stmt.expr = copy_ast_replacing(ctx, n->try_stmt.expr, p, c, os, ns);
         break;
     case NODE_REFLECTION:
         new_node->reflection.kind = n->reflection.kind;
@@ -1511,30 +1515,30 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
             replace_type_formal(n->reflection.target_type, p, c, os, ns);
         break;
     case NODE_REPL_PRINT:
-        new_node->repl_print.expr = copy_ast_replacing(n->repl_print.expr, p, c, os, ns);
+        new_node->repl_print.expr = copy_ast_replacing(ctx, n->repl_print.expr, p, c, os, ns);
         break;
     case NODE_CUDA_LAUNCH:
-        new_node->cuda_launch.call = copy_ast_replacing(n->cuda_launch.call, p, c, os, ns);
-        new_node->cuda_launch.grid = copy_ast_replacing(n->cuda_launch.grid, p, c, os, ns);
-        new_node->cuda_launch.block = copy_ast_replacing(n->cuda_launch.block, p, c, os, ns);
+        new_node->cuda_launch.call = copy_ast_replacing(ctx, n->cuda_launch.call, p, c, os, ns);
+        new_node->cuda_launch.grid = copy_ast_replacing(ctx, n->cuda_launch.grid, p, c, os, ns);
+        new_node->cuda_launch.block = copy_ast_replacing(ctx, n->cuda_launch.block, p, c, os, ns);
         new_node->cuda_launch.shared_mem =
-            copy_ast_replacing(n->cuda_launch.shared_mem, p, c, os, ns);
-        new_node->cuda_launch.stream = copy_ast_replacing(n->cuda_launch.stream, p, c, os, ns);
+            copy_ast_replacing(ctx, n->cuda_launch.shared_mem, p, c, os, ns);
+        new_node->cuda_launch.stream = copy_ast_replacing(ctx, n->cuda_launch.stream, p, c, os, ns);
         break;
     case NODE_VA_START:
-        new_node->va_start_args.ap = copy_ast_replacing(n->va_start_args.ap, p, c, os, ns);
+        new_node->va_start_args.ap = copy_ast_replacing(ctx, n->va_start_args.ap, p, c, os, ns);
         new_node->va_start_args.last_arg =
-            copy_ast_replacing(n->va_start_args.last_arg, p, c, os, ns);
+            copy_ast_replacing(ctx, n->va_start_args.last_arg, p, c, os, ns);
         break;
     case NODE_VA_END:
-        new_node->va_end_args.ap = copy_ast_replacing(n->va_end_args.ap, p, c, os, ns);
+        new_node->va_end_args.ap = copy_ast_replacing(ctx, n->va_end_args.ap, p, c, os, ns);
         break;
     case NODE_VA_COPY:
-        new_node->va_copy_args.dest = copy_ast_replacing(n->va_copy_args.dest, p, c, os, ns);
-        new_node->va_copy_args.src = copy_ast_replacing(n->va_copy_args.src, p, c, os, ns);
+        new_node->va_copy_args.dest = copy_ast_replacing(ctx, n->va_copy_args.dest, p, c, os, ns);
+        new_node->va_copy_args.src = copy_ast_replacing(ctx, n->va_copy_args.src, p, c, os, ns);
         break;
     case NODE_VA_ARG:
-        new_node->va_arg_val.ap = copy_ast_replacing(n->va_arg_val.ap, p, c, os, ns);
+        new_node->va_arg_val.ap = copy_ast_replacing(ctx, n->va_arg_val.ap, p, c, os, ns);
         new_node->va_arg_val.type_info = replace_type_formal(n->va_arg_val.type_info, p, c, os, ns);
         break;
     default:

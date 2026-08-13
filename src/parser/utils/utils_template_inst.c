@@ -14,8 +14,8 @@
 int is_unmangle_primitive(const char *base);
 char *unmangle_ptr_suffix(const char *s);
 Type *replace_type_formal(Type *t, const char *p, const char *c, const char *os, const char *ns);
-ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char *os,
-                            const char *ns);
+ASTNode *copy_ast_replacing(ParserContext *ctx, ASTNode *n, const char *p, const char *c,
+                            const char *os, const char *ns);
 
 // Helper function to recursively scan AST for sizeof types AND generic calls to trigger
 // instantiation
@@ -531,7 +531,8 @@ char *instantiate_function_template(ParserContext *ctx, const char *name, const 
         zfree(param_suffix);
     }
 
-    ASTNode *new_fn = copy_ast_replacing(tpl->func_node, tpl->generic_param, subst_arg, NULL, NULL);
+    ASTNode *new_fn =
+        copy_ast_replacing(ctx, tpl->func_node, tpl->generic_param, subst_arg, NULL, NULL);
     if (!new_fn || new_fn->kind != NODE_FUNCTION)
     {
         return NULL;
@@ -717,7 +718,7 @@ void instantiate_methods(ParserContext *ctx, GenericImplTemplate *it,
     char *raw = (char *)(unmangled_arg ? unmangled_arg : arg);
     char *subst_arg = unmangle_ptr_suffix(raw);
 
-    ASTNode *new_impl = copy_ast_replacing(it->impl_node, it->generic_param, subst_arg,
+    ASTNode *new_impl = copy_ast_replacing(ctx, it->impl_node, it->generic_param, subst_arg,
                                            it->struct_name, mangled_struct_name);
 
     // Also replace mangled template name (both List__G and List_G)
@@ -726,7 +727,8 @@ void instantiate_methods(ParserContext *ctx, GenericImplTemplate *it,
         char *sanitized = sanitize_mangled_name(it->struct_name);
         if (strcmp(sanitized, it->struct_name) != 0)
         {
-            ASTNode *tmp = copy_ast_replacing(new_impl, NULL, NULL, sanitized, mangled_struct_name);
+            ASTNode *tmp =
+                copy_ast_replacing(ctx, new_impl, NULL, NULL, sanitized, mangled_struct_name);
             new_impl = tmp;
         }
 
@@ -740,7 +742,7 @@ void instantiate_methods(ParserContext *ctx, GenericImplTemplate *it,
         if (strcmp(old_sanitized, it->struct_name) != 0 && strcmp(old_sanitized, sanitized) != 0)
         {
             ASTNode *tmp =
-                copy_ast_replacing(new_impl, NULL, NULL, old_sanitized, mangled_struct_name);
+                copy_ast_replacing(ctx, new_impl, NULL, NULL, old_sanitized, mangled_struct_name);
             new_impl = tmp;
         }
 
