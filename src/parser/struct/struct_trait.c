@@ -16,7 +16,7 @@ ASTNode *parse_trait(ParserContext *ctx, Lexer *l)
 {
     lexer_next(l); // eat trait
     Token n = lexer_next(l);
-    check_identifier(ctx, n);
+    check_identifier(n);
     if (n.kind != TOK_IDENT)
     {
         zpanic_at(n, "Expected trait name");
@@ -36,7 +36,7 @@ ASTNode *parse_trait(ParserContext *ctx, Lexer *l)
         while (1)
         {
             Token p = lexer_next(l);
-            check_identifier(ctx, p);
+            check_identifier(p);
             if (p.kind != TOK_IDENT)
             {
                 zpanic_at(p, "Expected generic parameter name");
@@ -111,7 +111,7 @@ ASTNode *parse_trait(ParserContext *ctx, Lexer *l)
         }
 
         Token mn = lexer_next(l);
-        check_identifier(ctx, mn);
+        check_identifier(mn);
         char *mname = xmalloc(mn.len + 1);
         strncpy(mname, mn.start, mn.len);
         mname[mn.len] = 0;

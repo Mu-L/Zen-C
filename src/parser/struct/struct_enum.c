@@ -16,14 +16,14 @@ ASTNode *parse_enum(ParserContext *ctx, Lexer *l, const char *link_name, int is_
 {
     lexer_next(l);
     Token n = lexer_next(l);
-    check_identifier(ctx, n);
+    check_identifier(n);
 
     char *gp = NULL;
     if (lexer_peek(l).kind == TOK_LANGLE)
     {
         lexer_next(l); // eat <
         Token g = lexer_next(l);
-        check_identifier(ctx, g);
+        check_identifier(g);
         gp = token_strdup(g);
         lexer_next(l); // eat >
         register_generic(ctx, gp);
@@ -58,7 +58,7 @@ ASTNode *parse_enum(ParserContext *ctx, Lexer *l, const char *link_name, int is_
         if (t.kind == TOK_IDENT)
         {
             Token vt = lexer_next(l);
-            check_identifier(ctx, vt);
+            check_identifier(vt);
             char *vname = token_strdup(vt);
 
             Type *payload = NULL;

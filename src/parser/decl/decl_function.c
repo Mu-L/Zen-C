@@ -17,7 +17,7 @@ ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async, int is_exter
 {
     lexer_next(l);
     Token name_tok = lexer_next(l);
-    check_identifier(ctx, name_tok);
+    check_identifier(name_tok);
     char *name = token_strdup(name_tok);
 
     if (is_async)

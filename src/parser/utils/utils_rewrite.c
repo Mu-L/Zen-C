@@ -728,7 +728,7 @@ char *parse_and_convert_args(ParserContext *ctx, Lexer *l, char ***defaults_out,
                     zpanic_at(lexer_peek(l), "Expected arg name");
                     return NULL;
                 }
-                check_identifier(ctx, param_tok);
+                check_identifier(param_tok);
                 char *name = token_strdup(param_tok);
                 names[count] = name; // Store name
                 if (lexer_next(l).kind != TOK_COLON)

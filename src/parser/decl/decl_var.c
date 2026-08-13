@@ -84,7 +84,7 @@ ASTNode *parse_var_decl(ParserContext *ctx, Lexer *l, int is_export)
                 type_infos = xrealloc(type_infos, (size_t)cap * sizeof(Type *));
             }
             Token t = lexer_next(l);
-            check_identifier(ctx, t);
+            check_identifier(t);
             char *nm = token_strdup(t);
             names[count] = nm;
             types[count] = NULL;
@@ -144,7 +144,7 @@ ASTNode *parse_var_decl(ParserContext *ctx, Lexer *l, int is_export)
 
     // Normal Declaration OR Named Struct Destructuring
     Token name_tok = lexer_next(l);
-    check_identifier(ctx, name_tok);
+    check_identifier(name_tok);
     char *name = token_strdup(name_tok);
 
     // Check for Struct Destructuring: var Point { x, y }
@@ -159,7 +159,7 @@ ASTNode *parse_var_decl(ParserContext *ctx, Lexer *l, int is_export)
         {
             // Parse field:name or just name
             Token t = lexer_next(l);
-            check_identifier(ctx, t);
+            check_identifier(t);
             char *ident = token_strdup(t);
 
             if (lexer_peek(l).kind == TOK_COLON)
@@ -167,7 +167,7 @@ ASTNode *parse_var_decl(ParserContext *ctx, Lexer *l, int is_export)
                 // field: var_name
                 lexer_next(l); // eat :
                 Token v = lexer_next(l);
-                check_identifier(ctx, v);
+                check_identifier(v);
                 fields[count] = ident;
                 names[count] = token_strdup(v);
             }
@@ -226,7 +226,7 @@ ASTNode *parse_var_decl(ParserContext *ctx, Lexer *l, int is_export)
     {
         lexer_next(l);
         Token val_tok = lexer_next(l);
-        check_identifier(ctx, val_tok);
+        check_identifier(val_tok);
         char *val_name = token_strdup(val_tok);
 
         if (lexer_next(l).kind != TOK_RPAREN)
@@ -413,7 +413,7 @@ ASTNode *parse_var_decl(ParserContext *ctx, Lexer *l, int is_export)
             {
                 lexer_next(l); // eat comma
                 Token ntok = lexer_next(l);
-                check_identifier(ctx, ntok);
+                check_identifier(ntok);
                 char *nname = token_strdup(ntok);
                 char *ntype = NULL;
                 Type *ntype_obj = NULL;
@@ -753,7 +753,7 @@ ASTNode *parse_var_decl(ParserContext *ctx, Lexer *l, int is_export)
 
             // Parse next variable: name [:type] [= expr]
             Token next_name_tok = lexer_next(l);
-            check_identifier(ctx, next_name_tok);
+            check_identifier(next_name_tok);
             char *next_name = token_strdup(next_name_tok);
 
             char *next_type = NULL;

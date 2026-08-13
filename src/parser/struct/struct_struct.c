@@ -18,7 +18,7 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
 
     lexer_next(l); // eat struct or union
     Token n = lexer_next(l);
-    check_identifier(ctx, n);
+    check_identifier(n);
     char *name = token_strdup(n);
     Token name_token = n;
 
@@ -37,7 +37,7 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
         while (1)
         {
             Token g = lexer_next(l);
-            check_identifier(ctx, g);
+            check_identifier(g);
             gps = realloc(gps, sizeof(char *) * (size_t)(gp_count + 1));
             gps[gp_count++] = token_strdup(g);
 
@@ -150,7 +150,7 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
             {
                 // Named use -> Composition (Add field, don't flatten)
                 Token field_name = lexer_next(l);
-                check_identifier(ctx, field_name);
+                check_identifier(field_name);
                 lexer_next(l); // eat :
                 Type *ft = parse_type_formal(ctx, l);
                 if (!ft)
@@ -236,7 +236,7 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
         if (t.kind == TOK_IDENT)
         {
             Token f_name = lexer_next(l);
-            check_identifier(ctx, f_name);
+            check_identifier(f_name);
             z_parse_expect(l, TOK_COLON, "Expected :");
             Type *ft = parse_type_formal(ctx, l);
             if (!ft)

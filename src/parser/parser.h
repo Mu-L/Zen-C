@@ -797,7 +797,7 @@ int is_reserved_keyword(Token t);
 /**
  * @brief Checks if an identifier is valid (not a keyword).
  */
-void check_identifier(ParserContext *ctx, Token t);
+void check_identifier(Token t);
 
 /**
  * @brief Main loop to parse top-level nodes in a file.

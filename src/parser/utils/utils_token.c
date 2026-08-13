@@ -432,9 +432,8 @@ int is_reserved_keyword(Token t)
     return 0;
 }
 
-void check_identifier(ParserContext *ctx, Token t)
+void check_identifier(Token t)
 {
-    (void)ctx;
     if (is_reserved_keyword(t))
     {
         char buf[MAX_SHORT_MSG_LEN];
