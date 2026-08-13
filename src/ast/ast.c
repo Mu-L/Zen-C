@@ -24,6 +24,15 @@ void register_trait(const char *name)
     registered_traits_local = r;
 }
 
+void clear_registered_traits(void)
+{
+    // The TraitReg nodes are arena-allocated, so the arena reset/restore in the
+    // fuzz harness and the LSP reclaims them. The list head must be cleared
+    // there too, otherwise it dangles into reused arena memory and is_trait()
+    // walks a cyclic list forever.
+    registered_traits_local = NULL;
+}
+
 int is_trait(const char *name)
 {
     if (!name)

@@ -33,7 +33,7 @@ static void sync_type_linkage_depth(ParserContext *ctx, Type *t, int depth)
     {
         sync_type_linkage_depth(ctx, t->inner, depth + 1);
     }
-    for (int i = 0; i < t->count; i++)
+    for (int i = 0; t->args && i < t->count; i++)
     {
         sync_type_linkage_depth(ctx, t->args[i], depth + 1);
     }

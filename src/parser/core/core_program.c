@@ -213,10 +213,13 @@ ASTNode *parse_program_nodes(ParserContext *ctx, Lexer *l)
                 if (next.kind == TOK_IDENT && next.len == 3 && strncmp(next.start, "let", 3) == 0)
                 {
                     s = parse_var_decl(ctx, l, attrs.is_export);
-                    s->var_decl.is_static = 1;
-                    if (attrs.is_thread_local)
+                    if (s)
                     {
-                        s->var_decl.is_thread_local = 1;
+                        s->var_decl.is_static = 1;
+                        if (attrs.is_thread_local)
+                        {
+                            s->var_decl.is_thread_local = 1;
+                        }
                     }
                 }
                 else

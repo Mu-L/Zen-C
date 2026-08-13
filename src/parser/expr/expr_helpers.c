@@ -231,7 +231,7 @@ CallArgs parse_call_args(ParserContext *ctx, Lexer *l, FuncSig *sig)
             }
 
             // Implicit trait cast logic
-            if (sig && res.count < sig->total_args && arg)
+            if (sig && sig->arg_types && res.count < sig->total_args && arg)
             {
                 Type *expected = sig->arg_types[res.count];
                 if (expected && expected->name && is_trait(expected->name))

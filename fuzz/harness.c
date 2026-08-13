@@ -119,6 +119,9 @@ __attribute__((used)) int LLVMFuzzerTestOneInput(const uint8_t *data, size_t siz
     fclose(ctx.cg.hoist_out);
     zarena_reset(&g_compiler.arena);
 
+    // Reset parser globals that point into the reclaimed arena.
+    clear_registered_traits();
+
     // Reset config vectors (free system-heap buffers, clear pointers)
     zvec_free_Str(&g_compiler.config.include_paths);
     zvec_free_Str(&g_compiler.config.cfg_defines);

@@ -195,6 +195,10 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
             if (lexer_peek(l).kind == TOK_IDENT && strncmp(lexer_peek(l).start, "fn", 2) == 0)
             {
                 ASTNode *f = parse_function(ctx, l, 0, 0, attrs.link_name, 0);
+                if (!f)
+                {
+                    continue;
+                }
                 ATTACH_DOC_COMMENT(ctx, f);
                 // Mangle: Type_Trait_Method
                 {
@@ -242,6 +246,10 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                 if (lexer_peek(l).kind == TOK_IDENT && strncmp(lexer_peek(l).start, "fn", 2) == 0)
                 {
                     ASTNode *f = parse_function(ctx, l, 1, 0, attrs.link_name, 0);
+                    if (!f)
+                    {
+                        continue;
+                    }
                     ATTACH_DOC_COMMENT(ctx, f);
                     f->func.is_async = 1;
                     // Mangle: Type_Trait_Method
@@ -405,6 +413,10 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                 if (lexer_peek(l).kind == TOK_IDENT && strncmp(lexer_peek(l).start, "fn", 2) == 0)
                 {
                     ASTNode *f = parse_function(ctx, l, 0, 0, attrs.link_name, 0);
+                    if (!f)
+                    {
+                        continue;
+                    }
                     ATTACH_DOC_COMMENT(ctx, f);
                     {
                         char *tmp = mangle_method_symbol(name1, NULL, f->func.name);
@@ -458,6 +470,10 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                         strncmp(lexer_peek(l).start, "fn", 2) == 0)
                     {
                         ASTNode *f = parse_function(ctx, l, 1, 0, attrs.link_name, 0);
+                        if (!f)
+                        {
+                            continue;
+                        }
                         f->func.is_async = 1;
                         {
                             char *tmp = mangle_method_symbol(name1, NULL, f->func.name);
@@ -607,6 +623,10 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                         strncmp(lexer_peek(l).start, "fn", 2) == 0)
                     {
                         ASTNode *f = parse_function(ctx, l, 1, 0, attrs.link_name, 0);
+                        if (!f)
+                        {
+                            continue;
+                        }
                         f->func.is_async = 1;
                         {
                             char *tmp = mangle_method_symbol(name1, NULL, f->func.name);

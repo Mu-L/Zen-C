@@ -469,7 +469,7 @@ void mark_type_as_used(TypeChecker *tc, Type *t)
     }
 
     // Generic arguments
-    for (int i = 0; i < curr->count; i++)
+    for (int i = 0; curr->args && i < curr->count; i++)
     {
         mark_type_as_used(tc, curr->args[i]);
     }
@@ -478,7 +478,7 @@ void mark_type_as_used(TypeChecker *tc, Type *t)
     if (curr->kind == TYPE_FUNCTION)
     {
         mark_type_as_used(tc, curr->inner);
-        for (int i = 0; i < curr->count; i++)
+        for (int i = 0; curr->args && i < curr->count; i++)
         {
             mark_type_as_used(tc, curr->args[i]);
         }

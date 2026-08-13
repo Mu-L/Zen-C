@@ -1697,7 +1697,7 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
                 zpanic_at(lexer_peek(l), "Expected )");
                 return NULL;
             }
-            for (int i = args_provided; i < sig->total_args; i++)
+            for (int i = args_provided; sig->arg_types && i < sig->total_args; i++)
             {
                 if (sig->defaults[i])
                 {
@@ -2568,7 +2568,8 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
 
                     // Arg 1: Self
                     ASTNode *arg1 = node;
-                    if (sig->total_args > 0 && sig->arg_types[0]->kind == TYPE_POINTER && !is_ptr)
+                    if (sig->arg_types && sig->total_args > 0 &&
+                        sig->arg_types[0]->kind == TYPE_POINTER && !is_ptr)
                     {
                         // Needs ptr, have value -> &node
                         ASTNode *addr = ast_create(NODE_EXPR_UNARY);
@@ -2577,7 +2578,7 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
                         addr->type_info = type_new_ptr(st);
                         arg1 = addr;
                     }
-                    else if (is_ptr && sig->arg_types[0]->kind != TYPE_POINTER)
+                    else if (sig->arg_types && is_ptr && sig->arg_types[0]->kind != TYPE_POINTER)
                     {
                         // Needs value, have ptr -> *node
                         ASTNode *deref = ast_create(NODE_EXPR_UNARY);

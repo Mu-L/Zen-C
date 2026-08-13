@@ -163,6 +163,10 @@ ASTNode *parse_statement(ParserContext *ctx, Lexer *l)
             zpanic_at(lexer_peek(l), "Expected 'let' after autofree");
         }
         s = parse_var_decl(ctx, l, 0);
+        if (!s)
+        {
+            return NULL;
+        }
         s->var_decl.is_autofree = 1;
         // Mark symbol as autofree to suppress unused variable warning
         ZenSymbol *sym = find_symbol_entry(ctx, s->var_decl.name);
