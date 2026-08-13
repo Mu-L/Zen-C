@@ -108,7 +108,7 @@ ASTNode *parse_program_nodes(ParserContext *ctx, Lexer *l)
             zvec_push_Str(&ctx->config->c_files, xstrdup(resolved ? resolved : path));
             if (resolved)
             {
-                free(resolved);
+                libc_free(resolved);
             }
 
             s = ast_create(NODE_LINK);

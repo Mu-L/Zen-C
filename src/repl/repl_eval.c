@@ -242,7 +242,7 @@ void repl_load_docs(ReplState *state)
         size_t nread = fread(data, 1, (size_t)(len), f);
         if (nread != (size_t)(len))
         {
-            free(data);
+            zfree(data);
             data = NULL;
         }
         else

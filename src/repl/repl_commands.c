@@ -295,7 +295,7 @@ static int cmd_edit(ReplState *state, const char *args)
                         size_t nread = fread(buffer, 1, (size_t)(length), fr);
                         if (nread != (size_t)(length))
                         {
-                            free(buffer);
+                            zfree(buffer);
                             fclose(fr);
                             return REPL_HANDLED;
                         }
@@ -371,7 +371,7 @@ static int cmd_edit(ReplState *state, const char *args)
                     size_t nread = fread(buffer, 1, (size_t)(length), fr);
                     if (nread != (size_t)(length))
                     {
-                        free(buffer);
+                        zfree(buffer);
                         fclose(fr);
                         return REPL_HANDLED;
                     }
